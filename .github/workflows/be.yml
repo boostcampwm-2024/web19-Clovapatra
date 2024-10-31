@@ -81,6 +81,6 @@ jobs:
           script: |
             cd ~/deploy/clovapatra/
             unzip -o dist.zip -d ./dist/
-            pm2 delete clovapatra || true
-            pm2 start dist/main.js --name clovapatra
+            ~/.nvm/versions/node/v21.7.3/bin/pm2 delete clovapatra || true
+            ~/.nvm/versions/node/v21.7.3/bin/pm2 start dist/main.js --name clovapatra
             rm dist.zip
