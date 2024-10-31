@@ -45,10 +45,14 @@ jobs:
         shell: bash
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          cd ./be
+          pnpm install --frozen-lockfile
 
       - name: Build application
-        run: pnpm build
+        run: |
+          cd ./be
+          pnpm build
 
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.0
