@@ -67,7 +67,7 @@ jobs:
       - name: Transfer built files via SCP
         run: |
           cd ./be/dist
-          zip -r ../dist.zip .
+          zip -r ../dist.zip dist package.json pnpm-lock.yaml
           cd ..
           scp -P ${{ secrets.SERVER_PORT }} ./dist.zip ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SSH_USER }}/deploy/clovapatra/dist.zip
 
@@ -80,8 +80,13 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
           script: |
             cd ~/deploy/clovapatra/
+            if pm2 list | grep -q "clovapatra"; then
+              pm2 delete clovapatra
+            fi
+            sudo rm -rf ./dist
             unzip -o dist.zip -d ./dist/
-            export PATH=$PATH:/home/${{ secrets.SSH_USER }}/.nvm/versions/node/v21.7.3/bin
-            pm2 delete clovapatra || true
-            pm2 start dist/main.js --name clovapatra
             rm dist.zip
+            pnpm install --prod
+            export PATH=$PATH:/home/${{ secrets.SSH_USER }}/.nvm/versions/node/v21.7.3/bin
+            pm2 start dist/main.js --name clovapatra
+            pm2 save
