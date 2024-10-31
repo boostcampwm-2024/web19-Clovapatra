@@ -14,29 +14,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "21.7.3"
+      # - name: Set up Node.js
+      #   uses: actions/setup-node@v4
+      #   with:
+      #     node-version: "21.7.3"
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
-          run_install: false
+      # - name: Install pnpm
+      #   uses: pnpm/action-setup@v2
+      #   with:
+      #     version: 8
+      #     run_install: false
 
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      # - name: Get pnpm store directory
+      #   shell: bash
+      #   run: |
+      #     echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
-      - name: Setup pnpm cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+      # - name: Setup pnpm cache
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: ${{ env.STORE_PATH }}
+      #     key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-pnpm-store-
 
       - name: Import environment variables
         run: |
@@ -44,15 +44,15 @@ jobs:
           echo "${{ secrets.ENV_PRODUCTION }}" > .env
         shell: bash
 
-      - name: Install dependencies
-        run: |
-          cd ./be
-          pnpm install --no-frozen-lockfile
+      # - name: Install dependencies
+      #   run: |
+      #     cd ./be
+      #     pnpm install --no-frozen-lockfile
 
-      - name: Build application
-        run: |
-          cd ./be
-          pnpm build
+      # - name: Build application
+      #   run: |
+      #     cd ./be
+      #     pnpm build
 
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.0
@@ -64,11 +64,10 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
 
-      - name: Transfer built files via SCP
+      - name: Transfer files via SCP
         run: |
-          cd ./be
-          zip -r dist.zip dist node_modules
-          scp -P ${{ secrets.SERVER_PORT }} ./dist.zip ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SSH_USER }}/deploy/clovapatra/dist.zip
+          zip -r be.zip be
+          scp -P ${{ secrets.SERVER_PORT }} ./be.zip ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SSH_USER }}/deploy/clovapatra/be.zip
 
       - name: Execute remote commands
         uses: appleboy/ssh-action@master
@@ -78,14 +77,16 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SERVER_PORT }}
           script: |
+            export PATH=$PATH:/home/${{ secrets.SSH_USER }}/.nvm/versions/node/v21.7.3/bin
             cd ~/deploy/clovapatra/
             if pm2 list | grep -q "clovapatra"; then
               pm2 delete clovapatra
             fi
-            sudo rm -rf ./dist
-            unzip -o dist.zip -d ./dist/
-            rm dist.zip
+            sudo rm -rf ./be
+            unzip -o be.zip -d ./
+            rm be.zip
+            cd ./be
             pnpm install --prod
-            export PATH=$PATH:/home/${{ secrets.SSH_USER }}/.nvm/versions/node/v21.7.3/bin
+            pnpm run build
             pm2 start dist/main.js --name clovapatra
             pm2 save
