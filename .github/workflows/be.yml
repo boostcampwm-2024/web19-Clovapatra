@@ -40,7 +40,7 @@ jobs:
 
       - name: Import environment variables
         run: |
-          cd ./src
+          cd ./be
           echo "${{ secrets.ENV_PRODUCTION }}" > .env
         shell: bash
 
