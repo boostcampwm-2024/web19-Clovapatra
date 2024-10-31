@@ -47,7 +47,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd ./be
-          pnpm install --frozen-lockfile
+          pnpm install --no-frozen-lockfile
 
       - name: Build application
         run: |
