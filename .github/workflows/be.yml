@@ -67,7 +67,7 @@ jobs:
       - name: Transfer built files via SCP
         run: |
           cd ./be/dist
-          zip -r ../dist.zip dist package.json pnpm-lock.yaml
+          zip -r dist.zip dist package.json pnpm-lock.yaml
           cd ..
           scp -P ${{ secrets.SERVER_PORT }} ./dist.zip ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SSH_USER }}/deploy/clovapatra/dist.zip
 
