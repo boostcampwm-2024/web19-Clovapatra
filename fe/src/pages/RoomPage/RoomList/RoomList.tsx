@@ -1,7 +1,7 @@
 import GameRoom from './GameRoom';
 import Pagination from './Pagination';
 import { usePagination } from '@/hooks/usePagination';
-import { ROOM_RULES } from '@/constants/rules';
+import { RULES } from '@/constants/rules';
 
 const RoomList = () => {
   const {
@@ -20,8 +20,8 @@ const RoomList = () => {
           <GameRoom key={room.id} room={room} />
         ))}
         {currentRooms.length > 0 &&
-          currentRooms.length < ROOM_RULES.maxPage &&
-          Array.from({ length: ROOM_RULES.maxPage - currentRooms.length }).map(
+          currentRooms.length < RULES.maxPage &&
+          Array.from({ length: RULES.maxPage - currentRooms.length }).map(
             (_, i) => <div key={`empty-${i}`} className="w-full h-0"></div>
           )}
       </div>

@@ -66,9 +66,8 @@
 }
 
 :root {
-  margin: 0 auto;
-  padding: 2rem;
-  max-width: 80rem;
+  margin: 0;
+  padding: 0;
 
   color-scheme: light dark;
 
@@ -78,4 +77,19 @@
 
 * {
   box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  margin: 0;
+}
+
+.app {
+  padding: 2rem;
 }
