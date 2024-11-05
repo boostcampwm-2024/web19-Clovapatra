@@ -21,8 +21,10 @@
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
+    "@nestjs/config": "^3.3.0",
     "@nestjs/core": "^10.0.0",
     "@nestjs/platform-express": "^10.0.0",
+    "@nestjs/swagger": "^8.0.1",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1"
   },
