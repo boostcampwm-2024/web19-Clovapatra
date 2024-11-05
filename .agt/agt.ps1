@@ -11,7 +11,44 @@ function Check-GhCli {
     if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
         Write-Host "Error: GitHub CLI is not installed. Please install it first." -ForegroundColor Red
         exit 1
-    }
+    fi
+}
+
+# 도움말 출력 함수
+function Print-Help {
+    Write-Host "AGT - Automatic Git & Github Tool" -ForegroundColor Cyan
+    Write-Host
+    Write-Host "Usage: agt <command>" -ForegroundColor Yellow
+    Write-Host
+    Write-Host "Available Commands:" -ForegroundColor White
+    Write-Host "  list     List all open issues in current repository, sorted by issue number"
+    Write-Host "  branch   Create and switch to a new feature branch based on issue number"
+    Write-Host "           Format: feature-{fe|be}-#{issue-number}"
+    Write-Host "  pr       Create a pull request from current feature branch"
+    Write-Host
+    Write-Host "Command Details:" -ForegroundColor White
+    Write-Host "  list:"
+    Write-Host "    - Shows all open issues in the current repository"
+    Write-Host "    - Issues are sorted by number"
+    Write-Host "    - No additional arguments required"
+    Write-Host
+    Write-Host "  branch:"
+    Write-Host "    - Shows list of open issues and prompts for issue number"
+    Write-Host "    - Creates a new branch from dev-fe or dev-be based on issue prefix"
+    Write-Host "    - Automatically switches to the new branch"
+    Write-Host "    - Branch naming convention: feature-fe-#1 or feature-be-#1"
+    Write-Host
+    Write-Host "  pr:"
+    Write-Host "    - Creates a pull request from current feature branch"
+    Write-Host "    - PR title will match the issue title"
+    Write-Host "    - Adds reviewers from CODEOWNERS automatically"
+    Write-Host "    - Uses pull request template from .github/pull_request_template.md"
+    Write-Host "    - Automatically links PR with issue for auto-close on merge"
+    Write-Host
+    Write-Host "Examples:" -ForegroundColor White
+    Write-Host "  agt list"
+    Write-Host "  agt branch"
+    Write-Host "  agt pr"
 }
 
 # 이슈 목록 출력 함수
@@ -20,14 +57,14 @@ function List-Issues {
     Check-GhCli
     Write-Host "=== Open Issues ===" -ForegroundColor Green
     
-    # JSON 형식으로 이슈를 가져와서 정렬 후 출력
+    # 이슈 목록 가져와서 정렬
     $issues = gh issue list --json number,title -q '.[] | {number: .number, title: .title}' | ConvertFrom-Json
-    $issues | Sort-Object {[int]$_.number} | ForEach-Object {
+    $issues | Sort-Object { [int]$_.number } | ForEach-Object {
         Write-Host ("#" + $_.number.ToString().PadRight(3) + " " + $_.title)
     }
 }
 
-# 나머지 함수들은 이전과 동일...
+# 브랜치 생성 함수
 function Create-Branch {
     Check-GitRepo
     Check-GhCli
@@ -84,16 +121,33 @@ function Create-Branch {
     Write-Host "Successfully created and switched to branch: $branchName" -ForegroundColor Green
 }
 
-# 메인 로직
-switch ($args[0]) {
-    "list" { 
-        List-Issues 
-    }
-    "branch" { 
-        Create-Branch 
-    }
-    default { 
-        Write-Host "Usage: agt {list|branch}" -ForegroundColor Yellow
+# PR 생성 함수
+function Create-PR {
+    Check-GitRepo
+    Check-GhCli
+    
+    # 현재 브랜치 확인
+    $currentBranch = git branch --show-current
+    
+    # feature 브랜치가 아닌 경우 종료
+    if ($currentBranch -notmatch '^feature-(fe|be)-#\d+$') {
+        Write-Host "Error: Current branch is not a feature branch" -ForegroundColor Red
         exit 1
     }
-}
+    
+    # 브랜치 정보에서 이슈 번호와 타입 추출
+    $issueNumber = [regex]::Match($currentBranch, '#(\d+)$').Groups[1].Value
+    $branchType = if ($currentBranch -match 'feature-(fe|be)') { $matches[1] }
+    
+    # 이슈 제목 가져오기
+    $issueTitle = gh issue view $issueNumber --json title -q .title
+    
+    # base 브랜치 결정
+    $baseBranch = "dev-$branchType"
+    
+    # CODEOWNERS 파일에서 리뷰어 목록 가져오기
+    $codeowners = gh api /repos/:owner/:repo/contents/.github/CODEOWNERS --jq '.content' | 
+                  [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($_))
+    $currentUser = gh api /user --jq '.login'
+    $reviewers = $codeowners -split "`n" | 
+                Where-Object { $_ -match '@[\w-]+' } |
