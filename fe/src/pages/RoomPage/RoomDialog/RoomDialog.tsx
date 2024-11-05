@@ -9,9 +9,23 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import useRoomStore from '@/store/useRoomStore';
 import { RoomDialogProps } from '@/types/room';
+import { useState } from 'react';
 
 const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
+  const [roomName, setRoomName] = useState('');
+  const [nickname, setNickname] = useState('');
+
+  const addRoom = useRoomStore((state) => state.addRoom);
+
+  const handleSubmit = () => {
+    addRoom(roomName.trim(), nickname.trim());
+    setRoomName('');
+    setNickname('');
+    onOpenChange(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -28,6 +42,10 @@ const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
             </Label>
             <Input
               id="roomName"
+              value={roomName}
+              onChange={(e) => {
+                setRoomName(e.target.value);
+              }}
               placeholder="방 제목을 입력하세요"
               className="col-span-3"
             />
@@ -38,6 +56,10 @@ const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
             </Label>
             <Input
               id="nickname"
+              value={nickname}
+              onChange={(e) => {
+                setNickname(e.target.value);
+              }}
               placeholder="닉네임을 입력하세요"
               className="col-span-3"
             />
@@ -47,11 +69,17 @@ const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
           <Button
             type="button"
             variant="outline"
-            onClick={() => onOpenChange(false)}
+            onClick={() => {
+              setRoomName('');
+              setNickname('');
+              onOpenChange(false);
+            }}
           >
             취소
           </Button>
-          <Button type="button">확인</Button>
+          <Button type="button" onClick={handleSubmit}>
+            확인
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
