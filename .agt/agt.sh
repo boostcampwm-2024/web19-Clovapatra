@@ -134,7 +134,7 @@ create_pr() {
     if [[ ! $current_branch =~ ^feature-(fe|be)-#[0-9]+$ ]]; then
         echo "Error: Current branch is not a feature branch"
         exit 1
-    }
+    fi
     
     # 브랜치 정보에서 이슈 번호와 타입 추출
     issue_number=$(echo $current_branch | sed 's/.*#\([0-9]\+\)$/\1/')
