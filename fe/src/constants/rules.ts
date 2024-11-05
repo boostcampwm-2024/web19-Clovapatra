@@ -1,3 +1,4 @@
-export const ROOM_RULES = Object.freeze({
+export const RULES = Object.freeze({
   maxPage: 9,
+  maxPlayer: 4,
 });

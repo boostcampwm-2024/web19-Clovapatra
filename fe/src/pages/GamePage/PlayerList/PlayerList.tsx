@@ -1,0 +1,23 @@
+import { RULES } from '@/constants/rules';
+import { PlayerListProps } from '@/types/player';
+import Player from './Player';
+
+const PlayerList = ({ players }: PlayerListProps) => {
+  const emptySlots = RULES.maxPlayer - players.length;
+
+  return (
+    <div className="grid grid-cols-2 gap-4">
+      {players.map((player) => (
+        <Player key={player.nickname} {...player} />
+      ))}
+      {Array.from({ length: emptySlots }).map((_, index) => (
+        <div
+          key={`empty-${index}`}
+          className="w-full h-[76px] border border-dashed rounded-lg border-muted-foreground/25"
+        />
+      ))}
+    </div>
+  );
+};
+
+export default PlayerList;

@@ -5,8 +5,9 @@ import { devtools } from 'zustand/middleware';
 
 const useRoomStore = create<RoomStore>()(
   devtools(
-    (set) => ({
+    (set, get) => ({
       rooms: [],
+      currentRoom: null,
       addRoom: (roomName: string, nickname: string) => {
         const roomId = v4();
         const newRoom: Room = {
@@ -19,9 +20,17 @@ const useRoomStore = create<RoomStore>()(
 
         set((state) => ({
           rooms: [...state.rooms, newRoom],
+          currentRoom: newRoom,
         }));
 
         return roomId;
+      },
+      setCurrentRoom: (roomId: string) => {
+        const room = get().rooms.find((r) => r.id === roomId);
+        set((state) => ({
+          ...state,
+          currentRoom: room || null,
+        }));
       },
     }),
     {
