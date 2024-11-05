@@ -1,7 +1,7 @@
 import GameRoom from './GameRoom';
 import Pagination from './Pagination';
 import { usePagination } from '@/hooks/usePagination';
-import { ROOM_RULES } from '@/constants/room';
+import { ROOM_RULES } from '@/constants/rules';
 
 const RoomList = () => {
   const {

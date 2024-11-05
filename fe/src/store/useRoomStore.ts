@@ -8,8 +8,9 @@ const useRoomStore = create<RoomStore>()(
     (set) => ({
       rooms: [],
       addRoom: (roomName: string, nickname: string) => {
+        const roomId = v4();
         const newRoom: Room = {
-          id: v4(),
+          id: roomId,
           name: roomName,
           creator: nickname,
           players: [nickname],
@@ -19,6 +20,8 @@ const useRoomStore = create<RoomStore>()(
         set((state) => ({
           rooms: [...state.rooms, newRoom],
         }));
+
+        return roomId;
       },
     }),
     {

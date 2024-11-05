@@ -12,18 +12,26 @@ import { Label } from '@/components/ui/label';
 import useRoomStore from '@/store/useRoomStore';
 import { RoomDialogProps } from '@/types/room';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
   const [roomName, setRoomName] = useState('');
   const [nickname, setNickname] = useState('');
+  const navigate = useNavigate();
 
   const addRoom = useRoomStore((state) => state.addRoom);
 
-  const handleSubmit = () => {
-    addRoom(roomName.trim(), nickname.trim());
+  const resetAndClose = () => {
     setRoomName('');
     setNickname('');
     onOpenChange(false);
+  };
+
+  const handleSubmit = () => {
+    if (!roomName.trim() || !nickname.trim()) return;
+    const roomId = addRoom(roomName.trim(), nickname.trim());
+    resetAndClose();
+    navigate(`/game/${roomId}`);
   };
 
   return (
@@ -66,18 +74,14 @@ const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
           </div>
         </div>
         <DialogFooter className="gap-2 mt-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              setRoomName('');
-              setNickname('');
-              onOpenChange(false);
-            }}
-          >
+          <Button type="button" variant="outline" onClick={resetAndClose}>
             취소
           </Button>
-          <Button type="button" onClick={handleSubmit}>
+          <Button
+            type="button"
+            onClick={handleSubmit}
+            disabled={!roomName.trim() || !nickname.trim()}
+          >
             확인
           </Button>
         </DialogFooter>
