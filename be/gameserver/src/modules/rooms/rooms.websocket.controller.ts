@@ -23,8 +23,8 @@ export class RoomsWebSocketController {
     return {
       roomId: 'example-room-id',
       roomName: createRoomDto.roomName,
-      hostNickName: createRoomDto.hostNickName,
-      users: [createRoomDto.hostNickName],
+      creatorNickname: createRoomDto.creatorNickname,
+      players: [createRoomDto.creatorNickname],
       status: 'waiting',
     };
   }

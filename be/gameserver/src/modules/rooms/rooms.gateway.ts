@@ -23,14 +23,13 @@ export class RoomsGateway {
     @MessageBody() createRoomDto: CreateRoomDto,
     @ConnectedSocket() client: Socket,
   ) {
-    const { roomName, hostNickName } = createRoomDto;
-
+    const { roomName, creatorNickname } = createRoomDto;
     const roomId = uuidv4();
     const roomData: RoomDataDto = {
       roomId,
       roomName,
-      hostNickName,
-      users: [hostNickName],
+      creatorNickname,
+      players: [creatorNickname],
       status: 'waiting',
     };
 
