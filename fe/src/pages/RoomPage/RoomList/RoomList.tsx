@@ -1,26 +1,17 @@
-import { Room } from '@/types/room';
-import { useEffect, useState } from 'react';
 import GameRoom from './GameRoom';
 import Pagination from './Pagination';
-import useRoomStore from '@/store/useRoomStore';
+import { usePagination } from '@/hooks/usePagination';
+import { RULES } from '@/constants/rules';
 
 const RoomList = () => {
-  const rooms = useRoomStore((state) => state.rooms);
-  const [currentPage, setCurrentPage] = useState(0);
-
-  const ROOMS_PER_PAGE = 9;
-  const totalPages = Math.ceil(rooms.length / ROOMS_PER_PAGE);
-
-  const currentRooms = rooms.slice(
-    currentPage * ROOMS_PER_PAGE,
-    (currentPage + 1) * ROOMS_PER_PAGE
-  );
-
-  useEffect(() => {
-    if (rooms.length > ROOMS_PER_PAGE * (currentPage + 1)) {
-      setCurrentPage(currentPage + 1);
-    }
-  }, [rooms.length, totalPages]);
+  const {
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    currentRooms,
+    isEmpty,
+    showPagination,
+  } = usePagination();
 
   return (
     <div className="space-y-6 max-h-screen mt-2">
@@ -29,20 +20,20 @@ const RoomList = () => {
           <GameRoom key={room.id} room={room} />
         ))}
         {currentRooms.length > 0 &&
-          currentRooms.length < ROOMS_PER_PAGE &&
-          Array.from({ length: ROOMS_PER_PAGE - currentRooms.length }).map(
+          currentRooms.length < RULES.maxPage &&
+          Array.from({ length: RULES.maxPage - currentRooms.length }).map(
             (_, i) => <div key={`empty-${i}`} className="w-full h-0"></div>
           )}
       </div>
 
-      {rooms.length > ROOMS_PER_PAGE && (
+      {showPagination && (
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={setCurrentPage}
         />
       )}
-      {rooms.length === 0 && (
+      {isEmpty && (
         <div className="text-center py-8 text-muted-foreground">
           생성된 방이 없습니다.
         </div>
