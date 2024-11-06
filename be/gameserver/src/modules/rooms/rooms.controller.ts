@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Logger } from '@nestjs/common';
 import { RedisService } from '../../redis/redis.service';
 import { RoomDataDto } from './dto/room-data.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -6,6 +6,8 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 @ApiTags('Rooms (REST)')
 @Controller('rooms')
 export class RoomController {
+  private readonly logger = new Logger(RoomController.name);
+
   constructor(private readonly redisService: RedisService) {}
 
   @Get()
@@ -20,6 +22,7 @@ export class RoomController {
   })
   async getRooms(): Promise<RoomDataDto[]> {
     const roomKeys = await this.redisService.keys('room:*');
+    this.logger.log('게임 방 목록 조회 시작');
 
     const rooms = await Promise.all(
       roomKeys.map(async (key) => {
@@ -27,7 +30,7 @@ export class RoomController {
         return JSON.parse(roomData) as RoomDataDto;
       }),
     );
-
+    this.logger.log(`게임 방 목록 조회 완료, ${rooms.length}개 방 반환`);
     return rooms;
   }
 }
