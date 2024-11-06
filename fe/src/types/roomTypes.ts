@@ -3,6 +3,10 @@ export interface RoomDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+export interface JoinDialogProps extends RoomDialogProps {
+  roomId: string;
+}
+
 export interface Room {
   roomId: string;
   roomName: string;
@@ -13,6 +17,7 @@ export interface Room {
 
 export interface GameRoomProps {
   room: Room;
+  onJoinRoom: (roomId: string) => void;
 }
 
 export interface PaginationProps {

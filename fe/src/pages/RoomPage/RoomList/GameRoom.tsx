@@ -2,13 +2,27 @@ import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { GameRoomProps } from '@/types/roomTypes';
 import { FaCircle, FaCrown, FaUsers } from 'react-icons/fa6';
 
-const GameRoom = ({ room }: GameRoomProps) => {
+const GameRoom = ({ room, onJoinRoom }: GameRoomProps) => {
   const isGameStarted = (status: string) => {
     return status === 'playing';
   };
+  const isRoomFull = room.players.length >= 4;
+
+  const handleRoomClick = () => {
+    if (!isGameStarted(room.status) && !isRoomFull) {
+      onJoinRoom(room.roomId);
+    }
+  };
 
   return (
-    <Card className="flex w-full mt-2">
+    <Card
+      className={`flex w-full mt-2 ${
+        !isGameStarted(room.status) && !isRoomFull
+          ? 'cursor-pointer hover:bg-gray-50'
+          : 'opacity-70'
+      }`}
+      onClick={handleRoomClick}
+    >
       <CardHeader className="space-y-1">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl">{room.roomName}</CardTitle>
