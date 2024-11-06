@@ -24,5 +24,5 @@ export interface PaginationProps {
 export interface RoomStore {
   rooms: Room[];
   currentRoom: Room | null;
-  addRoom: (roomName: string, hostNickname: string) => void;
+  addRoom: (roomName: string, hostNickname: string) => Promise<string>;
 }

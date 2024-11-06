@@ -16,6 +16,7 @@ import { useNavigate } from 'react-router-dom';
 
 const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
   const [roomName, setRoomName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [hostNickname, setHostNickname] = useState('');
   const navigate = useNavigate();
 
@@ -24,16 +25,25 @@ const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
   const resetAndClose = () => {
     setRoomName('');
     setHostNickname('');
+    setIsLoading(false);
     onOpenChange(false);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!roomName.trim() || !hostNickname.trim()) return;
 
-    const roomId = addRoom(roomName.trim(), hostNickname.trim());
+    try {
+      setIsLoading(true);
+      const roomId = await addRoom(roomName.trim(), hostNickname.trim());
 
-    resetAndClose();
-    navigate(`/game/${roomId}`);
+      resetAndClose();
+      navigate(`/game/${roomId}`);
+    } catch (error) {
+      console.error('방 생성 실패:', error);
+      // TODO: 에러 처리 토스트 메시지로
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -58,6 +68,7 @@ const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
               }}
               placeholder="방 제목을 입력하세요"
               className="col-span-3"
+              disabled={isLoading}
             />
           </div>
           <div className="space-y-2">
@@ -72,17 +83,23 @@ const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
               }}
               placeholder="닉네임을 입력하세요"
               className="col-span-3"
+              disabled={isLoading}
             />
           </div>
         </div>
         <DialogFooter className="gap-2 mt-2">
-          <Button type="button" variant="outline" onClick={resetAndClose}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={resetAndClose}
+            disabled={isLoading}
+          >
             취소
           </Button>
           <Button
             type="button"
             onClick={handleSubmit}
-            disabled={!roomName.trim() || !hostNickname.trim()}
+            disabled={!roomName.trim() || !hostNickname.trim() || isLoading}
           >
             확인
           </Button>
