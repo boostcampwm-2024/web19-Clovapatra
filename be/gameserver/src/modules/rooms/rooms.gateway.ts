@@ -24,7 +24,6 @@ export class RoomsGateway {
     @ConnectedSocket() client: Socket,
   ) {
     const { roomName, creatorNickname } = createRoomDto;
-
     const roomId = uuidv4();
     const roomData: RoomDataDto = {
       roomId,
