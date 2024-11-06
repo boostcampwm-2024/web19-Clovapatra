@@ -1,0 +1,41 @@
+name: Auto Close Issue on PR Merge
+
+on:
+  pull_request_target:
+    types: [closed]
+    branches: 
+      - 'dev-fe'
+      - 'dev-be'
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  close-issue:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Close linked issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
+          TARGET_BRANCH: ${{ github.event.pull_request.base.ref }}
+        run: |
+          # feature-{fe|be}-#123 형식에서 이슈 번호 추출
+          if [[ $BRANCH_NAME =~ feature-(fe|be)-#([0-9]+)$ ]]; then
+            ISSUE_NUMBER="${BASH_REMATCH[2]}"
+            echo "Found issue number: $ISSUE_NUMBER"
+            echo "Closing issue #$ISSUE_NUMBER"
+            gh issue close "$ISSUE_NUMBER" --comment "Automatically closed by PR #$PR_NUMBER merge to $TARGET_BRANCH"
+          else
+            echo "Branch name '$BRANCH_NAME' does not match expected pattern"
+            exit 0
+          fi
