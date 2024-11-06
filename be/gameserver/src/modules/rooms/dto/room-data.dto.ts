@@ -11,7 +11,7 @@ export class RoomDataDto {
   hostNickName: string;
 
   @ApiProperty({
-    example: ['user1', 'user2'],
+    example: ['hostUser123'],
     description: 'List of users currently in the room',
   })
   users: string[];
