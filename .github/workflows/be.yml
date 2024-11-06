@@ -14,41 +14,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '21.7.3'
-          
-      - name: Install pnpm
-        run: npm install -g pnpm
-
       - name: Import environment variables
         run: |
           echo "${{ secrets.ENV_GAME }}" > ./be/gameServer/.env
           echo "${{ secrets.ENV_SIGNALING }}" > ./be/signalingServer/.env
           echo "${{ secrets.ENV_VOICE }}" > ./be/voiceProcessingServer/.env
         shell: bash
-
-      - name: Install dependencies and build
-        run: |
-          # Game Server
-          cd ./be/gameServer
-          pnpm install
-          pnpm run build
-          rm -rf node_modules
-          pnpm install --prod
-          pnpm add tslib @types/node # NestJS 런타임에 필요한 의존성 추가
-          cd ..
-          
-          # Signaling Server
-          cd signalingServer
-          npm install --prod
-          cd ..
-          
-          # Voice Processing Server
-          cd voiceProcessingServer
-          npm install --prod
-          cd ../..
           
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.0
@@ -65,19 +36,19 @@ jobs:
           cd be
           # Game Server
           cd gameServer
-          zip -r game-server.zip dist node_modules package.json .env
+          zip -r game-server.zip src package.json tsconfig.json tsconfig.build.json nest-cli.json .env
           scp -P ${{ secrets.SERVER_PORT }} ./game-server.zip ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SSH_USER }}/deploy/servers/
           cd ..
           
           # Signaling Server
           cd signalingServer
-          zip -r signaling-server.zip server.js node_modules package.json .env
+          zip -r signaling-server.zip src package.json .env
           scp -P ${{ secrets.SERVER_PORT }} ./signaling-server.zip ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SSH_USER }}/deploy/servers/
           cd ..
           
           # Voice Processing Server
           cd voiceProcessingServer
-          zip -r voice-server.zip server.js node_modules package.json .env
+          zip -r voice-server.zip src package.json .env
           scp -P ${{ secrets.SERVER_PORT }} ./voice-server.zip ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SSH_USER }}/deploy/servers/
 
       - name: Execute remote commands
@@ -99,6 +70,8 @@ jobs:
             unzip -o game-server.zip -d ./game-server
             rm game-server.zip
             cd game-server
+            npm install
+            npm run build
             pm2 start dist/main.js --name game-server
             cd ..
             
@@ -110,7 +83,8 @@ jobs:
             unzip -o signaling-server.zip -d ./signaling-server
             rm signaling-server.zip
             cd signaling-server
-            pm2 start server.js --name signaling-server
+            npm install
+            pm2 start src/main.js --name signaling-server
             cd ..
             
             # Voice Processing Server
@@ -121,7 +95,8 @@ jobs:
             unzip -o voice-server.zip -d ./voice-server
             rm voice-server.zip
             cd voice-server
-            pm2 start server.js --name voice-server
+            npm install
+            pm2 start src/main.js --name voice-server
             cd ..
             
             pm2 save
