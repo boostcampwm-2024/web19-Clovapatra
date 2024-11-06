@@ -7,14 +7,17 @@ export class RoomDataDto {
   @ApiProperty({ example: '게임방123', description: 'Room name' })
   roomName: string;
 
-  @ApiProperty({ example: 'hostUser123', description: 'Host user nickname' })
-  hostNickName: string;
+  @ApiProperty({
+    example: 'creatorNickname123',
+    description: 'creatorNickname',
+  })
+  creatorNickname: string;
 
   @ApiProperty({
-    example: ['hostUser123'],
-    description: 'List of users currently in the room',
+    example: ['creatorNickname123'],
+    description: 'List of players currently in the room',
   })
-  users: string[];
+  players: string[];
 
   @ApiProperty({
     example: 'waiting',
