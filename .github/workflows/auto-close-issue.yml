@@ -1,13 +1,14 @@
 name: Auto Close Issue on PR Merge
 
 on:
-  pull_request:
+  pull_request_target:
     types: [closed]
     branches: 
       - 'dev-fe'
       - 'dev-be'
 
 permissions:
+  contents: read
   issues: write
   pull-requests: write
 
@@ -18,15 +19,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Setup GitHub CLI
-        run: |
-          # GitHub CLI 인증 설정
-          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Close linked issue
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
           TARGET_BRANCH: ${{ github.event.pull_request.base.ref }}
