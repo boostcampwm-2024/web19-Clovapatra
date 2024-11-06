@@ -6,8 +6,15 @@ import { ConfigService } from '@nestjs/config';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  app.enableCors({
+    origin: '*', // 모든 도메인 허용
+    methods: '*',
+    allowedHeaders: '*',
+    exposedHeaders: '*',
+    maxAge: 86400, // 24시간
+  });
+
   app.setGlobalPrefix('api');
-  const configService = app.get(ConfigService);
 
   const config = new DocumentBuilder()
     .setTitle('GameServer API Document')
@@ -17,6 +24,7 @@ async function bootstrap() {
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, documentFactory);
 
+  const configService = app.get(ConfigService);
   await app.listen(configService.get<number>('app.port'));
 }
 bootstrap();

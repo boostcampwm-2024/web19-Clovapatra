@@ -13,6 +13,8 @@ import { RoomDataDto } from './dto/room-data.dto';
 import { JoinRoomDto } from './dto/join-data.dto';
 import { v4 as uuidv4 } from 'uuid';
 
+// todo: pipe or fillter 사용하여 예외상황처리
+
 @WebSocketGateway({ namespace: '/rooms' })
 export class RoomsGateway {
   private readonly logger = new Logger(RoomsGateway.name);
@@ -27,21 +29,20 @@ export class RoomsGateway {
     @MessageBody() createRoomDto: CreateRoomDto,
     @ConnectedSocket() client: Socket,
   ) {
-    const { roomName, creatorNickname } = createRoomDto;
-    this.logger.log(
-      `Room creation requested: ${roomName} by ${creatorNickname}`,
-    );
-
-    const roomId = uuidv4();
-    const roomData: RoomDataDto = {
-      roomId,
-      roomName,
-      creatorNickname,
-      players: [creatorNickname],
-      status: 'waiting',
-    };
-
     try {
+      const { roomName, creatorNickname } = createRoomDto;
+      this.logger.log(
+        `Room creation requested: ${roomName} by ${creatorNickname}`,
+      );
+
+      const roomId = uuidv4();
+      const roomData: RoomDataDto = {
+        roomId,
+        roomName,
+        creatorNickname,
+        players: [creatorNickname],
+        status: 'waiting',
+      };
       await this.redisService.set(`room:${roomId}`, JSON.stringify(roomData));
       this.logger.log(`Room created successfully: ${roomId}`);
 
@@ -49,7 +50,7 @@ export class RoomsGateway {
       client.emit('roomCreated', roomData);
     } catch (error) {
       this.logger.error(`Error creating room: ${error.message}`, error.stack);
-      throw error;
+      client.emit('error', 'Failed to create the room');
     }
   }
 
