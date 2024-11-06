@@ -29,7 +29,9 @@ const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
 
   const handleSubmit = () => {
     if (!roomName.trim() || !nickname.trim()) return;
+
     const roomId = addRoom(roomName.trim(), nickname.trim());
+
     resetAndClose();
     navigate(`/game/${roomId}`);
   };
