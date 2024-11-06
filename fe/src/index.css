@@ -91,5 +91,5 @@ body {
 }
 
 .app {
-  padding: 2rem;
+  @apply flex flex-col mx-auto justify-center max-w-[1074px] lg:px-0 p-8;
 }
