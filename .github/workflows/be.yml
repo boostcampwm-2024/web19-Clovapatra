@@ -35,16 +35,18 @@ jobs:
           cd ./be/gameServer
           pnpm install
           pnpm run build
+          rm -rf node_modules
+          pnpm install --prod
           cd ..
           
           # Signaling Server
           cd signalingServer
-          npm install
+          npm install --prod
           cd ..
           
           # Voice Processing Server
           cd voiceProcessingServer
-          npm install
+          npm install --prod
           cd ../..
           
       - name: Setup SSH
