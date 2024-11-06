@@ -106,6 +106,9 @@ create_branch() {
         exit 1
     fi
 
+    # git 저장소 루트 디렉토리로 이동
+    cd "$(git rev-parse --show-toplevel)"
+
     echo "Creating and switching to branch: $branch_name from $source_branch"
 
     # source 브랜치로 전환
