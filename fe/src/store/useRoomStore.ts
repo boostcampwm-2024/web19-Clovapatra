@@ -1,4 +1,4 @@
-import { Room, RoomStore } from '@/types/room';
+import { Room, RoomStore } from '@/types/roomTypes';
 import { v4 } from 'uuid';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
@@ -11,11 +11,11 @@ const useRoomStore = create<RoomStore>()(
       addRoom: (roomName: string, nickname: string) => {
         const roomId = v4();
         const newRoom: Room = {
-          id: roomId,
-          name: roomName,
-          creator: nickname,
+          roomId: roomId,
+          roomName: roomName,
+          hostNickname: nickname,
           players: [nickname],
-          isGameStarted: false,
+          status: 'waiting',
         };
 
         set((state) => ({
@@ -26,7 +26,7 @@ const useRoomStore = create<RoomStore>()(
         return roomId;
       },
       setCurrentRoom: (roomId: string) => {
-        const room = get().rooms.find((r) => r.id === roomId);
+        const room = get().rooms.find((r) => r.roomId === roomId);
         set((state) => ({
           ...state,
           currentRoom: room || null,

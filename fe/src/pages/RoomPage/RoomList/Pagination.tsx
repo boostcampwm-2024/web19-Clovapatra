@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { PaginationProps } from '@/types/room';
+import { PaginationProps } from '@/types/roomTypes';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa6';
 
 const Pagination = ({

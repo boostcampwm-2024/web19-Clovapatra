@@ -10,27 +10,27 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import useRoomStore from '@/store/useRoomStore';
-import { RoomDialogProps } from '@/types/room';
+import { RoomDialogProps } from '@/types/roomTypes';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
   const [roomName, setRoomName] = useState('');
-  const [nickname, setNickname] = useState('');
+  const [hostNickname, setHostNickname] = useState('');
   const navigate = useNavigate();
 
   const addRoom = useRoomStore((state) => state.addRoom);
 
   const resetAndClose = () => {
     setRoomName('');
-    setNickname('');
+    setHostNickname('');
     onOpenChange(false);
   };
 
   const handleSubmit = () => {
-    if (!roomName.trim() || !nickname.trim()) return;
+    if (!roomName.trim() || !hostNickname.trim()) return;
 
-    const roomId = addRoom(roomName.trim(), nickname.trim());
+    const roomId = addRoom(roomName.trim(), hostNickname.trim());
 
     resetAndClose();
     navigate(`/game/${roomId}`);
@@ -66,9 +66,9 @@ const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
             </Label>
             <Input
               id="nickname"
-              value={nickname}
+              value={hostNickname}
               onChange={(e) => {
-                setNickname(e.target.value);
+                setHostNickname(e.target.value);
               }}
               placeholder="닉네임을 입력하세요"
               className="col-span-3"
@@ -82,7 +82,7 @@ const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
           <Button
             type="button"
             onClick={handleSubmit}
-            disabled={!roomName.trim() || !nickname.trim()}
+            disabled={!roomName.trim() || !hostNickname.trim()}
           >
             확인
           </Button>

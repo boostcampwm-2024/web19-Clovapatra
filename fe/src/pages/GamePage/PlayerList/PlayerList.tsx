@@ -1,5 +1,5 @@
 import { RULES } from '@/constants/rules';
-import { PlayerListProps } from '@/types/player';
+import { PlayerListProps } from '@/types/playerTypes';
 import Player from './Player';
 
 const PlayerList = ({ players }: PlayerListProps) => {
@@ -8,7 +8,7 @@ const PlayerList = ({ players }: PlayerListProps) => {
   return (
     <div className="grid grid-cols-2 gap-4">
       {players.map((player) => (
-        <Player key={player.nickname} {...player} />
+        <Player key={player.playerNickname} {...player} />
       ))}
       {Array.from({ length: emptySlots }).map((_, index) => (
         <div

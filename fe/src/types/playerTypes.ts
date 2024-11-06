@@ -1,6 +1,6 @@
 export interface PlayerProps {
-  nickname: string;
-  isCreator?: boolean;
+  playerNickname: string;
+  isHost?: boolean;
   isAudioOn: boolean;
   isReady?: boolean;
 }
