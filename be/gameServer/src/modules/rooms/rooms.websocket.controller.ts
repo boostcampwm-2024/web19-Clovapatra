@@ -24,8 +24,8 @@ export class RoomsWebSocketController {
     return {
       roomId: 'example-room-id',
       roomName: createRoomDto.roomName,
-      creatorNickname: createRoomDto.creatorNickname,
-      players: [createRoomDto.creatorNickname],
+      hostNickname: createRoomDto.hostNickname,
+      players: [createRoomDto.hostNickname],
       status: 'waiting',
     };
   }

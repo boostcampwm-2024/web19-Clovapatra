@@ -14,13 +14,13 @@ export class RoomDataDto {
   roomName: string;
 
   @ApiProperty({
-    example: 'creatorNickname123',
+    example: 'hostNickname123',
     description: '방을 생성한 사용자의 닉네임',
   })
-  creatorNickname: string;
+  hostNickname: string;
 
   @ApiProperty({
-    example: ['creatorNickname123'],
+    example: ['hostNickname123'],
     description: '현재 방에 참여한 플레이어 목록',
   })
   players: string[];

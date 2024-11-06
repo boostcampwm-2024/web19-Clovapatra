@@ -30,17 +30,17 @@ export class RoomsGateway {
     @ConnectedSocket() client: Socket,
   ) {
     try {
-      const { roomName, creatorNickname } = createRoomDto;
+      const { roomName, hostNickname } = createRoomDto;
       this.logger.log(
-        `Room creation requested: ${roomName} by ${creatorNickname}`,
+        `Room creation requested: ${roomName} by ${hostNickname}`,
       );
 
       const roomId = uuidv4();
       const roomData: RoomDataDto = {
         roomId,
         roomName,
-        creatorNickname,
-        players: [creatorNickname],
+        hostNickname,
+        players: [hostNickname],
         status: 'waiting',
       };
       await this.redisService.set(`room:${roomId}`, JSON.stringify(roomData));
