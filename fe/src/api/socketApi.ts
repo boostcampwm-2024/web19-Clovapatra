@@ -1,4 +1,3 @@
-import { SOCKET_BASE_URL } from '@/constants/rules';
 import { Room } from '@/types/roomTypes';
 import {
   ClientToServerEvents,
@@ -6,8 +5,14 @@ import {
 } from '@/types/socketTypes';
 import { io, Socket } from 'socket.io-client';
 
+const SOCKET_BASE_URL = 'wss://game.clovapatra.com';
+
 const socket: Socket<ServerToClientEvents, ClientToServerEvents> = io(
-  `${SOCKET_BASE_URL}/rooms`
+  `${SOCKET_BASE_URL}/rooms`,
+  {
+    transports: ['websocket'],
+    withCredentials: true,
+  }
 );
 
 export const createRoom = async (
@@ -15,9 +20,9 @@ export const createRoom = async (
   hostNickname: string
 ): Promise<Room> => {
   return new Promise((resolve, reject) => {
-    socket.emit('create_room', { roomName, hostNickname });
+    socket.emit('createRoom', { roomName, hostNickname });
 
-    socket.on('room_created', (room) => {
+    socket.on('roomCreated', (room) => {
       resolve(room);
     });
 

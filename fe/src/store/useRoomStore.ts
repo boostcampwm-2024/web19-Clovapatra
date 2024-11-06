@@ -1,5 +1,5 @@
 import { createRoom } from '@/api/socketApi';
-import { Room, RoomStore } from '@/types/roomTypes';
+import { RoomStore } from '@/types/roomTypes';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
@@ -9,9 +9,13 @@ const useRoomStore = create<RoomStore>()(
       rooms: [],
       currentRoom: null,
 
-      addRoom: async (roomName: string, nickname: string): Promise<string> => {
+      addRoom: async (
+        roomName: string,
+        hostNickname: string
+      ): Promise<string> => {
         try {
-          const newRoom = await createRoom(roomName, nickname);
+          const newRoom = await createRoom(roomName, hostNickname);
+
           set((state) => ({
             rooms: [...state.rooms, newRoom],
             currentRoom: newRoom,
