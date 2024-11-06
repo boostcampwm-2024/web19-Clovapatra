@@ -12,6 +12,14 @@ jobs:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup GitHub CLI
+        run: |
+          # GitHub CLI 인증 설정
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+
       - name: Close linked issue
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -26,4 +34,5 @@ jobs:
             gh issue close $ISSUE_NUMBER --comment "Automatically closed by PR #$PR_NUMBER merge to $TARGET_BRANCH"
           else
             echo "Branch name does not match expected pattern"
+            exit 0
           fi
