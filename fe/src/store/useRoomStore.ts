@@ -1,36 +1,30 @@
-import { Room, RoomStore } from '@/types/room';
-import { v4 } from 'uuid';
+import { createRoom } from '@/api/socketApi';
+import { RoomStore } from '@/types/roomTypes';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
 const useRoomStore = create<RoomStore>()(
   devtools(
-    (set, get) => ({
+    (set) => ({
       rooms: [],
       currentRoom: null,
-      addRoom: (roomName: string, nickname: string) => {
-        const roomId = v4();
-        const newRoom: Room = {
-          id: roomId,
-          name: roomName,
-          creator: nickname,
-          players: [nickname],
-          isGameStarted: false,
-        };
 
-        set((state) => ({
-          rooms: [...state.rooms, newRoom],
-          currentRoom: newRoom,
-        }));
+      addRoom: async (
+        roomName: string,
+        hostNickname: string
+      ): Promise<string> => {
+        try {
+          const newRoom = await createRoom(roomName, hostNickname);
 
-        return roomId;
-      },
-      setCurrentRoom: (roomId: string) => {
-        const room = get().rooms.find((r) => r.id === roomId);
-        set((state) => ({
-          ...state,
-          currentRoom: room || null,
-        }));
+          set((state) => ({
+            rooms: [...state.rooms, newRoom],
+            currentRoom: newRoom,
+          }));
+          return newRoom.roomId;
+        } catch (error) {
+          console.error('방 생성 실패:', error);
+          throw error;
+        }
       },
     }),
     {

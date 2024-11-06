@@ -1,7 +1,7 @@
 import { Slider } from '@/components/ui/slider';
 import { HiSpeakerWave, HiSpeakerXMark } from 'react-icons/hi2';
 import { useState } from 'react';
-import { AudioControlProps } from '@/types/player';
+import { AudioControlProps } from '@/types/playerTypes';
 
 const VolumeBar = ({ isOn }: AudioControlProps) => {
   const [volume, setVolume] = useState(50);

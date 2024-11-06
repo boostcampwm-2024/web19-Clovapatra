@@ -16,9 +16,9 @@ const GamePage = () => {
           Game Screen
         </div>
         <PlayerList
-          players={currentRoom.players.map((nickname) => ({
-            nickname,
-            isCreator: nickname === currentRoom.creator,
+          players={currentRoom.players.map((playerNickname) => ({
+            playerNickname,
+            isHost: playerNickname === currentRoom.hostNickname,
             isAudioOn,
             isReady: false,
           }))}

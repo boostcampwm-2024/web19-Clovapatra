@@ -4,11 +4,11 @@ export interface RoomDialogProps {
 }
 
 export interface Room {
-  id: string;
-  name: string;
-  creator: string;
+  roomId: string;
+  roomName: string;
+  hostNickname: string;
   players: string[];
-  isGameStarted: boolean;
+  status: 'waiting' | 'playing';
 }
 
 export interface GameRoomProps {
@@ -24,5 +24,5 @@ export interface PaginationProps {
 export interface RoomStore {
   rooms: Room[];
   currentRoom: Room | null;
-  addRoom: (roomName: string, nickname: string) => string;
+  addRoom: (roomName: string, hostNickname: string) => Promise<string>;
 }

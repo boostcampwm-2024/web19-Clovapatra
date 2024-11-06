@@ -10,28 +10,40 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import useRoomStore from '@/store/useRoomStore';
-import { RoomDialogProps } from '@/types/room';
+import { RoomDialogProps } from '@/types/roomTypes';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
   const [roomName, setRoomName] = useState('');
-  const [nickname, setNickname] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [hostNickname, setHostNickname] = useState('');
   const navigate = useNavigate();
 
   const addRoom = useRoomStore((state) => state.addRoom);
 
   const resetAndClose = () => {
     setRoomName('');
-    setNickname('');
+    setHostNickname('');
+    setIsLoading(false);
     onOpenChange(false);
   };
 
-  const handleSubmit = () => {
-    if (!roomName.trim() || !nickname.trim()) return;
-    const roomId = addRoom(roomName.trim(), nickname.trim());
-    resetAndClose();
-    navigate(`/game/${roomId}`);
+  const handleSubmit = async () => {
+    if (!roomName.trim() || !hostNickname.trim()) return;
+
+    try {
+      setIsLoading(true);
+      const roomId = await addRoom(roomName.trim(), hostNickname.trim());
+
+      resetAndClose();
+      navigate(`/game/${roomId}`);
+    } catch (error) {
+      console.error('방 생성 실패:', error);
+      // TODO: 에러 처리 토스트 메시지로
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -56,6 +68,7 @@ const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
               }}
               placeholder="방 제목을 입력하세요"
               className="col-span-3"
+              disabled={isLoading}
             />
           </div>
           <div className="space-y-2">
@@ -64,23 +77,29 @@ const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
             </Label>
             <Input
               id="nickname"
-              value={nickname}
+              value={hostNickname}
               onChange={(e) => {
-                setNickname(e.target.value);
+                setHostNickname(e.target.value);
               }}
               placeholder="닉네임을 입력하세요"
               className="col-span-3"
+              disabled={isLoading}
             />
           </div>
         </div>
         <DialogFooter className="gap-2 mt-2">
-          <Button type="button" variant="outline" onClick={resetAndClose}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={resetAndClose}
+            disabled={isLoading}
+          >
             취소
           </Button>
           <Button
             type="button"
             onClick={handleSubmit}
-            disabled={!roomName.trim() || !nickname.trim()}
+            disabled={!roomName.trim() || !hostNickname.trim() || isLoading}
           >
             확인
           </Button>
