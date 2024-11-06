@@ -37,6 +37,7 @@ jobs:
           pnpm run build
           rm -rf node_modules
           pnpm install --prod
+          pnpm add tslib @types/node # NestJS 런타임에 필요한 의존성 추가
           cd ..
           
           # Signaling Server
