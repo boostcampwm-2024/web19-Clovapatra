@@ -1,4 +1,4 @@
-import { createRoom, joinRoom } from '@/services/gameSocket';
+import { createRoom, joinRoom } from '@/services/socket';
 import { RoomStore } from '@/types/roomTypes';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
