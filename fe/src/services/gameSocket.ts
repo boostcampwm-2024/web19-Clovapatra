@@ -17,7 +17,7 @@ const gameSocket: Socket<ServerToClientEvents, ClientToServerEvents> = io(
 
 // 소켓 연결 상태 모니터링
 gameSocket.on('connect', () => {
-  console.log('Socket connected successfully. Socket ID:', gameSocket.id);
+  console.log('Socket connected');
 });
 
 gameSocket.on('connect_error', (error) => {
