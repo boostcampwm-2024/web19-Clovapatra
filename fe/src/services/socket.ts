@@ -9,7 +9,7 @@ import {
 } from '@/types/socketTypes';
 
 const SOCKET_BASE_URL = 'wss://game.clovapatra.com';
-const SIGNALING_URL = 'https://test2.clovapatra.com';
+const SIGNALING_URL = 'https://signaling.clovapatra.com';
 
 // 게임 서버 소켓
 const gameSocket: Socket<ServerToClientEvents, ClientToServerEvents> = io(
