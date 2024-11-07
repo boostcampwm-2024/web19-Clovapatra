@@ -16,7 +16,14 @@ import { v4 as uuidv4 } from 'uuid';
 
 // todo: pipe or fillter 사용하여 예외상황처리
 
-@WebSocketGateway({ namespace: '/rooms' })
+@WebSocketGateway({
+  namespace: '/rooms',
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+})
 export class RoomsGateway implements OnGatewayDisconnect {
   private readonly logger = new Logger(RoomsGateway.name);
 
