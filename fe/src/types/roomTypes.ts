@@ -34,6 +34,8 @@ export interface JoinGameRoomResult {
 export interface RoomStore {
   rooms: Room[];
   currentRoom: Room | null;
+  refreshRooms: () => Promise<void>;
   addRoom: (roomName: string, hostNickname: string) => Promise<string>;
   joinGameRoom: (roomId: string, playerNickname: string) => void;
+  updateCurrentRoom: (room: Room) => void;
 }
