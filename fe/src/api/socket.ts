@@ -7,6 +7,7 @@ import {
   SignalingServerToClientEvents,
   SignalingClientToServerEvents,
 } from '@/types/socketTypes';
+import useRoomStore from '@/store/useRoomStore';
 
 const SOCKET_BASE_URL = 'wss://game.clovapatra.com';
 const SIGNALING_URL = 'https://signaling.clovapatra.com';
@@ -268,4 +269,44 @@ gameSocket.on('connect_error', (error) => {
 
 signalingSocket.on('connect_error', (error) => {
   console.error('Signaling socket connection error:', error);
+});
+
+// 방 목록 갱신을 위한 이벤트
+gameSocket.on('roomCreated', async (room: Room) => {
+  console.log('Room created event received:', room);
+
+  try {
+    if (currentRoomId === room.roomId) {
+      // 방금 생성된 방이 현재 방이면 players도 업데이트
+      const store = useRoomStore.getState();
+      store.joinGameRoom(room.roomId, currentUserId || '');
+    }
+    // 전체 방 목록 갱신
+    await useRoomStore.getState().refreshRooms();
+  } catch (error) {
+    console.error('방 목록 갱신 실패:', error);
+  }
+});
+
+gameSocket.on('updateUsers', async (players: string[]) => {
+  console.log('Update users event received:', players);
+
+  const store = useRoomStore.getState();
+  const currentRoom = store.currentRoom;
+
+  if (currentRoom) {
+    const updatedRoom = {
+      ...currentRoom,
+      players,
+      hostNickname: players[0],
+    };
+    store.updateCurrentRoom(updatedRoom);
+  }
+
+  // 전체 방 목록도 갱신
+  try {
+    await useRoomStore.getState().refreshRooms();
+  } catch (error) {
+    console.error('방 목록 갱신 실패:', error);
+  }
 });
