@@ -1,4 +1,4 @@
-import { createRoom } from '@/api/socketApi';
+import { createRoom, joinRoom } from '@/services/gameSocket';
 import { RoomStore } from '@/types/roomTypes';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
@@ -23,6 +23,29 @@ const useRoomStore = create<RoomStore>()(
           return newRoom.roomId;
         } catch (error) {
           console.error('방 생성 실패:', error);
+          throw error;
+        }
+      },
+
+      joinGameRoom: async (roomId: string, playerNickname: string) => {
+        try {
+          const { room } = await joinRoom(roomId, playerNickname);
+
+          set((state) => {
+            const updatedRooms = state.rooms.map((existingRoom) =>
+              existingRoom.roomId === roomId
+                ? { ...existingRoom, players: room.players }
+                : existingRoom
+            );
+
+            return {
+              rooms: updatedRooms,
+              currentRoom:
+                updatedRooms.find((room) => room.roomId === roomId) || null,
+            };
+          });
+        } catch (error) {
+          console.error('방 입장 실패:', error);
           throw error;
         }
       },
