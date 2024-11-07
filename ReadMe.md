@@ -98,7 +98,98 @@
 
 ## 🏛️ 시스템 아키텍처
 
-![시스템 아키텍처](https://github.com/user-attachments/assets/79a3f4c1-c325-4678-9316-42a69087abd1)
+![시스템 아키텍처](https://github.com/user-attachments/assets/dc8c7236-9963-4d6a-b7e0-1346d24e8cb9)
+
+```mermaid
+flowchart TB
+    %% ===========================================
+    %% 클라이언트 그룹 정의
+    %% ===========================================
+    subgraph ClientGroup["클라이언트 그룹(Mesh)"]
+        direction LR
+        Client1["클라이언트 1"]
+        Client2["클라이언트 2"]
+        Client3["클라이언트 3"]
+        Client4["클라이언트 4"]
+
+        %% P2P 연결
+        Client1 <--> |P2P WebRTC| Client2
+        Client1 <--> |P2P WebRTC| Client3
+        Client1 <--> |P2P WebRTC| Client4
+        Client2 <--> |P2P WebRTC| Client3
+        Client2 <--> |P2P WebRTC| Client4
+        Client3 <--> |P2P WebRTC| Client4
+    end
+
+    %% ===========================================
+    %% 시스템 컴포넌트 정의
+    %% ===========================================
+    
+    %% 로드 밸런서
+    subgraph LoadBalancer["로드 밸런서"]
+        direction TB
+        NGINXMain["NGINX"]
+    end
+
+    %% 게임 서버
+    subgraph GameServer["게임 서버 (NestJS)"]
+        direction TB
+        GameLogic["게임 로직"]
+        WebSocket["WebSocket 핸들러"]
+        GameState["게임 상태 관리"]
+    end
+
+    %% 시그널링 서버
+    subgraph SignalingServer["시그널링 서버 (Express)"]
+        direction TB
+        SignalingLogic["시그널링 로직"]
+        WebRTCHandler["WebRTC 핸들러"]
+    end
+
+    %% 음성 처리 서버 클러스터
+    subgraph VoiceProcessing["음성 처리 서버 (Express) 클러스터"]
+        direction TB
+        VoiceServer1["음성 처리 서버 1"]
+        VoiceServer2["음성 처리 서버 2"]
+        VoiceServer3["음성 처리 서버 3"]
+    end
+
+    %% 외부 API
+    ClovaAPI["Clova Speech Recognition API"]
+
+    %% 저장소
+    subgraph Storage["저장소"]
+        direction TB
+        Redis[(Redis)]
+        MySQL[(MySQL)]
+    end
+
+    %% ===========================================
+    %% 시스템 연결 정의
+    %% ===========================================
+
+    %% 1. 프론트엔드 연결
+    ClientGroup <--> |HTTPS| NGINXMain
+
+    %% 2. 로드 밸런서 연결
+    NGINXMain <--> |게임 트래픽| GameServer
+    NGINXMain <--> |시그널링 트래픽| SignalingServer
+    NGINXMain <--> |음성 트래픽| VoiceProcessing
+
+    %% 3. 데이터 저장소 연결
+    GameServer <--> Redis
+    GameServer <--> MySQL
+    SignalingServer <--> Redis
+
+    %% 4. 서비스 간 연결
+    VoiceProcessing --> |음성 데이터 처리 결과| GameServer
+    GameServer <--> |게임 데이터| ClientGroup
+
+    %% 5. 외부 API 연결
+    VoiceServer1 <--> |음성 인식 요청| ClovaAPI
+    VoiceServer2 <--> |음성 인식 요청| ClovaAPI
+    VoiceServer3 <--> |음성 인식 요청| ClovaAPI
+```
 
 <br />
 
