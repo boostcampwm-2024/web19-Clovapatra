@@ -1,4 +1,4 @@
-name: Nest.js with PM2 Deployment
+name: Multiple Server Deployment
 
 on:
   push:
@@ -14,42 +14,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "21.7.3"
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
-          run_install: false
-
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
       - name: Import environment variables
         run: |
-          cd ./src
-          echo "${{ secrets.ENV_PRODUCTION }}" > .env
+          echo "${{ secrets.ENV_GAME }}" > ./be/gameServer/.env
+          echo "${{ secrets.ENV_SIGNALING }}" > ./be/signalingServer/.env
+          echo "${{ secrets.ENV_VOICE }}" > ./be/voiceProcessingServer/.env
         shell: bash
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build application
-        run: pnpm build
-
+          
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.0
         with:
@@ -60,12 +31,25 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
 
-      - name: Transfer built files via SCP
+      - name: Transfer files via SCP
         run: |
-          cd dist
-          zip -r ../dist.zip .
+          cd be
+          # Game Server
+          cd gameServer
+          zip -r game-server.zip src package.json tsconfig.json tsconfig.build.json nest-cli.json .env
+          scp -P ${{ secrets.SERVER_PORT }} ./game-server.zip ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SSH_USER }}/deploy/servers/
           cd ..
-          scp -P ${{ secrets.SERVER_PORT }} ./dist.zip ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SSH_USER }}/deploy/clovapatra/dist.zip
+          
+          # Signaling Server
+          cd signalingServer
+          zip -r signaling-server.zip src package.json .env
+          scp -P ${{ secrets.SERVER_PORT }} ./signaling-server.zip ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SSH_USER }}/deploy/servers/
+          cd ..
+          
+          # Voice Processing Server
+          cd voiceProcessingServer
+          zip -r voice-server.zip src package.json .env
+          scp -P ${{ secrets.SERVER_PORT }} ./voice-server.zip ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/home/${{ secrets.SSH_USER }}/deploy/servers/
 
       - name: Execute remote commands
         uses: appleboy/ssh-action@master
@@ -75,8 +59,44 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SERVER_PORT }}
           script: |
-            cd ~/deploy/clovapatra/
-            unzip -o dist.zip -d ./dist/
-            pm2 delete clovapatra || true
-            pm2 start dist/main.js --name clovapatra
-            rm dist.zip
+            export PATH=$PATH:/home/${{ secrets.SSH_USER }}/.nvm/versions/node/v21.7.3/bin
+            cd ~/deploy/servers/
+            
+            # Game Server
+            if pm2 list | grep -q "game-server"; then
+              pm2 delete game-server
+            fi
+            rm -rf ./game-server
+            unzip -o game-server.zip -d ./game-server
+            rm game-server.zip
+            cd game-server
+            npm install
+            npm run build
+            pm2 start dist/main.js --name game-server
+            cd ..
+            
+            # Signaling Server
+            if pm2 list | grep -q "signaling-server"; then
+              pm2 delete signaling-server
+            fi
+            rm -rf ./signaling-server
+            unzip -o signaling-server.zip -d ./signaling-server
+            rm signaling-server.zip
+            cd signaling-server
+            npm install
+            pm2 start src/main.js --name signaling-server
+            cd ..
+            
+            # Voice Processing Server
+            if pm2 list | grep -q "voice-server"; then
+              pm2 delete voice-server
+            fi
+            rm -rf ./voice-server
+            unzip -o voice-server.zip -d ./voice-server
+            rm voice-server.zip
+            cd voice-server
+            npm install
+            pm2 start src/main.js --name voice-server
+            cd ..
+            
+            pm2 save
