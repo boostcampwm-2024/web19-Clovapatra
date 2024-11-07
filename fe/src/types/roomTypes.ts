@@ -26,8 +26,14 @@ export interface PaginationProps {
   onPageChange: (page: number) => void;
 }
 
+export interface JoinGameRoomResult {
+  room: Room;
+  stream: MediaStream;
+}
+
 export interface RoomStore {
   rooms: Room[];
   currentRoom: Room | null;
   addRoom: (roomName: string, hostNickname: string) => Promise<string>;
+  joinGameRoom: (roomId: string, playerNickname: string) => void;
 }

@@ -9,34 +9,36 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import useRoomStore from '@/store/useRoomStore';
 import { JoinDialogProps } from '@/types/roomTypes';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
-  const [nickname, setNickname] = useState('');
+  const [playerNickname, setPlayerNickname] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const joinGameRoom = useRoomStore((state) => state.joinGameRoom);
 
   const resetAndClose = () => {
-    setNickname('');
+    setPlayerNickname('');
     setIsLoading(false);
     onOpenChange(false);
   };
 
   const handleJoin = async () => {
-    if (!nickname.trim()) return;
+    if (!playerNickname.trim()) return;
 
     try {
       setIsLoading(true);
-      // TODO: 방 입장 로직 구현
-      // await joinRoom(roomId, nickname.trim());
+      joinGameRoom(roomId, playerNickname.trim());
+
+      // stream은 별도의 상태 관리 필요 (예: audio store)
 
       resetAndClose();
       navigate(`/game/${roomId}`);
     } catch (error) {
       console.error('방 입장 실패:', error);
-      // TODO: 에러 처리 토스트 메시지로
     } finally {
       setIsLoading(false);
     }
@@ -51,13 +53,13 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="nickname" className="text-right">
+            <Label htmlFor="playerNickname" className="text-right">
               닉네임
             </Label>
             <Input
-              id="nickname"
-              value={nickname}
-              onChange={(e) => setNickname(e.target.value)}
+              id="playerNickname"
+              value={playerNickname}
+              onChange={(e) => setPlayerNickname(e.target.value)}
               placeholder="닉네임을 입력하세요"
               className="col-span-3"
               disabled={isLoading}
@@ -76,7 +78,7 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
           <Button
             type="button"
             onClick={handleJoin}
-            disabled={!nickname.trim() || isLoading}
+            disabled={!playerNickname.trim() || isLoading}
           >
             입장하기
           </Button>
