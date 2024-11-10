@@ -9,9 +9,11 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useRoomActions } from '@/hooks/useRoomActions';
+import { gameSocket } from '@/services/gameSocket';
+import { signalingSocket } from '@/services/signalingSocket';
+import useRoomStore from '@/stores/zustand/useRoomStore';
 import { RoomDialogProps } from '@/types/roomTypes';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
@@ -19,7 +21,14 @@ const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [hostNickname, setHostNickname] = useState('');
   const navigate = useNavigate();
-  const { addRoom } = useRoomActions();
+  const currentRoom = useRoomStore((state) => state.currentRoom);
+
+  useEffect(() => {
+    if (currentRoom?.roomId) {
+      navigate(`/game/${currentRoom.roomId}`);
+      onOpenChange(false);
+    }
+  }, [currentRoom]);
 
   const resetAndClose = () => {
     setRoomName('');
@@ -33,13 +42,11 @@ const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
 
     try {
       setIsLoading(true);
-      const roomId = await addRoom(roomName.trim(), hostNickname.trim());
-
-      resetAndClose();
-      navigate(`/game/${roomId}`);
+      gameSocket.connect();
+      signalingSocket.connect();
+      gameSocket.createRoom(roomName.trim(), hostNickname.trim());
     } catch (error) {
       console.error('방 생성 실패:', error);
-      // TODO: 에러 처리 토스트 메시지로
     } finally {
       setIsLoading(false);
     }

@@ -21,7 +21,10 @@ const useRoomStore = create<RoomStore & RoomActions>()(
   devtools((set) => ({
     ...initialState,
 
-    setRooms: (rooms) => set(() => ({ rooms })),
+    setRooms: (rooms) =>
+      set(() => ({
+        rooms,
+      })),
 
     setCurrentRoom: (room) =>
       set(() => ({

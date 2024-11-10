@@ -10,14 +10,14 @@ const GamePage = () => {
   const { data: rooms } = getRoomsQuery();
   const { currentRoom, setCurrentRoom } = useRoomStore();
 
-  // useEffect(() => {
-  //   if (rooms && roomId && (!currentRoom || currentRoom.roomId !== roomId)) {
-  //     const room = rooms.find((r) => r.roomId === roomId);
-  //     if (room) {
-  //       setCurrentRoom(room);
-  //     }
-  //   }
-  // }, [rooms, roomId, currentRoom]);
+  useEffect(() => {
+    if (rooms && roomId) {
+      const room = rooms.find((r) => r.roomId === roomId);
+      if (room) {
+        setCurrentRoom(room);
+      }
+    }
+  }, [rooms, roomId]);
 
   if (!currentRoom) return null;
 

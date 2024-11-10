@@ -2,10 +2,10 @@ import SearchBar from '@/components/common/SearchBar';
 import RoomHeader from './RoomHeader/RoomHeader';
 import RoomList from './RoomList/RoomList';
 import { useEffect } from 'react';
-import { useRoomActions } from '@/hooks/useRoomActions';
+import { useRefreshRooms } from '@/hooks/useRefreshRooms';
 
 const RoomPage = () => {
-  const { refreshRooms } = useRoomActions();
+  const refreshRooms = useRefreshRooms();
 
   useEffect(() => {
     refreshRooms();
