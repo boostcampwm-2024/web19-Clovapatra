@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import useRoomStore from '@/store/useRoomStore';
+import { useRoomActions } from '@/hooks/useRoomActions';
 import { RoomDialogProps } from '@/types/roomTypes';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -19,8 +19,7 @@ const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [hostNickname, setHostNickname] = useState('');
   const navigate = useNavigate();
-
-  const addRoom = useRoomStore((state) => state.addRoom);
+  const { addRoom } = useRoomActions();
 
   const resetAndClose = () => {
     setRoomName('');

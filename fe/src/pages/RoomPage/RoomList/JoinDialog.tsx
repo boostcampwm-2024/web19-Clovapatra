@@ -9,7 +9,8 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import useRoomStore from '@/store/useRoomStore';
+import { useRoomActions } from '@/hooks/useRoomActions';
+import useRoomStore from '@/stores/zustand/useRoomStore';
 import { RoomDialogProps } from '@/types/roomTypes';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -22,7 +23,7 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
   const [playerNickname, setPlayerNickname] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const joinGameRoom = useRoomStore((state) => state.joinGameRoom);
+  const { joinGameRoom } = useRoomActions();
 
   const resetAndClose = () => {
     setPlayerNickname('');
@@ -38,7 +39,6 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
       joinGameRoom(roomId, playerNickname.trim());
 
       // stream은 별도의 상태 관리 필요 (예: audio store)
-
       resetAndClose();
       navigate(`/game/${roomId}`);
     } catch (error) {

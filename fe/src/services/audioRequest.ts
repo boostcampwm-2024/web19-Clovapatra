@@ -1,4 +1,8 @@
-import { AudioStreamSetup } from '@/types/audioTypes';
+interface AudioStreamSetup {
+  audioContext: AudioContext;
+  source: MediaStreamAudioSourceNode;
+  gainNode: GainNode;
+}
 
 export const requestAudioStream = async (): Promise<MediaStream> => {
   try {
