@@ -1,6 +1,11 @@
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
-import { GameRoomProps } from '@/types/roomTypes';
+import { Room } from '@/types/roomTypes';
 import { FaCircle, FaCrown, FaUsers } from 'react-icons/fa6';
+
+interface GameRoomProps {
+  room: Room;
+  onJoinRoom: (roomId: string) => void;
+}
 
 const GameRoom = ({ room, onJoinRoom }: GameRoomProps) => {
   const isGameStarted = (status: string) => {

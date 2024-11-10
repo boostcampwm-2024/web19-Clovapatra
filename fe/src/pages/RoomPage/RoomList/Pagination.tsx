@@ -1,6 +1,11 @@
 import { Button } from '@/components/ui/button';
-import { PaginationProps } from '@/types/roomTypes';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa6';
+
+interface PaginationProps {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}
 
 const Pagination = ({
   currentPage,

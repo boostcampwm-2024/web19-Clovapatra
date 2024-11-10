@@ -10,9 +10,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import useRoomStore from '@/store/useRoomStore';
-import { JoinDialogProps } from '@/types/roomTypes';
+import { RoomDialogProps } from '@/types/roomTypes';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+interface JoinDialogProps extends RoomDialogProps {
+  roomId: string;
+}
 
 const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
   const [playerNickname, setPlayerNickname] = useState('');

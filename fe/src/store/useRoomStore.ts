@@ -1,8 +1,17 @@
 import { getRooms } from '@/api/api';
 import { createRoom, joinRoom } from '@/api/socket';
-import { Room, RoomStore } from '@/types/roomTypes';
+import { Room } from '@/types/roomTypes';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+
+export interface RoomStore {
+  rooms: Room[];
+  currentRoom: Room | null;
+  refreshRooms: () => Promise<void>;
+  addRoom: (roomName: string, hostNickname: string) => Promise<string>;
+  joinGameRoom: (roomId: string, playerNickname: string) => void;
+  updateCurrentRoom: (room: Room) => void;
+}
 
 const useRoomStore = create<RoomStore>()(
   devtools(

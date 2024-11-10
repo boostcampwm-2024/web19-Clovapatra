@@ -1,6 +1,10 @@
 import { RULES } from '@/constants/rules';
-import { PlayerListProps } from '@/types/playerTypes';
+import { PlayerProps } from '@/types/playerTypes';
 import Player from './Player';
+
+interface PlayerListProps {
+  players: PlayerProps[];
+}
 
 const PlayerList = ({ players }: PlayerListProps) => {
   const emptySlots = RULES.maxPlayer - players.length;

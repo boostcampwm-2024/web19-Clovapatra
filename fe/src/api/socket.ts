@@ -1,6 +1,6 @@
 import { io, Socket } from 'socket.io-client';
 import { requestAudioStream, cleanupAudioStream } from './audioRequest';
-import { JoinGameRoomResult, Room } from '@/types/roomTypes';
+import { Room } from '@/types/roomTypes';
 import {
   ClientToServerEvents,
   ServerToClientEvents,
@@ -11,6 +11,11 @@ import useRoomStore from '@/store/useRoomStore';
 
 const SOCKET_BASE_URL = 'wss://game.clovapatra.com';
 const SIGNALING_URL = 'https://signaling.clovapatra.com';
+
+interface JoinGameRoomResult {
+  room: Room;
+  stream: MediaStream;
+}
 
 // 게임 서버 소켓
 const gameSocket: Socket<ServerToClientEvents, ClientToServerEvents> = io(
