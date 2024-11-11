@@ -43,8 +43,6 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
 
     try {
       setIsLoading(true);
-      gameSocket.connect();
-      signalingSocket.connect();
       gameSocket.joinRoom(roomId, playerNickname.trim());
 
       onOpenChange(false);
