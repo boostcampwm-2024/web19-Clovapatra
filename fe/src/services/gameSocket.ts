@@ -11,7 +11,7 @@ import { cleanupAudioStream, requestAudioStream } from './audioRequest';
 const GAME_SOCKET_URL = 'wss://game.clovapatra.com/rooms';
 
 class GameSocket extends SocketService {
-  #audioStream: MediaStream | null = null;
+  private audioStream: MediaStream | null = null;
 
   constructor() {
     super();
@@ -42,6 +42,7 @@ class GameSocket extends SocketService {
 
     this.socket.on('roomCreated', async (room: Room) => {
       try {
+        // Zustand store 업데이트
         const store = useRoomStore.getState();
         store.setRooms([...store.rooms, room]);
         store.setCurrentRoom(room);
@@ -73,12 +74,10 @@ class GameSocket extends SocketService {
   }
 
   createRoom(roomName: string, hostNickname: string) {
-    this.validateSocket();
-
     // 마이크 권한 요청 후 방 생성
     requestAudioStream()
       .then((stream) => {
-        this.#audioStream = stream; // stream 저장
+        this.audioStream = stream; // stream 저장
         this.socket?.emit('createRoom', { roomName, hostNickname });
       })
       .catch((error) => {
@@ -88,10 +87,9 @@ class GameSocket extends SocketService {
   }
 
   joinRoom(roomId: string, playerNickname: string) {
-    this.validateSocket();
     requestAudioStream()
       .then((stream) => {
-        this.#audioStream = stream; // stream 저장
+        this.audioStream = stream; // stream 저장
         this.socket?.emit('joinRoom', { roomId, playerNickname });
       })
       .catch((error) => {
@@ -102,9 +100,9 @@ class GameSocket extends SocketService {
 
   // audio stream 정리를 위한 메서드
   cleanupAudio() {
-    if (this.#audioStream) {
-      cleanupAudioStream(this.#audioStream);
-      this.#audioStream = null;
+    if (this.audioStream) {
+      cleanupAudioStream(this.audioStream);
+      this.audioStream = null;
     }
   }
 

@@ -15,10 +15,8 @@ export class SocketService {
     this.#socket = socket;
   }
 
-  validateSocket() {
-    if (!this.#socket) {
-      throw new Error('Socket connection not established');
-    }
+  isConnected() {
+    return !!this.#socket?.connected;
   }
 
   disconnect() {

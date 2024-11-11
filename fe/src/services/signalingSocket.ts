@@ -200,7 +200,6 @@ class SignalingSocket extends SocketService {
   }
 
   joinSignalingRoom(roomId: string, userId: string) {
-    this.validateSocket();
     this.socket?.emit('join', { roomId, userId });
   }
 
