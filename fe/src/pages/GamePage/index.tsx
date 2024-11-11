@@ -1,31 +1,23 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import useRoomStore from '@/store/useRoomStore';
+import useRoomStore from '@/stores/zustand/useRoomStore';
 import PlayerList from './PlayerList/PlayerList';
-import { getRooms } from '@/api/api';
+import { getRoomsQuery } from '@/stores/queries/getRoomsQuery';
 
 const GamePage = () => {
   const [isAudioOn, setIsAudioOn] = useState(true);
   const { roomId } = useParams();
-  const { currentRoom, updateCurrentRoom } = useRoomStore();
+  const { data: rooms } = getRoomsQuery();
+  const { currentRoom, setCurrentRoom } = useRoomStore();
 
   useEffect(() => {
-    const initializeRoom = async () => {
-      if (roomId) {
-        try {
-          const rooms = await getRooms();
-          const room = rooms.find((r) => r.roomId === roomId);
-          if (room) updateCurrentRoom(room);
-        } catch (error) {
-          console.error('Failed to restore room info:', error);
-        }
+    if (rooms && roomId) {
+      const room = rooms.find((r) => r.roomId === roomId);
+      if (room) {
+        setCurrentRoom(room);
       }
-    };
-
-    if (!currentRoom || currentRoom.roomId !== roomId) initializeRoom();
-  }, [roomId, currentRoom]);
-
-  console.log('GamePage render:', { currentRoom, roomId });
+    }
+  }, [rooms, roomId]);
 
   if (!currentRoom) return null;
 
