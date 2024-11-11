@@ -24,10 +24,10 @@ class SignalingSocket extends SocketService {
     }) as Socket<SignalingServerToClientEvents, SignalingClientToServerEvents>;
 
     this.setSocket(socket);
-    this.setupEventListeners();
+    this.#setupEventListeners();
   }
 
-  private setupEventListeners() {
+  #setupEventListeners() {
     if (!this.socket) return;
 
     this.socket.on('connect', () => {
@@ -44,7 +44,7 @@ class SignalingSocket extends SocketService {
 
     this.socket.on('peer-joined', async ({ peerId, userId }) => {
       try {
-        const pc = await this.createPeerConnection(peerId);
+        const pc = await this.#createPeerConnection(peerId);
         const offer = await pc.createOffer({
           offerToReceiveAudio: true,
           offerToReceiveVideo: false,
@@ -65,7 +65,7 @@ class SignalingSocket extends SocketService {
         let pc = this.#peerConnections[targetId];
 
         if (!pc) {
-          pc = await this.createPeerConnection(targetId);
+          pc = await this.#createPeerConnection(targetId);
         }
 
         await pc.setRemoteDescription(new RTCSessionDescription(sdp));
@@ -133,9 +133,7 @@ class SignalingSocket extends SocketService {
     });
   }
 
-  private async createPeerConnection(
-    peerId: string
-  ): Promise<RTCPeerConnection> {
+  async #createPeerConnection(peerId: string): Promise<RTCPeerConnection> {
     const configuration: RTCConfiguration = {
       iceServers: [
         {

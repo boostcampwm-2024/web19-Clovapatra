@@ -26,10 +26,10 @@ class GameSocket extends SocketService {
     }) as Socket<ServerToClientEvents, ClientToServerEvents>;
 
     this.setSocket(socket);
-    this.setupEventListeners();
+    this.#setupEventListeners();
   }
 
-  private setupEventListeners() {
+  #setupEventListeners() {
     if (!this.socket) return;
 
     this.socket.on('connect', () => {
