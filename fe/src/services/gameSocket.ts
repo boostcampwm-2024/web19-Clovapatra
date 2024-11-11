@@ -5,71 +5,16 @@ import {
 } from '@/types/socketTypes';
 import { Room } from '@/types/roomTypes';
 import { SocketService } from './SocketService';
-import { cleanupAudioStream, requestAudioStream } from './audioRequest';
 import useRoomStore from '@/stores/zustand/useRoomStore';
+import { cleanupAudioStream, requestAudioStream } from './audioRequest';
 
 const GAME_SOCKET_URL = 'wss://game.clovapatra.com/rooms';
 
-interface AudioSetup {
-  audioContext: AudioContext;
-  source: MediaStreamAudioSourceNode;
-  gainNode: GainNode;
-}
-
 class GameSocket extends SocketService {
   #audioStream: MediaStream | null = null;
-  #audioSetup: AudioSetup | null = null;
 
   constructor() {
     super();
-  }
-
-  async setupAudioStream(): Promise<MediaStream> {
-    try {
-      if (this.#audioStream) {
-        return this.#audioStream;
-      }
-
-      const stream = await requestAudioStream();
-      this.#audioStream = stream;
-
-      // 오디오 설정
-      this.#audioSetup = await this.#setupAudio(stream);
-
-      return stream;
-    } catch (error) {
-      console.error('Failed to setup audio stream:', error);
-      throw error;
-    }
-  }
-
-  async #setupAudio(stream: MediaStream): Promise<AudioSetup> {
-    try {
-      const audioContext = new AudioContext();
-      const source = audioContext.createMediaStreamSource(stream);
-      const gainNode = audioContext.createGain();
-
-      source.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-
-      // 기본 볼륨 설정
-      gainNode.gain.value = 0.5;
-
-      return {
-        audioContext,
-        source,
-        gainNode,
-      };
-    } catch (error) {
-      console.error('Error setting up audio:', error);
-      throw error;
-    }
-  }
-
-  setAudioVolume(volume: number) {
-    if (this.#audioSetup) {
-      this.#audioSetup.gainNode.gain.value = volume;
-    }
   }
 
   connect() {
@@ -81,28 +26,18 @@ class GameSocket extends SocketService {
     }) as Socket<ServerToClientEvents, ClientToServerEvents>;
 
     this.setSocket(socket);
-    this.#setupEventListeners();
+    this.setupEventListeners();
   }
 
-  async createRoom(roomName: string, hostNickname: string) {
-    this.validateSocket();
-    const stream = await this.setupAudioStream();
-    this.socket?.emit('createRoom', { roomName, hostNickname });
-    return stream;
-  }
-
-  async joinRoom(roomId: string, playerNickname: string) {
-    this.validateSocket();
-    const stream = await this.setupAudioStream();
-    this.socket?.emit('joinRoom', { roomId, playerNickname });
-    return stream;
-  }
-
-  #setupEventListeners() {
+  private setupEventListeners() {
     if (!this.socket) return;
 
     this.socket.on('connect', () => {
       console.log('Game socket connected');
+    });
+
+    this.socket.on('connect_error', (error) => {
+      console.error('Game socket connection error:', error);
     });
 
     this.socket.on('roomCreated', async (room: Room) => {
@@ -115,13 +50,12 @@ class GameSocket extends SocketService {
       }
     });
 
-    this.socket.on('updateUsers', (players: string[]) => {
+    this.socket.on('updateUsers', async (players: string[]) => {
       try {
-        const store = useRoomStore.getState();
-        const { currentRoom } = store;
+        const { currentRoom, setCurrentRoom } = useRoomStore.getState();
 
         if (currentRoom) {
-          store.setCurrentRoom({
+          setCurrentRoom({
             ...currentRoom,
             players,
             hostNickname: players[0],
@@ -131,19 +65,50 @@ class GameSocket extends SocketService {
         console.error('Failed to update users:', error);
       }
     });
+
+    this.socket.on('error', (error) => {
+      console.error('Socket error:', error);
+      window.location.href = '/';
+    });
   }
 
+  createRoom(roomName: string, hostNickname: string) {
+    this.validateSocket();
+
+    // 마이크 권한 요청 후 방 생성
+    requestAudioStream()
+      .then((stream) => {
+        this.#audioStream = stream; // stream 저장
+        this.socket?.emit('createRoom', { roomName, hostNickname });
+      })
+      .catch((error) => {
+        console.error('Failed to access microphone:', error);
+        throw error;
+      });
+  }
+
+  joinRoom(roomId: string, playerNickname: string) {
+    this.validateSocket();
+    requestAudioStream()
+      .then((stream) => {
+        this.#audioStream = stream; // stream 저장
+        this.socket?.emit('joinRoom', { roomId, playerNickname });
+      })
+      .catch((error) => {
+        console.error('Failed to access microphone:', error);
+        throw error;
+      });
+  }
+
+  // audio stream 정리를 위한 메서드
   cleanupAudio() {
     if (this.#audioStream) {
       cleanupAudioStream(this.#audioStream);
       this.#audioStream = null;
     }
-    if (this.#audioSetup) {
-      this.#audioSetup.audioContext.close();
-      this.#audioSetup = null;
-    }
   }
 
+  // disconnect 시 audio도 정리
   override disconnect() {
     this.cleanupAudio();
     super.disconnect();

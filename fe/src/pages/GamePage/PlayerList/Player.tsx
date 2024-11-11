@@ -1,6 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { PlayerProps } from '@/types/playerTypes';
-import { BsMicFill, BsMicMuteFill } from 'react-icons/bs';
 import { FaCrown } from 'react-icons/fa6';
 import VolumeBar from './VolumeBar';
 
