@@ -17,7 +17,7 @@ const VolumeBar = ({ isOn }: AudioControlProps) => {
         <HiSpeakerXMark className="h-4 w-4 text-muted-foreground" />
       )}
       <Slider
-        defaultValue={[volume]}
+        value={[volume]}
         max={100}
         step={1}
         className="w-24"
