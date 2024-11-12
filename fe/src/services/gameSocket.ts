@@ -6,13 +6,10 @@ import {
 import { Room } from '@/types/roomTypes';
 import { SocketService } from './SocketService';
 import useRoomStore from '@/stores/zustand/useRoomStore';
-import { cleanupAudioStream, requestAudioStream } from './audioRequest';
 
 const GAME_SOCKET_URL = 'wss://game.clovapatra.com/rooms';
 
 class GameSocket extends SocketService {
-  private audioStream: MediaStream | null = null;
-
   constructor() {
     super();
   }
@@ -22,7 +19,7 @@ class GameSocket extends SocketService {
 
     const socket = io(GAME_SOCKET_URL, {
       transports: ['websocket'],
-      withCredentials: true,
+      withCredentials: false,
     }) as Socket<ServerToClientEvents, ClientToServerEvents>;
 
     this.setSocket(socket);
@@ -32,6 +29,7 @@ class GameSocket extends SocketService {
   private setupEventListeners() {
     if (!this.socket) return;
 
+    // 소켓 모니터링
     this.socket.on('connect', () => {
       console.log('Game socket connected');
     });
@@ -40,76 +38,36 @@ class GameSocket extends SocketService {
       console.error('Game socket connection error:', error);
     });
 
-    this.socket.on('roomCreated', async (room: Room) => {
-      try {
-        // Zustand store 업데이트
-        const store = useRoomStore.getState();
-        store.setRooms([...store.rooms, room]);
-        store.setCurrentRoom(room);
-      } catch (error) {
-        console.error('Failed to update rooms:', error);
-      }
-    });
-
-    this.socket.on('updateUsers', async (players: string[]) => {
-      try {
-        const { currentRoom, setCurrentRoom } = useRoomStore.getState();
-
-        if (currentRoom) {
-          setCurrentRoom({
-            ...currentRoom,
-            players,
-            hostNickname: players[0],
-          });
-        }
-      } catch (error) {
-        console.error('Failed to update users:', error);
-      }
-    });
-
     this.socket.on('error', (error) => {
       console.error('Socket error:', error);
       window.location.href = '/';
     });
+
+    this.socket.on('roomCreated', (room: Room) => {
+      const store = useRoomStore.getState();
+      store.setRooms([...store.rooms, room]);
+      store.setCurrentRoom(room);
+    });
+
+    this.socket.on('updateUsers', (players: string[]) => {
+      const { currentRoom, setCurrentRoom } = useRoomStore.getState();
+
+      if (currentRoom) {
+        setCurrentRoom({
+          ...currentRoom,
+          players,
+          hostNickname: players[0],
+        });
+      }
+    });
   }
 
   createRoom(roomName: string, hostNickname: string) {
-    // 마이크 권한 요청 후 방 생성
-    requestAudioStream()
-      .then((stream) => {
-        this.audioStream = stream; // stream 저장
-        this.socket?.emit('createRoom', { roomName, hostNickname });
-      })
-      .catch((error) => {
-        console.error('Failed to access microphone:', error);
-        throw error;
-      });
+    this.socket?.emit('createRoom', { roomName, hostNickname });
   }
 
   joinRoom(roomId: string, playerNickname: string) {
-    requestAudioStream()
-      .then((stream) => {
-        this.audioStream = stream; // stream 저장
-        this.socket?.emit('joinRoom', { roomId, playerNickname });
-      })
-      .catch((error) => {
-        console.error('Failed to access microphone:', error);
-        throw error;
-      });
-  }
-
-  // audio stream 정리를 위한 메서드
-  cleanupAudio() {
-    if (this.audioStream) {
-      cleanupAudioStream(this.audioStream);
-      this.audioStream = null;
-    }
-  }
-
-  // disconnect 시 audio도 정리
-  override disconnect() {
-    this.cleanupAudio();
-    super.disconnect();
+    this.socket?.emit('joinRoom', { roomId, playerNickname });
   }
 }
 
