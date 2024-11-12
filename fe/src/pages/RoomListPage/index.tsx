@@ -7,27 +7,19 @@ import { signalingSocket } from '@/services/signalingSocket';
 import { useRefreshRooms } from '@/hooks/useRefreshRooms';
 
 const RoomPage = () => {
-  const refreshRooms = useRefreshRooms();
+  const refetchRooms = useRefreshRooms();
 
   useEffect(() => {
-    // 소켓이 연결되어 있지 않을 때만 연결
-    if (!gameSocket.isConnected()) {
-      gameSocket.connect();
-    }
-    if (!signalingSocket.isConnected()) {
-      signalingSocket.connect();
-    }
-
-    refreshRooms();
+    refetchRooms();
 
     const interval = setInterval(() => {
-      refreshRooms();
-    }, 3000);
+      refetchRooms();
+    }, 3000); // 3초에 한 번씩
 
     return () => {
       clearInterval(interval);
     };
-  }, [refreshRooms]);
+  }, [refetchRooms]);
 
   return (
     <div>

@@ -42,6 +42,9 @@ const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
 
     try {
       setIsLoading(true);
+      gameSocket.connect();
+      signalingSocket.connect();
+
       gameSocket.createRoom(roomName.trim(), hostNickname.trim());
     } catch (error) {
       console.error('방 생성 실패:', error);
