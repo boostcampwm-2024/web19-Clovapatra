@@ -378,36 +378,42 @@ class SignalingSocket extends SocketService {
     console.log('[WebRTCClient] 연결 해제 처리 완료:', socketId);
   }
 
-  // 방 나가기 및 모든 연결 종료
-  leaveRoom() {
-    console.log('[WebRTCClient] 방 나가기 시작');
-
-    // 모든 피어 연결 종료
+  // WebRTC 관련 리소스 정리
+  private cleanupResources() {
+    // 1. Peer Connections 정리
     for (const [peerId, pc] of this.peerConnections) {
       pc.close();
+      // 2. 오디오 엘리먼트 제거
       const audioElement = document.getElementById(`audio-${peerId}`);
       if (audioElement) {
         audioElement.remove();
       }
     }
-
     this.peerConnections.clear();
 
-    // 로컬 스트림 정리
+    // 3. 로컬 스트림 정리
     if (this.localStream) {
       this.localStream.getTracks().forEach((track) => track.stop());
       this.localStream = null;
     }
 
-    // 소켓 연결 해제
-    if (this.socket) {
-      this.socket.disconnect();
-    }
-
+    // 상태 초기화
     this.roomId = null;
     this.deviceId = null;
+  }
 
-    console.log('[WebRTCClient] 방 나가기 완료');
+  override disconnect() {
+    if (!this.socket?.connected) return;
+
+    console.log('[WebRTCClient] 연결 종료 시작');
+
+    // WebRTC 리소스 정리
+    this.cleanupResources();
+
+    // 소켓 연결 종료
+    super.disconnect();
+
+    console.log('[WebRTCClient] 연결 종료 완료');
   }
 }
 
