@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { gameSocket } from '@/services/gameSocket';
 import { signalingSocket } from '@/services/signalingSocket';
+import { getRoomsQuery } from '@/stores/queries/getRoomsQuery';
 import useRoomStore from '@/stores/zustand/useRoomStore';
 import { RoomDialogProps } from '@/types/roomTypes';
 import { useEffect, useState } from 'react';
@@ -24,13 +25,9 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
   const [playerNickname, setPlayerNickname] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { currentRoom } = useRoomStore.getState();
-
-  useEffect(() => {
-    if (currentRoom?.roomId) {
-      navigate(`/game/${currentRoom.roomId}`);
-    }
-  }, [currentRoom?.roomId, navigate]);
+  const { data: rooms } = getRoomsQuery();
+  const currentRoom = rooms.find((room) => room.roomId === roomId);
+  const { setCurrentRoom } = useRoomStore.getState();
 
   const resetAndClose = () => {
     setPlayerNickname('');
@@ -43,9 +40,14 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
 
     try {
       setIsLoading(true);
-      gameSocket.joinRoom(roomId, playerNickname.trim());
+      gameSocket.connect();
+      signalingSocket.connect();
 
-      onOpenChange(false);
+      setCurrentRoom(currentRoom);
+      gameSocket.joinRoom(roomId, playerNickname.trim());
+      await signalingSocket.joinRoom(currentRoom);
+
+      resetAndClose();
       navigate(`/game/${roomId}`);
     } catch (error) {
       console.error('방 입장 실패:', error);

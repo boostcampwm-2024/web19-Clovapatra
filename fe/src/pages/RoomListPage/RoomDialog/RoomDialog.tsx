@@ -24,11 +24,12 @@ const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
   const currentRoom = useRoomStore((state) => state.currentRoom);
 
   useEffect(() => {
-    if (currentRoom?.roomId) {
+    if (currentRoom) {
       navigate(`/game/${currentRoom.roomId}`);
-      onOpenChange(false);
+      signalingSocket.joinRoom(currentRoom);
+      resetAndClose();
     }
-  }, [currentRoom]);
+  }, [currentRoom, navigate]);
 
   const resetAndClose = () => {
     setRoomName('');
