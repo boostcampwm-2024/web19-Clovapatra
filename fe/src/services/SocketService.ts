@@ -16,7 +16,7 @@ export class SocketService {
   }
 
   isConnected() {
-    return !!this.#socket?.connected;
+    return !this.#socket?.connected;
   }
 
   disconnect() {
