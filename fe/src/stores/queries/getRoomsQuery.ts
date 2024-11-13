@@ -1,11 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { Room } from '@/types/roomTypes';
-
-const BASE_URL = 'https://game.clovapatra.com';
+import { ENV } from '@/config/env';
 
 const gameAPI = axios.create({
-  baseURL: BASE_URL,
+  baseURL: ENV.REST_BASE_URL,
   timeout: 5000,
   withCredentials: false,
 });

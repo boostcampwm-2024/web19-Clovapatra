@@ -6,8 +6,8 @@ import {
   SignalingData,
   SignalingEvents,
 } from '@/types/webrtcTypes';
-import { MEDIA_CONSTRAINTS, STUN_SERVERS } from '@/constants/webRTC';
-const SIGNALING_URL = 'wss://signaling.clovapatra.com';
+import { MEDIA_CONSTRAINTS } from '@/constants/webRTC';
+import { ENV } from '@/config/env';
 
 class SignalingSocket extends SocketService {
   // WebRTC 연결을 관리하는 객체 - key: peerId, value: RTCPeerConnection
@@ -26,7 +26,7 @@ class SignalingSocket extends SocketService {
   connect() {
     if (this.socket?.connected) return;
 
-    const socket = io(SIGNALING_URL, {
+    const socket = io(ENV.SIGNALING_SERVER_URL, {
       transports: ['websocket'],
       withCredentials: false,
     }) as Socket<SignalingEvents>;
@@ -276,7 +276,7 @@ class SignalingSocket extends SocketService {
     }
 
     // 새로운 RTCPeerConnection 생성
-    const pc = new RTCPeerConnection(STUN_SERVERS);
+    const pc = new RTCPeerConnection(ENV.STUN_SERVERS);
     this.peerConnections.set(peerId, pc);
 
     // 로컬 미디어 스트림 추가

@@ -1,16 +1,3 @@
-export const STUN_SERVERS = Object.freeze({
-  iceServers: [
-    {
-      urls: 'stun:coturn.clovapatra.com:3478',
-    },
-    {
-      urls: 'turn:coturn.clovapatra.com:3478',
-      username: 'test',
-      credential: 'bestcompanynaver',
-    },
-  ],
-});
-
 export const MEDIA_CONSTRAINTS = Object.freeze({
   audio: {
     echoCancellation: true, // 에코 제거
