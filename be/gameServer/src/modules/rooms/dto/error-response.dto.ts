@@ -64,6 +64,7 @@ export class ErrorResponse {
         },
       },
     ],
+    required: false,
   })
   details?: ErrorDetails[];
 }
