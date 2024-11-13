@@ -11,42 +11,46 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { gameSocket } from '@/services/gameSocket';
 import { signalingSocket } from '@/services/signalingSocket';
+import { getRoomsQuery } from '@/stores/queries/getRoomsQuery';
 import useRoomStore from '@/stores/zustand/useRoomStore';
 import { RoomDialogProps } from '@/types/roomTypes';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
-  const [roomName, setRoomName] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [hostNickname, setHostNickname] = useState('');
-  const navigate = useNavigate();
-  const currentRoom = useRoomStore((state) => state.currentRoom);
+interface JoinDialogProps extends RoomDialogProps {
+  roomId: string;
+}
 
-  useEffect(() => {
-    if (currentRoom?.roomId) {
-      navigate(`/game/${currentRoom.roomId}`);
-      onOpenChange(false);
-    }
-  }, [currentRoom]);
+const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
+  const [playerNickname, setPlayerNickname] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const { data: rooms } = getRoomsQuery();
+  const currentRoom = rooms.find((room) => room.roomId === roomId);
+  const { setCurrentRoom } = useRoomStore.getState();
 
   const resetAndClose = () => {
-    setRoomName('');
-    setHostNickname('');
+    setPlayerNickname('');
     setIsLoading(false);
     onOpenChange(false);
   };
 
-  const handleSubmit = async () => {
-    if (!roomName.trim() || !hostNickname.trim()) return;
+  const handleJoin = async () => {
+    if (!playerNickname.trim()) return;
 
     try {
       setIsLoading(true);
       gameSocket.connect();
       signalingSocket.connect();
-      gameSocket.createRoom(roomName.trim(), hostNickname.trim());
+
+      setCurrentRoom(currentRoom);
+      gameSocket.joinRoom(roomId, playerNickname.trim());
+      await signalingSocket.joinRoom(currentRoom);
+
+      resetAndClose();
+      navigate(`/game/${roomId}`);
     } catch (error) {
-      console.error('방 생성 실패:', error);
+      console.error('방 입장 실패:', error);
     } finally {
       setIsLoading(false);
     }
@@ -56,37 +60,18 @@ const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>방 만들기</DialogTitle>
-          <DialogDescription>
-            방 제목과 사용하실 닉네임을 입력해주세요.
-          </DialogDescription>
+          <DialogTitle>방 입장하기</DialogTitle>
+          <DialogDescription>사용하실 닉네임을 입력해주세요.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="roomName" className="text-right">
-              방 제목
-            </Label>
-            <Input
-              id="roomName"
-              value={roomName}
-              onChange={(e) => {
-                setRoomName(e.target.value);
-              }}
-              placeholder="방 제목을 입력하세요"
-              className="col-span-3"
-              disabled={isLoading}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="nickname" className="text-right">
+            <Label htmlFor="playerNickname" className="text-right">
               닉네임
             </Label>
             <Input
-              id="nickname"
-              value={hostNickname}
-              onChange={(e) => {
-                setHostNickname(e.target.value);
-              }}
+              id="playerNickname"
+              value={playerNickname}
+              onChange={(e) => setPlayerNickname(e.target.value)}
               placeholder="닉네임을 입력하세요"
               className="col-span-3"
               disabled={isLoading}
@@ -104,10 +89,10 @@ const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
           </Button>
           <Button
             type="button"
-            onClick={handleSubmit}
-            disabled={!roomName.trim() || !hostNickname.trim() || isLoading}
+            onClick={handleJoin}
+            disabled={!playerNickname.trim() || isLoading}
           >
-            확인
+            입장하기
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -115,4 +100,4 @@ const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
   );
 };
 
-export default RoomDialog;
+export default JoinDialog;

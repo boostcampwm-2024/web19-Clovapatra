@@ -1,6 +1,6 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import './App.css';
-import RoomPage from './pages/RoomPage';
+import RoomPage from './pages/RoomListPage';
 import GamePage from './pages/GamePage';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 

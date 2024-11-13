@@ -16,41 +16,39 @@ import { RoomDialogProps } from '@/types/roomTypes';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-interface JoinDialogProps extends RoomDialogProps {
-  roomId: string;
-}
-
-const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
-  const [playerNickname, setPlayerNickname] = useState('');
+const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
+  const [roomName, setRoomName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [hostNickname, setHostNickname] = useState('');
   const navigate = useNavigate();
-  const { currentRoom } = useRoomStore.getState();
+  const currentRoom = useRoomStore((state) => state.currentRoom);
 
   useEffect(() => {
-    if (currentRoom?.roomId) {
+    if (currentRoom) {
       navigate(`/game/${currentRoom.roomId}`);
+      signalingSocket.joinRoom(currentRoom);
+      resetAndClose();
     }
-  }, [currentRoom?.roomId, navigate]);
+  }, [currentRoom, navigate]);
 
   const resetAndClose = () => {
-    setPlayerNickname('');
+    setRoomName('');
+    setHostNickname('');
     setIsLoading(false);
     onOpenChange(false);
   };
 
-  const handleJoin = async () => {
-    if (!playerNickname.trim()) return;
+  const handleSubmit = async () => {
+    if (!roomName.trim() || !hostNickname.trim()) return;
 
     try {
       setIsLoading(true);
       gameSocket.connect();
       signalingSocket.connect();
-      gameSocket.joinRoom(roomId, playerNickname.trim());
 
-      onOpenChange(false);
-      navigate(`/game/${roomId}`);
+      gameSocket.createRoom(roomName.trim(), hostNickname.trim());
     } catch (error) {
-      console.error('방 입장 실패:', error);
+      console.error('방 생성 실패:', error);
     } finally {
       setIsLoading(false);
     }
@@ -60,18 +58,37 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>방 입장하기</DialogTitle>
-          <DialogDescription>사용하실 닉네임을 입력해주세요.</DialogDescription>
+          <DialogTitle>방 만들기</DialogTitle>
+          <DialogDescription>
+            방 제목과 사용하실 닉네임을 입력해주세요.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="playerNickname" className="text-right">
+            <Label htmlFor="roomName" className="text-right">
+              방 제목
+            </Label>
+            <Input
+              id="roomName"
+              value={roomName}
+              onChange={(e) => {
+                setRoomName(e.target.value);
+              }}
+              placeholder="방 제목을 입력하세요"
+              className="col-span-3"
+              disabled={isLoading}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="nickname" className="text-right">
               닉네임
             </Label>
             <Input
-              id="playerNickname"
-              value={playerNickname}
-              onChange={(e) => setPlayerNickname(e.target.value)}
+              id="nickname"
+              value={hostNickname}
+              onChange={(e) => {
+                setHostNickname(e.target.value);
+              }}
               placeholder="닉네임을 입력하세요"
               className="col-span-3"
               disabled={isLoading}
@@ -89,10 +106,10 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
           </Button>
           <Button
             type="button"
-            onClick={handleJoin}
-            disabled={!playerNickname.trim() || isLoading}
+            onClick={handleSubmit}
+            disabled={!roomName.trim() || !hostNickname.trim() || isLoading}
           >
-            입장하기
+            확인
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -100,4 +117,4 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
   );
 };
 
-export default JoinDialog;
+export default RoomDialog;
