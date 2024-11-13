@@ -8,8 +8,6 @@ export const useRoomsSSE = () => {
   const { data: initialRooms } = getRoomsQuery();
   const { setRooms } = useRoomStore();
 
-  console.log(initialRooms);
-
   useEffect(() => {
     // 초기 데이터 설정
     if (initialRooms) {
