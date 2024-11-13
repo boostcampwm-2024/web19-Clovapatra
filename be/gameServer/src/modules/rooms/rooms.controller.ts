@@ -33,7 +33,7 @@ export class RoomController {
     });
   }
 
-  @Sse()
+  @Sse('stream')
   @ApiOperation({
     summary: '게임 방 목록 조회하는 SSE',
     description: 'roomData가 변경되었을 시 변경된 room 배열을 전송합니다.',
@@ -83,5 +83,29 @@ export class RoomController {
 
     this.logger.log(`요청 완료 - Room 조회 성공: roomId=${roomId}`);
     return JSON.parse(roomData) as RoomDataDto;
+  }
+
+  @Get()
+  @ApiOperation({
+    summary: '게임 방 목록 조회',
+    description: 'Redis에서 저장된 모든 게임 방 목록을 조회합니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '게임 방 목록이 성공적으로 반환됩니다.',
+    type: [RoomDataDto],
+  })
+  async getRooms(): Promise<RoomDataDto[]> {
+    const roomKeys = await this.redisService.keys('room:*');
+    this.logger.log('게임 방 목록 조회 시작');
+
+    const rooms = await Promise.all(
+      roomKeys.map(async (key) => {
+        const roomData = await this.redisService.get<string>(key);
+        return JSON.parse(roomData) as RoomDataDto;
+      }),
+    );
+    this.logger.log(`게임 방 목록 조회 완료, ${rooms.length}개 방 반환`);
+    return rooms;
   }
 }
