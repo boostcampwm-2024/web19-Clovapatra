@@ -33,7 +33,7 @@ export class RoomController {
     });
   }
 
-  @Sse()
+  @Sse('stream')
   @ApiOperation({
     summary: '게임 방 목록 조회하는 SSE',
     description: 'roomData가 변경되었을 시 변경된 room 배열을 전송합니다.',
