@@ -51,7 +51,11 @@ export class RoomsGateway implements OnGatewayDisconnect {
         players: [hostNickname],
         status: 'waiting',
       };
-      await this.redisService.set(`room:${roomId}`, JSON.stringify(roomData));
+      await this.redisService.set(
+        `room:${roomId}`,
+        JSON.stringify(roomData),
+        'roomUpdate',
+      );
       client.join(roomId);
       client.data = { roomId, nickname: hostNickname };
       this.logger.log(`Room created successfully: ${roomId}`);
@@ -96,7 +100,11 @@ export class RoomsGateway implements OnGatewayDisconnect {
       }
 
       roomData.players.push(playerNickname);
-      await this.redisService.set(`room:${roomId}`, JSON.stringify(roomData));
+      await this.redisService.set(
+        `room:${roomId}`,
+        JSON.stringify(roomData),
+        'roomUpdate',
+      );
       client.join(roomId);
       client.data = { roomId, nickname: playerNickname };
 
@@ -136,6 +144,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
           await this.redisService.set(
             `room:${roomId}`,
             JSON.stringify(roomData),
+            'roomUpdate',
           );
 
           this.logger.log(`host ${nickname} leave room`);
@@ -146,10 +155,14 @@ export class RoomsGateway implements OnGatewayDisconnect {
           this.server.to(roomId).emit('updateUsers', roomData.players);
         } else {
           this.logger.log(`${roomId} deleting room`);
-          await this.redisService.delete(`room:${roomId}`);
+          await this.redisService.delete(`room:${roomId}`, 'roomUpdate');
         }
       } else {
-        await this.redisService.set(`room:${roomId}`, JSON.stringify(roomData));
+        await this.redisService.set(
+          `room:${roomId}`,
+          JSON.stringify(roomData),
+          'roomUpdate',
+        );
         this.logger.log(`host ${nickname} leave room`);
         this.server.to(roomId).emit('updateUsers', roomData.players);
       }
