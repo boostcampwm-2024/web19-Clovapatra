@@ -8,13 +8,20 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { RedisService } from '../../redis/redis.service';
-import { Logger } from '@nestjs/common';
+import { Logger, UseFilters } from '@nestjs/common';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { RoomDataDto } from './dto/room-data.dto';
 import { JoinRoomDto } from './dto/join-data.dto';
+import { ErrorResponse } from './dto/error-response.dto';
+import { RoomsValidationPipe } from './rooms.validation.pipe';
+import { WsExceptionsFilter } from 'src/common/filters/ws-exceptions.filter';
+import {
+  isRoomFull,
+  isNicknameTaken,
+  removePlayerFromRoom,
+  changeRoomHost,
+} from './room-utils';
 import { v4 as uuidv4 } from 'uuid';
-
-// todo: pipe or fillter 사용하여 예외상황처리
 
 @WebSocketGateway({
   namespace: '/rooms',
@@ -24,6 +31,7 @@ import { v4 as uuidv4 } from 'uuid';
     credentials: true,
   },
 })
+@UseFilters(WsExceptionsFilter)
 export class RoomsGateway implements OnGatewayDisconnect {
   private readonly logger = new Logger(RoomsGateway.name);
 
@@ -34,7 +42,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
 
   @SubscribeMessage('createRoom')
   async handleCreateRoom(
-    @MessageBody() createRoomDto: CreateRoomDto,
+    @MessageBody(new RoomsValidationPipe()) createRoomDto: CreateRoomDto,
     @ConnectedSocket() client: Socket,
   ) {
     try {
@@ -62,14 +70,18 @@ export class RoomsGateway implements OnGatewayDisconnect {
 
       client.emit('roomCreated', roomData);
     } catch (error) {
-      this.logger.error(`Error creating room: ${error.message}`, error.stack);
-      client.emit('error', 'Failed to create the room');
+      this.logger.error('Error creating room:', error.message);
+      const errorResponse: ErrorResponse = {
+        message: 'Failed to create the room',
+      };
+
+      client.emit('error', errorResponse);
     }
   }
 
   @SubscribeMessage('joinRoom')
   async handleJoinRoom(
-    @MessageBody() joinRoomDto: JoinRoomDto,
+    @MessageBody(new RoomsValidationPipe()) joinRoomDto: JoinRoomDto,
     @ConnectedSocket() client: Socket,
   ) {
     const { roomId, playerNickname } = joinRoomDto;
@@ -79,21 +91,16 @@ export class RoomsGateway implements OnGatewayDisconnect {
       const roomDataString = await this.redisService.get<string>(
         `room:${roomId}`,
       );
-      if (!roomDataString) {
-        this.logger.log(`Room not found: ${roomId}`);
-        client.emit('error', 'Room not found');
-        return;
-      }
 
       const roomData: RoomDataDto = JSON.parse(roomDataString);
 
-      if (roomData.players.length >= 4) {
+      if (isRoomFull(roomData)) {
         this.logger.log(`Room ${roomId} is full`);
         client.emit('error', 'Room is full');
         return;
       }
 
-      if (roomData.players.includes(playerNickname)) {
+      if (isNicknameTaken(roomData, playerNickname)) {
         this.logger.warn(`Nickname already taken: ${playerNickname}`);
         client.emit('error', 'Nickname already taken in this room');
         return;
@@ -105,14 +112,20 @@ export class RoomsGateway implements OnGatewayDisconnect {
         JSON.stringify(roomData),
         'roomUpdate',
       );
+
       client.join(roomId);
-      client.data = { roomId, nickname: playerNickname };
+      client.data = { roomId, nickname: roomData.players };
+      client.to(roomId).emit('updateUsers', roomData.players);
 
       this.logger.log(`User ${playerNickname} joined room ${roomId}`);
-      this.server.to(roomId).emit('updateUsers', roomData.players);
     } catch (error) {
       this.logger.error(`Error joining room: ${error.message}`, error.stack);
-      client.emit('error', 'Failed to join the room');
+
+      const errorResponse: ErrorResponse = {
+        message: 'Failed to join the room',
+      };
+
+      client.emit('error', errorResponse);
     }
   }
 
@@ -131,16 +144,14 @@ export class RoomsGateway implements OnGatewayDisconnect {
 
       const roomData: RoomDataDto = JSON.parse(roomDataString);
 
-      roomData.players = roomData.players.filter(
-        (player) => player !== nickname,
-      );
+      removePlayerFromRoom(roomData, nickname);
 
       // todo
       // 이 상태에서 다른 사용자가 방에 들어온다면?
 
       if (roomData.hostNickname === nickname) {
         if (roomData.players.length > 0) {
-          roomData.hostNickname = roomData.players[0];
+          changeRoomHost(roomData);
           await this.redisService.set(
             `room:${roomId}`,
             JSON.stringify(roomData),
@@ -148,9 +159,6 @@ export class RoomsGateway implements OnGatewayDisconnect {
           );
 
           this.logger.log(`host ${nickname} leave room`);
-          this.server
-            .to(roomId)
-            .emit('newHostAssigned', { newHostNickname: roomData.players[0] });
           this.logger.log(`host changed to ${roomData.players[0]}`);
           this.server.to(roomId).emit('updateUsers', roomData.players);
         } else {
@@ -168,6 +176,11 @@ export class RoomsGateway implements OnGatewayDisconnect {
       }
     } catch (error) {
       this.logger.error('Error handling disconnect: ', error.message);
+      const errorResponse: ErrorResponse = {
+        message: 'Failed to handle disconnect',
+      };
+
+      client.emit('error', errorResponse);
     }
   }
 }
