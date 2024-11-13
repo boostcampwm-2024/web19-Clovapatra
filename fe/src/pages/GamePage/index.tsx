@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import useRoomStore from '@/stores/zustand/useRoomStore';
 import PlayerList from './PlayerList/PlayerList';
 import { Button } from '@/components/ui/button';
+import ExitDialog from './GameDialog/ExitDialog';
+import { useBackExit } from '@/hooks/useBackExit';
 
 const GamePage = () => {
   const [isAudioOn, setIsAudioOn] = useState(true);
+  const [showExitDialog, setShowExitDialog] = useState(false);
   const { roomId } = useParams();
   const { rooms, currentRoom, setCurrentRoom } = useRoomStore();
 
@@ -17,6 +20,14 @@ const GamePage = () => {
       }
     }
   }, [rooms, roomId]);
+
+  useBackExit({
+    onBack: () => setShowExitDialog(true),
+  });
+
+  const handleClickExit = () => {
+    setShowExitDialog(true);
+  };
 
   if (!currentRoom) return null;
 
@@ -36,8 +47,14 @@ const GamePage = () => {
         />
       </div>
       <div className="flex mt-6">
-        <Button className="ml-auto">나가기</Button>
+        <Button onClick={handleClickExit} className="ml-auto">
+          나가기
+        </Button>
       </div>
+      <ExitDialog
+        open={showExitDialog}
+        onOpenChange={setShowExitDialog}
+      ></ExitDialog>
     </div>
   );
 };
