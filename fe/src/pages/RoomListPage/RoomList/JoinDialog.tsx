@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { gameSocket } from '@/services/gameSocket';
 import { signalingSocket } from '@/services/signalingSocket';
-import { getRoomsQuery } from '@/stores/queries/getRoomsQuery';
 import useRoomStore from '@/stores/zustand/useRoomStore';
 import { RoomDialogProps } from '@/types/roomTypes';
 import { useEffect, useState } from 'react';
@@ -25,9 +24,8 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
   const [playerNickname, setPlayerNickname] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { data: rooms } = getRoomsQuery();
+  const { rooms, setCurrentRoom } = useRoomStore();
   const currentRoom = rooms.find((room) => room.roomId === roomId);
-  const { setCurrentRoom } = useRoomStore.getState();
 
   const resetAndClose = () => {
     setPlayerNickname('');

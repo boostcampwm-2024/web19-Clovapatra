@@ -1,14 +1,12 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import useRoomStore from '@/stores/zustand/useRoomStore';
 import PlayerList from './PlayerList/PlayerList';
-import { getRoomsQuery } from '@/stores/queries/getRoomsQuery';
 
 const GamePage = () => {
   const [isAudioOn, setIsAudioOn] = useState(true);
   const { roomId } = useParams();
-  const { data: rooms } = getRoomsQuery();
-  const { currentRoom, setCurrentRoom } = useRoomStore();
+  const { rooms, currentRoom, setCurrentRoom } = useRoomStore();
 
   useEffect(() => {
     if (rooms && roomId) {
