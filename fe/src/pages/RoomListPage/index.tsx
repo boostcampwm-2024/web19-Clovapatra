@@ -1,12 +1,10 @@
 import SearchBar from '@/components/common/SearchBar';
 import RoomHeader from './RoomHeader/RoomHeader';
 import RoomList from './RoomList/RoomList';
-import { gameSocket } from '@/services/gameSocket';
 import { useEffect } from 'react';
-import { signalingSocket } from '@/services/signalingSocket';
 import { useRefreshRooms } from '@/hooks/useRefreshRooms';
 
-const RoomPage = () => {
+const RoomListPage = () => {
   const refetchRooms = useRefreshRooms();
 
   useEffect(() => {
@@ -30,4 +28,4 @@ const RoomPage = () => {
   );
 };
 
-export default RoomPage;
+export default RoomListPage;

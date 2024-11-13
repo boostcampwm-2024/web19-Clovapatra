@@ -6,8 +6,7 @@ import {
 import { Room } from '@/types/roomTypes';
 import { SocketService } from './SocketService';
 import useRoomStore from '@/stores/zustand/useRoomStore';
-
-const GAME_SOCKET_URL = 'wss://game.clovapatra.com/rooms';
+import { ENV } from '@/config/env';
 
 class GameSocket extends SocketService {
   constructor() {
@@ -17,7 +16,7 @@ class GameSocket extends SocketService {
   connect() {
     if (this.socket?.connected) return;
 
-    const socket = io(GAME_SOCKET_URL, {
+    const socket = io(ENV.GAME_SERVER_URL, {
       transports: ['websocket'],
       withCredentials: false,
     }) as Socket<ServerToClientEvents, ClientToServerEvents>;
