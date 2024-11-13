@@ -2,23 +2,18 @@
 
 ### 새로운 게임방이 추가될 때 순서대로 추가되지 않음
 
-### 게임 페이지에서 새로고침하면 렌더링이 완전히 되지 않음
+### SSE(Server Sent Events)로 방 목록 가져오기
 
-- VolumeBar `defaultValue` state 업데이트가 연속적으로 발생할 수 있는 구조
-- Controlled Component? Uncontrolled Component? 혼용하면 무한 상태 업데이트 루프 발생?
+- [x] RoomList Page에서 새로고침 하면 방 목록이 보여야 한다.
+- [x] 새로운 방이 생성되었을 때 각 사용자의 페이지에 생성된 방 목록이 바로 보여야 한다.
+- [x] 새로운 탭을 열어 Page가 로드되면 방 목록이 보여야 한다.
+- [x] 방이 닫히면 방 목록에서 바로 제거되어야 한다.
 
-### 게임 페이지에서 새로고침하면 players들이 사라짐, 마이크도 안 됨
+- 이 부분을 getRoomsQuery & setInterval 줘서 해뒀었다. 3초에 한 번씩 refetch 해서 rooms 상태를 저장했다.
+- SSE를 사용해서 rooms의 상태가 변경될 때 이벤트를 수신해서 rooms 데이터를 받아올 수 있다.
+- SSE는 서버에서 발생하는 새로운 이벤트(변경 사항)만 받아오는 방식이기 때문에 페이지를 처음 로드하거나 새로고침 할 때는 기존 데이터를 한 번 받아와야 한다. = GET 요청 필요
 
-- 새로고침이 아주 문제다!
+### useRoomStore 사용
 
-### 개발 환경에서 잘 실행되다가 배포한 후 제대로 실행이 안 됨
-
-- 빌드된 것은 잘 되는데.. `npm run dev` 하면 제대로 동작하지 않음
-- JS 접근제어자 #을 써서 그런가 의심.. (확실하지 않음)
-- 해결하지 못해서 잘 동작하던 상태로 되돌리고 진행🥲
-
-### 방을 생성한 사용자만 currentRoom 상태가 Store에 저장 돼서, 이미 생성된 방에 입장하려는 사용자는 currentRoom에 저장된 상태가 없음
-
-- signalingSocket.joinRoom을 하려면 현재 room을 전달해 주어야 한다. 그런데 저장된 currentRoom이 없다.
-- getRoomsQuery로 방 목록을 가져오고 roomId에 해당하는 room을 찾은 후 상태를 저장하고 signalingSocket에 전달하도록 함.
-- JoinDialog에서도 currentRoom을 구독하도록 하면 안 되려나..? 뭔가 방법이 있을 것 같은데,,
+- 훅/컴포넌트 내부에서 사용: useRoomStore()
+- React 외부의 비동기 작업, 이벤트 핸들러: useRoomStore.getState()
