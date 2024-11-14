@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
-import RoomDialog from '../RoomDialog/RoomDialog';
+import RoomDialog from '../RoomDialog/CreateDialog';
 
 const RoomHeader = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);

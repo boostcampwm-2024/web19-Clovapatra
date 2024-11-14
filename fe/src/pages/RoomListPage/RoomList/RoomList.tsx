@@ -3,7 +3,7 @@ import Pagination from './Pagination';
 import { usePagination } from '@/hooks/usePagination';
 import { RULES } from '@/constants/rules';
 import { useState } from 'react';
-import JoinDialog from './JoinDialog';
+import JoinDialog from '../RoomDialog/JoinDialog';
 
 const RoomList = () => {
   const {
