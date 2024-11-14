@@ -30,6 +30,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd ./fe
+          echo "${{ secrets.FE_ENV }}" > .env
           npm ci
 
       - name: Build
