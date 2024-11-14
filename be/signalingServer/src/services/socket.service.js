@@ -1,121 +1,92 @@
-const redisService = require('./redis.service');
+const RoomService = require("./room.service");
 
 class SocketService {
   constructor(io) {
     this.io = io;
-    this.rooms = new Map(); // roomId -> Set of socket ids
+    this.roomService = new RoomService();
   }
 
-  async handleConnection(socket) {
-    console.log(`Client connected: ${socket.id}`);
+  /**
+   * 새로운 소켓 연결 처리
+   * @param {Socket} socket - Socket.io 소켓 객체
+   */
+  handleConnection(socket) {
+    console.log(`[SocketService] 새로운 사용자 연결: ${socket.id}`);
 
-    socket.on('join', async (data) => this.handleJoin(socket, data));
-    socket.on('offer', (data) => this.handleOffer(socket, data));
-    socket.on('answer', (data) => this.handleAnswer(socket, data));
-    socket.on('ice-candidate', (data) => this.handleIceCandidate(socket, data));
-    socket.on('disconnect', () => this.handleDisconnect(socket));
-  }
+    // 방 참가 요청 처리
+    socket.on("join_room", (data) => {
+      const { roomId, sdp, candidates, deviceId } = data;
+      console.log(`[SocketService] 사용자 ${socket.id}가 방 ${roomId} 참가 요청`);
 
-  async handleJoin(socket, { roomId, userId }) {
-    try {
-      console.log(`User ${userId} joining room ${roomId}`);
-
-      // Verify room exists in Redis
-      const roomData = await redisService.getRoomData(roomId);
-      if (!roomData) {
-        socket.emit('error', 'Room not found');
-        return;
-      }
-
-      // Join the socket.io room
+      // 방에 사용자 추가
       socket.join(roomId);
-      
-      // Initialize room if it doesn't exist in memory
-      if (!this.rooms.has(roomId)) {
-        this.rooms.set(roomId, new Set());
-      }
-      
-      const room = this.rooms.get(roomId);
-      
-      // Store user info
-      socket.userId = userId;
-      socket.roomId = roomId;
-      room.add(socket.id);
-
-      // Notify existing peers to create offers
-      room.forEach(peerId => {
-        if (peerId !== socket.id) {
-          this.io.to(peerId).emit('new-peer', {
-            peerId: socket.id,
-            userId: userId
-          });
-        }
+      this.roomService.addUser(roomId, socket.id, {
+        sdp,
+        candidates,
+        deviceId,
       });
 
-      // Send list of existing peers to new user
-      const existingPeers = [];
-      room.forEach(peerId => {
-        if (peerId !== socket.id) {
-          const peerSocket = this.io.sockets.sockets.get(peerId);
-          existingPeers.push({
-            peerId: peerId,
-            userId: peerSocket.userId
-          });
-        }
-      });
-      
-      socket.emit('room-joined', { peers: existingPeers });
-    } catch (error) {
-      console.error('Error handling join:', error);
-      socket.emit('error', 'Failed to join room');
-    }
-  }
-
-  handleOffer(socket, { targetId, sdp }) {
-    console.log(`Forwarding offer from ${socket.id} to ${targetId}`);
-    this.io.to(targetId).emit('offer', {
-      peerId: socket.id,
-      userId: socket.userId,
-      sdp
+      // 방의 모든 사용자에게 업데이트된 정보 전송
+      this.broadcastRoomUpdate(roomId);
     });
-  }
 
-  handleAnswer(socket, { targetId, sdp }) {
-    console.log(`Forwarding answer from ${socket.id} to ${targetId}`);
-    this.io.to(targetId).emit('answer', {
-      peerId: socket.id,
-      sdp
-    });
-  }
+    // 방 정보 수신 확인
+    socket.on("room_info_received", (roomId) => {
+      console.log(`[SocketService] 사용자 ${socket.id}가 방 ${roomId} 정보 수신 확인`);
 
-  handleIceCandidate(socket, { targetId, candidate }) {
-    console.log(`Forwarding ICE candidate from ${socket.id} to ${targetId}`);
-    this.io.to(targetId).emit('ice-candidate', {
-      peerId: socket.id,
-      candidate
-    });
-  }
-
-  async handleDisconnect(socket) {
-    console.log(`Client disconnected: ${socket.id}`);
-    
-    if (socket.roomId) {
-      const room = this.rooms.get(socket.roomId);
-      if (room) {
-        room.delete(socket.id);
-        
-        // Notify remaining peers about disconnection
-        room.forEach(peerId => {
-          this.io.to(peerId).emit('peer-disconnected', {
-            peerId: socket.id
-          });
-        });
-
-        // Clean up empty room from memory
-        if (room.size === 0) {
-          this.rooms.delete(socket.roomId);
-        }
+      if (this.roomService.confirmReceived(roomId)) {
+        // 모든 사용자가 정보를 받았으면 연결 계획 전송
+        const plan = this.roomService.createConnectionPlan(roomId);
+        this.io.to(roomId).emit("start_connections", plan);
       }
+    });
+
+    // WebRTC 시그널링 처리
+    socket.on("webrtc_offer", (data) => {
+      console.log(`[SocketService] WebRTC Offer: ${socket.id} -> ${data.toId}`);
+      this.io.to(data.toId).emit("webrtc_offer", {
+        sdp: data.sdp,
+        fromId: socket.id,
+      });
+    });
+
+    socket.on("webrtc_answer", (data) => {
+      console.log(`[SocketService] WebRTC Answer: ${socket.id} -> ${data.toId}`);
+      this.io.to(data.toId).emit("webrtc_answer", {
+        sdp: data.sdp,
+        fromId: socket.id,
+      });
+    });
+
+    socket.on("webrtc_ice_candidate", (data) => {
+      console.log(`[SocketService] ICE Candidate: ${socket.id} -> ${data.toId}`);
+      this.io.to(data.toId).emit("webrtc_ice_candidate", {
+        candidate: data.candidate,
+        fromId: socket.id,
+      });
+    });
+
+    // 연결 해제 처리
+    socket.on("disconnect", () => {
+      console.log(`[SocketService] 사용자 연결 해제: ${socket.id}`);
+      const roomId = this.roomService.removeUser(socket.id);
+
+      if (roomId) {
+        this.io.to(roomId).emit("user_disconnected", socket.id);
+        this.broadcastRoomUpdate(roomId);
+      }
+    });
+  }
+
+  /**
+   * 방의 모든 사용자에게 업데이트된 정보 전송
+   * @param {string} roomId - 방 ID
+   */
+  broadcastRoomUpdate(roomId) {
+    const roomInfo = this.roomService.getRoomInfo(roomId);
+    if (roomInfo) {
+      console.log(`[SocketService] 방 ${roomId} 정보 브로드캐스트`);
+      this.io.to(roomId).emit("room_info", roomInfo);
     }
   }
 }
