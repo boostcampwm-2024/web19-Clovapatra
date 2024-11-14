@@ -9,16 +9,23 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import useRoomStore from '@/store/useRoomStore';
-import { JoinDialogProps } from '@/types/roomTypes';
-import { useState } from 'react';
+import { gameSocket } from '@/services/gameSocket';
+import { signalingSocket } from '@/services/signalingSocket';
+import useRoomStore from '@/stores/zustand/useRoomStore';
+import { RoomDialogProps } from '@/types/roomTypes';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+interface JoinDialogProps extends RoomDialogProps {
+  roomId: string;
+}
 
 const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
   const [playerNickname, setPlayerNickname] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const joinGameRoom = useRoomStore((state) => state.joinGameRoom);
+  const { rooms, setCurrentRoom } = useRoomStore();
+  const currentRoom = rooms.find((room) => room.roomId === roomId);
 
   const resetAndClose = () => {
     setPlayerNickname('');
@@ -31,9 +38,12 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
 
     try {
       setIsLoading(true);
-      joinGameRoom(roomId, playerNickname.trim());
+      gameSocket.connect();
+      signalingSocket.connect();
 
-      // stream은 별도의 상태 관리 필요 (예: audio store)
+      setCurrentRoom(currentRoom);
+      gameSocket.joinRoom(roomId, playerNickname.trim());
+      await signalingSocket.joinRoom(currentRoom);
 
       resetAndClose();
       navigate(`/game/${roomId}`);

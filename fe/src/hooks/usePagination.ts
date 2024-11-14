@@ -1,4 +1,4 @@
-import useRoomStore from '@/store/useRoomStore';
+import useRoomStore from '@/stores/zustand/useRoomStore';
 import { useState, useEffect } from 'react';
 
 const ROOMS_PER_PAGE = 9;

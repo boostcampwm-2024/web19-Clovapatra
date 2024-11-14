@@ -1,7 +1,10 @@
 import { Slider } from '@/components/ui/slider';
 import { HiSpeakerWave, HiSpeakerXMark } from 'react-icons/hi2';
 import { useState } from 'react';
-import { AudioControlProps } from '@/types/playerTypes';
+
+interface AudioControlProps {
+  isOn: boolean;
+}
 
 const VolumeBar = ({ isOn }: AudioControlProps) => {
   const [volume, setVolume] = useState(50);
@@ -14,7 +17,7 @@ const VolumeBar = ({ isOn }: AudioControlProps) => {
         <HiSpeakerXMark className="h-4 w-4 text-muted-foreground" />
       )}
       <Slider
-        defaultValue={[volume]}
+        value={[volume]}
         max={100}
         step={1}
         className="w-24"

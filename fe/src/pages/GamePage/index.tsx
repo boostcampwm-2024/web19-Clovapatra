@@ -1,38 +1,40 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import useRoomStore from '@/store/useRoomStore';
+import { useNavigate, useParams } from 'react-router-dom';
+import useRoomStore from '@/stores/zustand/useRoomStore';
 import PlayerList from './PlayerList/PlayerList';
-import { getRooms } from '@/api/api';
+import { Button } from '@/components/ui/button';
+import ExitDialog from './GameDialog/ExitDialog';
+import { useBackExit } from '@/hooks/useBackExit';
 
 const GamePage = () => {
   const [isAudioOn, setIsAudioOn] = useState(true);
+  const [showExitDialog, setShowExitDialog] = useState(false);
   const { roomId } = useParams();
-  const { currentRoom, updateCurrentRoom } = useRoomStore();
+  const { rooms, currentRoom, setCurrentRoom } = useRoomStore();
 
   useEffect(() => {
-    const initializeRoom = async () => {
-      if (roomId) {
-        try {
-          const rooms = await getRooms();
-          const room = rooms.find((r) => r.roomId === roomId);
-          if (room) updateCurrentRoom(room);
-        } catch (error) {
-          console.error('Failed to restore room info:', error);
-        }
+    if (rooms && roomId) {
+      const room = rooms.find((r) => r.roomId === roomId);
+      if (room) {
+        setCurrentRoom(room);
       }
-    };
+    }
+  }, [rooms, roomId]);
 
-    if (!currentRoom || currentRoom.roomId !== roomId) initializeRoom();
-  }, [roomId, currentRoom]);
+  useBackExit({
+    onBack: () => setShowExitDialog(true),
+  });
 
-  console.log('GamePage render:', { currentRoom, roomId });
+  const handleClickExit = () => {
+    setShowExitDialog(true);
+  };
 
   if (!currentRoom) return null;
 
   return (
     <div className="h-screen relative p-4">
       <div className="space-y-6">
-        <div className="h-[26rem] bg-muted rounded-lg flex items-center justify-center">
+        <div className="h-[27rem] bg-muted rounded-lg flex items-center justify-center">
           Game Screen
         </div>
         <PlayerList
@@ -44,6 +46,15 @@ const GamePage = () => {
           }))}
         />
       </div>
+      <div className="flex mt-6">
+        <Button onClick={handleClickExit} className="ml-auto">
+          나가기
+        </Button>
+      </div>
+      <ExitDialog
+        open={showExitDialog}
+        onOpenChange={setShowExitDialog}
+      ></ExitDialog>
     </div>
   );
 };

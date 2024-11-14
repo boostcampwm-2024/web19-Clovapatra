@@ -1,6 +1,10 @@
 import { RULES } from '@/constants/rules';
-import { PlayerListProps } from '@/types/playerTypes';
+import { PlayerProps } from '@/types/playerTypes';
 import Player from './Player';
+
+interface PlayerListProps {
+  players: PlayerProps[];
+}
 
 const PlayerList = ({ players }: PlayerListProps) => {
   const emptySlots = RULES.maxPlayer - players.length;
@@ -13,7 +17,7 @@ const PlayerList = ({ players }: PlayerListProps) => {
       {Array.from({ length: emptySlots }).map((_, index) => (
         <div
           key={`empty-${index}`}
-          className="w-full h-[76px] border border-dashed rounded-lg border-muted-foreground/25"
+          className="w-full h-[4.7rem] border border-dashed rounded-lg border-muted-foreground/25"
         />
       ))}
     </div>
