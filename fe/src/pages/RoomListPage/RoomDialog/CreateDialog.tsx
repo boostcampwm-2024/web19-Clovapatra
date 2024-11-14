@@ -16,7 +16,7 @@ import { RoomDialogProps } from '@/types/roomTypes';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
+const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
   const [roomName, setRoomName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [hostNickname, setHostNickname] = useState('');
@@ -27,7 +27,6 @@ const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
     if (currentRoom) {
       navigate(`/game/${currentRoom.roomId}`);
       signalingSocket.joinRoom(currentRoom);
-      resetAndClose();
     }
   }, [currentRoom, navigate]);
 
@@ -43,10 +42,19 @@ const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
 
     try {
       setIsLoading(true);
+
+      // 방장 닉네임 저장
+      sessionStorage.setItem('user_nickname', hostNickname.trim());
+      // sessionStorage.setItem('room_name', roomName.trim());
+      // sessionStorage.setItem('user_role', 'host');
+
       gameSocket.connect();
       signalingSocket.connect();
 
       gameSocket.createRoom(roomName.trim(), hostNickname.trim());
+
+      // 방 생성 후 currentRoom이 설정될 때까지 대기
+      resetAndClose();
     } catch (error) {
       console.error('방 생성 실패:', error);
     } finally {
@@ -117,4 +125,4 @@ const RoomDialog = ({ open, onOpenChange }: RoomDialogProps) => {
   );
 };
 
-export default RoomDialog;
+export default CreateDialog;

@@ -1,25 +1,35 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import useRoomStore from '@/stores/zustand/useRoomStore';
 import PlayerList from './PlayerList/PlayerList';
 import { Button } from '@/components/ui/button';
 import ExitDialog from './GameDialog/ExitDialog';
 import { useBackExit } from '@/hooks/useBackExit';
+import { getCurrentRoomQuery } from '@/stores/queries/getCurrentRoomQuery';
+import { gameSocket } from '@/services/gameSocket';
+import { signalingSocket } from '@/services/signalingSocket';
 
 const GamePage = () => {
   const [isAudioOn, setIsAudioOn] = useState(true);
   const [showExitDialog, setShowExitDialog] = useState(false);
   const { roomId } = useParams();
-  const { rooms, currentRoom, setCurrentRoom } = useRoomStore();
+  const { setCurrentRoom } = useRoomStore();
+  const currentRoom = useRoomStore((state) => state.currentRoom);
+  const nickname = sessionStorage.getItem('user_nickname');
+
+  const { data: room } = getCurrentRoomQuery(roomId);
 
   useEffect(() => {
-    if (rooms && roomId) {
-      const room = rooms.find((r) => r.roomId === roomId);
-      if (room) {
-        setCurrentRoom(room);
-      }
+    if (room && nickname && !currentRoom) {
+      console.log('Reconnecting with room:', room);
+
+      setCurrentRoom(room);
+      gameSocket.connect();
+      signalingSocket.connect();
+      gameSocket.joinRoom(roomId, nickname);
+      signalingSocket.joinRoom(room);
     }
-  }, [rooms, roomId]);
+  }, [room]);
 
   useBackExit({
     onBack: () => setShowExitDialog(true),
@@ -29,7 +39,13 @@ const GamePage = () => {
     setShowExitDialog(true);
   };
 
-  if (!currentRoom) return null;
+  if (!currentRoom) {
+    return <div>Loading...</div>;
+  }
+
+  if (!currentRoom && nickname) {
+    return <div>Reconnecting...</div>;
+  }
 
   return (
     <div className="h-screen relative p-4">

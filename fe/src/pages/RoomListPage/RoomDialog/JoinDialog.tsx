@@ -41,6 +41,10 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
       gameSocket.connect();
       signalingSocket.connect();
 
+      // 참가자 닉네임 저장
+      sessionStorage.setItem('user_nickname', playerNickname.trim());
+      // sessionStorage.setItem('user_role', 'player');
+
       setCurrentRoom(currentRoom);
       gameSocket.joinRoom(roomId, playerNickname.trim());
       await signalingSocket.joinRoom(currentRoom);

@@ -39,7 +39,6 @@ class GameSocket extends SocketService {
 
     this.socket.on('error', (error) => {
       console.error('Socket error:', error);
-      window.location.href = '/';
     });
 
     this.socket.on('roomCreated', (room: Room) => {
