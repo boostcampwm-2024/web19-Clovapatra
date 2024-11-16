@@ -5,9 +5,9 @@ import useRoomStore from '@/stores/zustand/useRoomStore';
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
-export const useReconnect = () => {
+export const useReconnect = ({ currentRoom }) => {
   const { roomId } = useParams();
-  const { currentRoom, setCurrentRoom } = useRoomStore();
+  const { setCurrentRoom } = useRoomStore();
   const nickname = sessionStorage.getItem('user_nickname');
   const { data: room } = getCurrentRoomQuery(roomId);
 

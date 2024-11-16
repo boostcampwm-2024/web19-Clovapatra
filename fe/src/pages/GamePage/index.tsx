@@ -1,29 +1,26 @@
-import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState } from 'react';
 import useRoomStore from '@/stores/zustand/useRoomStore';
 import PlayerList from './PlayerList/PlayerList';
 import { Button } from '@/components/ui/button';
 import ExitDialog from './GameDialog/ExitDialog';
-import { useBackExit } from '@/hooks/useBackExit';
 import { useReconnect } from '@/hooks/useReconnect';
+import { useBackExit } from '@/hooks/useBackExit';
+import { NotFound } from '@/components/common/NotFound';
 
 const GamePage = () => {
   const [isAudioOn, setIsAudioOn] = useState(true);
   const [showExitDialog, setShowExitDialog] = useState(false);
   const { currentRoom } = useRoomStore();
 
-  useReconnect();
-
-  useBackExit({
-    onBack: () => setShowExitDialog(true),
-  });
+  useReconnect({ currentRoom });
+  useBackExit({ setShowExitDialog });
 
   const handleClickExit = () => {
     setShowExitDialog(true);
   };
 
   if (!currentRoom) {
-    return <div>Loading...</div>;
+    return <NotFound />;
   }
 
   return (
@@ -42,14 +39,11 @@ const GamePage = () => {
         />
       </div>
       <div className="flex mt-6">
-        <Button onClick={handleClickExit} className="ml-auto">
+        <Button onClick={handleClickExit} className="font-galmuri ml-auto">
           나가기
         </Button>
       </div>
-      <ExitDialog
-        open={showExitDialog}
-        onOpenChange={setShowExitDialog}
-      ></ExitDialog>
+      <ExitDialog open={showExitDialog} onOpenChange={setShowExitDialog} />
     </div>
   );
 };
