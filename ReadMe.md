@@ -1,7 +1,8 @@
 <div align="center">
   <h1>안녕! 클로바파트라</h1>
 
-![cool_doge](https://github.com/user-attachments/assets/6fdeaaf2-b1a2-48a7-b182-0fb90c997326)
+![image](https://github.com/user-attachments/assets/a9738696-e4c6-4152-a206-374011e04705)
+
 
 <a href="https://clovapatra.com">서비스 바로가기(https://clovapatra.com)</a>
 
