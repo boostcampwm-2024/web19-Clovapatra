@@ -64,7 +64,7 @@ const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="font-galmuri sm:max-w-md">
         <DialogHeader>
           <DialogTitle>방 만들기</DialogTitle>
           <DialogDescription>

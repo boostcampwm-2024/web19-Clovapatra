@@ -60,7 +60,7 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="font-galmuri sm:max-w-md">
         <DialogHeader>
           <DialogTitle>방 입장하기</DialogTitle>
           <DialogDescription>사용하실 닉네임을 입력해주세요.</DialogDescription>
