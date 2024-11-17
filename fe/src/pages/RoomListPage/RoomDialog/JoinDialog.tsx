@@ -41,6 +41,10 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
       gameSocket.connect();
       signalingSocket.connect();
 
+      // 참가자 닉네임 저장
+      sessionStorage.setItem('user_nickname', playerNickname.trim());
+      // sessionStorage.setItem('user_role', 'player');
+
       setCurrentRoom(currentRoom);
       gameSocket.joinRoom(roomId, playerNickname.trim());
       await signalingSocket.joinRoom(currentRoom);
@@ -56,7 +60,7 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="font-galmuri sm:max-w-md">
         <DialogHeader>
           <DialogTitle>방 입장하기</DialogTitle>
           <DialogDescription>사용하실 닉네임을 입력해주세요.</DialogDescription>

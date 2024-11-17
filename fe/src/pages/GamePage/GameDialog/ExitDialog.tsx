@@ -29,7 +29,7 @@ const ExitDialog = ({ open, onOpenChange }: RoomDialogProps) => {
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="sm:max-w-[22rem]">
+      <AlertDialogContent className="font-galmuri sm:max-w-[22rem]">
         <AlertDialogHeader>
           <AlertDialogTitle>방 나가기</AlertDialogTitle>
           <AlertDialogDescription>

@@ -8,7 +8,7 @@ const SearchBar = () => {
       <Input
         type="search"
         placeholder="검색어를 입력하세요..."
-        className="pl-8"
+        className="font-galmuri pl-8"
       />
     </form>
   );
