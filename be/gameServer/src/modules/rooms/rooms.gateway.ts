@@ -14,7 +14,7 @@ import { RoomDataDto } from './dto/room-data.dto';
 import { JoinRoomDto } from './dto/join-data.dto';
 import { ErrorResponse } from './dto/error-response.dto';
 import { RoomsValidationPipe } from './rooms.validation.pipe';
-import { WsExceptionsFilter } from 'src/common/filters/ws-exceptions.filter';
+import { WsExceptionsFilter } from '../../common/filters/ws-exceptions.filter';
 import {
   isRoomFull,
   isNicknameTaken,
@@ -114,7 +114,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
       );
 
       client.join(roomId);
-      client.data = { roomId, nickname: roomData.players };
+      client.data = { roomId, nickname: playerNickname };
       client.to(roomId).emit('updateUsers', roomData.players);
 
       this.logger.log(`User ${playerNickname} joined room ${roomId}`);
