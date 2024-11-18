@@ -6,9 +6,9 @@ import ExitDialog from './GameDialog/ExitDialog';
 import { useReconnect } from '@/hooks/useReconnect';
 import { useBackExit } from '@/hooks/useBackExit';
 import { NotFound } from '@/components/common/NotFound';
+import GameScreen from './GameScreen/GameScreen';
 
 const GamePage = () => {
-  const [isAudioOn, setIsAudioOn] = useState(true);
   const [showExitDialog, setShowExitDialog] = useState(false);
   const { currentRoom } = useRoomStore();
 
@@ -26,9 +26,7 @@ const GamePage = () => {
   return (
     <div className="h-screen relative p-4">
       <div className="space-y-6">
-        <div className="h-[27rem] bg-muted rounded-lg flex items-center justify-center">
-          Game Screen
-        </div>
+        <GameScreen />
         <PlayerList
           players={currentRoom.players.map((player) => ({
             playerNickname: player.playerNickname,

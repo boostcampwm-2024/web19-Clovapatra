@@ -2,16 +2,12 @@ import { Slider } from '@/components/ui/slider';
 import { HiSpeakerWave, HiSpeakerXMark } from 'react-icons/hi2';
 import { useState } from 'react';
 
-interface AudioControlProps {
-  isOn: boolean;
-}
-
-const VolumeBar = ({ isOn }: AudioControlProps) => {
+const VolumeBar = () => {
   const [volume, setVolume] = useState(50);
 
   return (
     <div className="flex items-center gap-2">
-      {volume > 0 && isOn ? (
+      {volume > 0 ? (
         <HiSpeakerWave className="h-4 w-4" />
       ) : (
         <HiSpeakerXMark className="h-4 w-4 text-muted-foreground" />
