@@ -139,7 +139,7 @@ describe('RoomsGateway', () => {
 
       expect(mockClient.join).toHaveBeenCalledWith(roomId);
       expect(mockClient.data.roomId).toBe(roomId);
-      expect(mockClient.data.nickname).toBe(playerNickname);
+      expect(mockClient.data.playerNickname).toBe(playerNickname);
       expect(mockClient.to(roomId).emit).toHaveBeenCalledWith('updateUsers', [
         { playerNickname: 'host', isReady: false },
         { playerNickname, isReady: false },
@@ -256,7 +256,7 @@ describe('RoomsGateway', () => {
         .spyOn(redisService, 'get')
         .mockResolvedValueOnce(JSON.stringify(roomData));
 
-      mockClient.data = { roomId, nickname };
+      mockClient.data = { roomId, playerNickname: nickname };
 
       await gateway.handleDisconnect(mockClient);
 
@@ -295,7 +295,7 @@ describe('RoomsGateway', () => {
         .spyOn(redisService, 'get')
         .mockResolvedValueOnce(JSON.stringify(roomData));
 
-      mockClient.data = { roomId, nickname };
+      mockClient.data = { roomId, playerNickname: nickname };
 
       await gateway.handleDisconnect(mockClient);
 
@@ -331,7 +331,7 @@ describe('RoomsGateway', () => {
         .spyOn(redisService, 'get')
         .mockResolvedValueOnce(JSON.stringify(roomData));
 
-      mockClient.data = { roomId, nickname };
+      mockClient.data = { roomId, playerNickname: nickname };
 
       await gateway.handleDisconnect(mockClient);
 
@@ -371,6 +371,169 @@ describe('RoomsGateway', () => {
       await gateway.handleDisconnect(mockClient);
 
       expect(mockClient.emit).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('handleSetReady', () => {
+    it('플레이어가 준비 상태로 설정되어야 한다.', async () => {
+      const roomId = 'testRoomId';
+      const playerNickname = 'Player1';
+      const roomData: RoomDataDto = {
+        roomId,
+        roomName: 'testRoom',
+        hostNickname: 'host',
+        players: [
+          { playerNickname: 'host', isReady: false },
+          { playerNickname: 'Player1', isReady: false },
+        ],
+        status: 'waiting',
+      };
+
+      jest
+        .spyOn(redisService, 'get')
+        .mockResolvedValueOnce(JSON.stringify(roomData));
+      jest.spyOn(redisService, 'set').mockResolvedValueOnce(undefined);
+
+      mockClient.data = { roomId, playerNickname };
+
+      await gateway.handleSetReady(playerNickname, mockClient);
+
+      expect(redisService.set).toHaveBeenCalledWith(
+        `room:${roomId}`,
+        JSON.stringify({
+          ...roomData,
+          players: [
+            { playerNickname: 'host', isReady: false },
+            { playerNickname: 'Player1', isReady: true },
+          ],
+        }),
+      );
+      expect(mockServer.to(roomId).emit).toHaveBeenCalledWith('updateUsers', [
+        { playerNickname: 'host', isReady: false },
+        { playerNickname: 'Player1', isReady: true },
+      ]);
+    });
+
+    it('플레이어가 방에 없으면 에러를 전송해야 한다.', async () => {
+      const roomId = 'testRoomId';
+      const playerNickname = 'Player2';
+      const roomData: RoomDataDto = {
+        roomId,
+        roomName: 'testRoom',
+        hostNickname: 'host',
+        players: [
+          { playerNickname: 'host', isReady: false },
+          { playerNickname: 'Player1', isReady: false },
+        ],
+        status: 'waiting',
+      };
+
+      jest
+        .spyOn(redisService, 'get')
+        .mockResolvedValueOnce(JSON.stringify(roomData));
+
+      mockClient.data = { roomId, playerNickname };
+
+      await gateway.handleSetReady(playerNickname, mockClient);
+
+      expect(mockClient.emit).toHaveBeenCalledWith(
+        'error',
+        'Player not found in room',
+      );
+    });
+  });
+
+  describe('handleKickPlayer', () => {
+    it('호스트만 플레이어를 강퇴할 수 있어야 한다.', async () => {
+      const roomId = 'testRoomId';
+      const playerNickname = 'Player1'; // 호스트가 아닌 플레이어
+      const roomData: RoomDataDto = {
+        roomId,
+        roomName: 'testRoom',
+        hostNickname: 'host',
+        players: [
+          { playerNickname: 'host', isReady: false },
+          { playerNickname: 'Player1', isReady: false },
+        ],
+        status: 'waiting',
+      };
+
+      jest
+        .spyOn(redisService, 'get')
+        .mockResolvedValueOnce(JSON.stringify(roomData));
+
+      mockClient.data = { roomId, playerNickname };
+
+      await gateway.handleKickPlayer('Player1', mockClient);
+
+      expect(mockClient.emit).toHaveBeenCalledWith(
+        'error',
+        'Only host can kick players',
+      );
+    });
+
+    it('플레이어가 방에 없으면 에러를 전송해야 한다.', async () => {
+      const roomId = 'testRoomId';
+      const playerNickname = 'host';
+      const roomData: RoomDataDto = {
+        roomId,
+        roomName: 'testRoom',
+        hostNickname: 'host',
+        players: [
+          { playerNickname: 'host', isReady: false },
+          { playerNickname: 'Player1', isReady: false },
+        ],
+        status: 'waiting',
+      };
+
+      jest
+        .spyOn(redisService, 'get')
+        .mockResolvedValueOnce(JSON.stringify(roomData));
+
+      mockClient.data = { roomId, playerNickname };
+
+      await gateway.handleKickPlayer('Player2', mockClient);
+
+      expect(mockClient.emit).toHaveBeenCalledWith(
+        'error',
+        'Player not found in room',
+      );
+    });
+
+    it('호스트가 플레이어를 강퇴할 수 있어야 한다.', async () => {
+      const roomId = 'testRoomId';
+      const nickname = 'host';
+      const playerNickname = 'Player1';
+      const roomData: RoomDataDto = {
+        roomId,
+        roomName: 'testRoom',
+        hostNickname: 'host',
+        players: [
+          { playerNickname: 'host', isReady: false },
+          { playerNickname: 'Player1', isReady: false },
+        ],
+        status: 'waiting',
+      };
+
+      jest
+        .spyOn(redisService, 'get')
+        .mockResolvedValueOnce(JSON.stringify(roomData));
+      jest.spyOn(redisService, 'set').mockResolvedValueOnce(undefined);
+
+      mockClient.data = { roomId, playerNickname: nickname };
+
+      await gateway.handleKickPlayer(playerNickname, mockClient);
+
+      expect(redisService.set).toHaveBeenCalledWith(
+        `room:${roomId}`,
+        JSON.stringify({
+          ...roomData,
+          players: [{ playerNickname: 'host', isReady: false }],
+        }),
+      );
+      expect(mockServer.to(roomId).emit).toHaveBeenCalledWith('updateUsers', [
+        { playerNickname: 'host', isReady: false },
+      ]);
     });
   });
 });

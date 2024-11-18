@@ -239,8 +239,32 @@ export class RoomsGateway implements OnGatewayDisconnect {
         return;
       }
 
+      const roomSockets = this.server.sockets.adapter.rooms.get(roomId);
+      if (!roomSockets) {
+        client.emit('error', 'Room not found');
+        return;
+      }
+
+      let targetSocketId: string | undefined;
+      for (const socketId of roomSockets) {
+        const socket = this.server.sockets.sockets.get(socketId);
+        if (socket?.data.playerNickname === playerNickname) {
+          targetSocketId = socketId;
+          break;
+        }
+      }
+
+      if (!targetSocketId) {
+        client.emit('error', 'Target player is not connected');
+        return;
+      }
+
       roomData.players.splice(playerIndex, 1);
       await this.redisService.set(`room:${roomId}`, JSON.stringify(roomData));
+
+      const targetClient = this.server.sockets.sockets.get(targetSocketId);
+      targetClient?.disconnect();
+
       this.server.to(roomId).emit('updateUsers', roomData.players);
 
       this.logger.log(`Player ${playerNickname} kicked from room ${roomId}`);

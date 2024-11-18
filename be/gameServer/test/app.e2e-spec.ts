@@ -110,5 +110,63 @@ describe('RoomsGateway (e2e)', () => {
         expect(redisData).toBeNull();
       }, 100);
     });
+
+    it('플레이어가 준비 상태로 설정될 수 있어야 한다.', async () => {
+      const roomId = 'testRoom';
+      const roomData = {
+        roomId,
+        roomName: 'Test Room',
+        hostNickname: 'HostUser',
+        players: [
+          { playerNickname: 'HostUser', isReady: false },
+          { playerNickname: 'Player1', isReady: false },
+        ],
+        status: 'waiting',
+      };
+
+      await redisService.set(`room:${roomId}`, JSON.stringify(roomData));
+
+      clientSocket.emit('setReady', 'Player1');
+
+      clientSocket.on('updateUsers', async (players) => {
+        expect(players).toEqual([
+          { playerNickname: 'HostUser', isReady: false },
+          { playerNickname: 'Player1', isReady: true },
+        ]);
+
+        const redisData = await redisService.get<string>(`room:${roomId}`);
+        const updatedRoom = JSON.parse(redisData);
+        expect(updatedRoom.players[1].isReady).toBe(true);
+      });
+    });
+
+    it('호스트가 플레이어를 강퇴할 수 있어야 한다.', async () => {
+      const roomId = 'testRoom';
+      const roomData = {
+        roomId,
+        roomName: 'Test Room',
+        hostNickname: 'HostUser',
+        players: [
+          { playerNickname: 'HostUser', isReady: false },
+          { playerNickname: 'Player1', isReady: false },
+        ],
+        status: 'waiting',
+      };
+
+      await redisService.set(`room:${roomId}`, JSON.stringify(roomData));
+
+      clientSocket.on('updateUsers', async (players) => {
+        expect(players).toEqual([
+          { playerNickname: 'HostUser', isReady: false },
+        ]);
+
+        const redisData = await redisService.get<string>(`room:${roomId}`);
+        const updatedRoom = JSON.parse(redisData);
+        expect(updatedRoom.players.length).toBe(1);
+        expect(updatedRoom.players[0].playerNickname).toBe('HostUser');
+      });
+
+      clientSocket.emit('kickPlayer', 'Player1');
+    });
   });
 });
