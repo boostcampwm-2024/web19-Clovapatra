@@ -56,7 +56,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
         roomId,
         roomName,
         hostNickname,
-        players: [hostNickname],
+        players: [{ playerNickname: hostNickname, isReady: false }],
         status: 'waiting',
       };
       await this.redisService.set(
@@ -106,7 +106,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
         return;
       }
 
-      roomData.players.push(playerNickname);
+      roomData.players.push({ playerNickname, isReady: false });
       await this.redisService.set(
         `room:${roomId}`,
         JSON.stringify(roomData),

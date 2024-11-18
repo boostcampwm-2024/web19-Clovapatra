@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { PlayerDataDto } from '../../players/dto/player-data.dto';
 
 export class RoomDataDto {
   @ApiProperty({
@@ -20,10 +21,20 @@ export class RoomDataDto {
   hostNickname: string;
 
   @ApiProperty({
-    example: ['hostNickname123'],
-    description: '현재 방에 참여한 플레이어 목록',
+    type: [PlayerDataDto],
+    example: [
+      {
+        nickname: 'hostNickname123',
+        ready: true,
+      },
+      {
+        nickname: 'player1',
+        ready: false,
+      },
+    ],
+    description: '현재 방에 참여한 플레이어 목록과 준비 상태',
   })
-  players: string[];
+  players: PlayerDataDto[];
 
   @ApiProperty({
     example: 'waiting',

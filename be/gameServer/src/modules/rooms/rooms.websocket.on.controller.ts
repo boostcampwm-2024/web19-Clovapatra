@@ -20,7 +20,7 @@ export class RoomsWebSocketOnController {
       roomId: 'example-room-id',
       roomName: createRoomDto.roomName,
       hostNickname: createRoomDto.hostNickname,
-      players: [createRoomDto.hostNickname],
+      players: [{ playerNickname: createRoomDto.hostNickname, isReady: false }],
       status: 'waiting',
     };
   }

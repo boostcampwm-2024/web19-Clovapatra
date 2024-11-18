@@ -20,7 +20,7 @@ export class RoomsWebSocketEmitController {
       roomId: 'example-room-id',
       roomName: 'example-room-name',
       hostNickname: 'example-room-name',
-      players: ['example-room-name'],
+      players: [{ playerNickname: 'hostNickname', isReady: false }],
       status: 'waiting',
     };
   }
@@ -40,7 +40,10 @@ export class RoomsWebSocketEmitController {
       roomId: 'example-room-id',
       roomName: 'example-room-name',
       hostNickname: 'example-room-name',
-      players: ['example-room-name'],
+      players: [
+        { playerNickname: 'hostNickname', isReady: true },
+        { playerNickname: 'Player1', isReady: false },
+      ],
       status: 'waiting',
     };
   }
