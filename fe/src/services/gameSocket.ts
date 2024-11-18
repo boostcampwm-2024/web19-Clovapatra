@@ -3,7 +3,7 @@ import {
   ClientToServerEvents,
   ServerToClientEvents,
 } from '@/types/socketTypes';
-import { Room } from '@/types/roomTypes';
+import { PlayerProps, Room } from '@/types/roomTypes';
 import { SocketService } from './SocketService';
 import useRoomStore from '@/stores/zustand/useRoomStore';
 import { ENV } from '@/config/env';
@@ -47,14 +47,16 @@ class GameSocket extends SocketService {
       store.setCurrentRoom(room);
     });
 
-    this.socket.on('updateUsers', (players: string[]) => {
+    this.socket.on('updateUsers', (players: PlayerProps[]) => {
       const { currentRoom, setCurrentRoom } = useRoomStore.getState();
+
+      console.log(players);
 
       if (currentRoom) {
         setCurrentRoom({
           ...currentRoom,
           players,
-          hostNickname: players[0],
+          hostNickname: players[0].playerNickname,
         });
       }
     });
