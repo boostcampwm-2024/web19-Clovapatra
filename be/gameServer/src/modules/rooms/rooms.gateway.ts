@@ -56,7 +56,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
         roomId,
         roomName,
         hostNickname,
-        players: [hostNickname],
+        players: [{ playerNickname: hostNickname, isReady: false }],
         status: 'waiting',
       };
       await this.redisService.set(
@@ -65,7 +65,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
         'roomUpdate',
       );
       client.join(roomId);
-      client.data = { roomId, nickname: hostNickname };
+      client.data = { roomId, playerNickname: hostNickname };
       this.logger.log(`Room created successfully: ${roomId}`);
 
       client.emit('roomCreated', roomData);
@@ -106,7 +106,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
         return;
       }
 
-      roomData.players.push(playerNickname);
+      roomData.players.push({ playerNickname, isReady: false });
       await this.redisService.set(
         `room:${roomId}`,
         JSON.stringify(roomData),
@@ -114,7 +114,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
       );
 
       client.join(roomId);
-      client.data = { roomId, nickname: playerNickname };
+      client.data = { roomId, playerNickname: playerNickname };
       client.to(roomId).emit('updateUsers', roomData.players);
 
       this.logger.log(`User ${playerNickname} joined room ${roomId}`);
@@ -132,7 +132,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
   @SubscribeMessage('disconnect')
   async handleDisconnect(@ConnectedSocket() client: Socket) {
     try {
-      const { roomId, nickname } = client.data;
+      const { roomId, playerNickname } = client.data;
       const roomDataString = await this.redisService.get<string>(
         `room:${roomId}`,
       );
@@ -144,12 +144,12 @@ export class RoomsGateway implements OnGatewayDisconnect {
 
       const roomData: RoomDataDto = JSON.parse(roomDataString);
 
-      removePlayerFromRoom(roomData, nickname);
+      removePlayerFromRoom(roomData, playerNickname);
 
       // todo
       // 이 상태에서 다른 사용자가 방에 들어온다면?
 
-      if (roomData.hostNickname === nickname) {
+      if (roomData.hostNickname === playerNickname) {
         if (roomData.players.length > 0) {
           changeRoomHost(roomData);
           await this.redisService.set(
@@ -158,7 +158,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
             'roomUpdate',
           );
 
-          this.logger.log(`host ${nickname} leave room`);
+          this.logger.log(`host ${playerNickname} leave room`);
           this.logger.log(`host changed to ${roomData.players[0]}`);
           this.server.to(roomId).emit('updateUsers', roomData.players);
         } else {
@@ -171,7 +171,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
           JSON.stringify(roomData),
           'roomUpdate',
         );
-        this.logger.log(`host ${nickname} leave room`);
+        this.logger.log(`host ${playerNickname} leave room`);
         this.server.to(roomId).emit('updateUsers', roomData.players);
       }
     } catch (error) {
@@ -183,4 +183,95 @@ export class RoomsGateway implements OnGatewayDisconnect {
       client.emit('error', errorResponse);
     }
   }
+
+  @SubscribeMessage('setReady')
+  async handleSetReady(
+    @MessageBody() playerNickname: string,
+    @ConnectedSocket() client: Socket,
+  ) {
+    try {
+      const { roomId } = client.data;
+      const roomDataString = await this.redisService.get<string>(
+        `room:${roomId}`,
+      );
+      const roomData: RoomDataDto = JSON.parse(roomDataString);
+
+      const player = roomData.players.find(
+        (p) => p.playerNickname === playerNickname,
+      );
+
+      if (player) {
+        player.isReady = true;
+        await this.redisService.set(`room:${roomId}`, JSON.stringify(roomData));
+        this.server.to(roomId).emit('updateUsers', roomData.players);
+      } else {
+        client.emit('error', 'Player not found in room');
+      }
+    } catch (error) {
+      this.logger.error(`Error setting ready status: ${error.message}`);
+      client.emit('error', 'Failed to set ready status');
+    }
+  }
+
+  // @SubscribeMessage('kickPlayer')
+  // async handleKickPlayer(
+  //   @MessageBody() playerNickname: string,
+  //   @ConnectedSocket() client: Socket,
+  // ) {
+  //   try {
+  //     const { roomId } = client.data;
+  //     const roomDataString = await this.redisService.get<string>(
+  //       `room:${roomId}`,
+  //     );
+  //     const roomData: RoomDataDto = JSON.parse(roomDataString);
+
+  //     if (roomData.hostNickname !== client.data.playerNickname) {
+  //       client.emit('error', 'Only host can kick players');
+  //       return;
+  //     }
+
+  //     const playerIndex = roomData.players.findIndex(
+  //       (p) => p.playerNickname === playerNickname,
+  //     );
+
+  //     if (playerIndex === -1) {
+  //       client.emit('error', 'Player not found in room');
+  //       return;
+  //     }
+
+  //     const roomSockets = this.server.sockets.adapter.rooms.get(roomId);
+  //     console.log('Server Sockets Adapter:', this.server.sockets.adapter);
+  //     if (!roomSockets) {
+  //       client.emit('error', 'Room not found');
+  //       return;
+  //     }
+
+  //     let targetSocketId: string | undefined;
+  //     // `roomSockets`는 `Set` 형태이므로 직접 순회하여 찾음
+  //     for (const socketId of roomSockets) {
+  //       const socket = this.server.sockets.sockets.get(socketId);
+  //       if (socket?.data.playerNickname === playerNickname) {
+  //         targetSocketId = socketId;
+  //         break;
+  //       }
+  //     }
+
+  //     roomData.players.splice(playerIndex, 1);
+  //     await this.redisService.set(
+  //       `room:${roomId}`,
+  //       JSON.stringify(roomData),
+  //       'roomUpdate',
+  //     );
+
+  //     const targetClient = this.server.sockets.sockets.get(targetSocketId);
+  //     targetClient?.disconnect();
+
+  //     this.server.to(roomId).emit('updateUsers', roomData.players);
+
+  //     this.logger.log(`Player ${playerNickname} kicked from room ${roomId}`);
+  //   } catch (error) {
+  //     this.logger.error(`Error kicking player: ${error.message}`);
+  //     client.emit('error', 'Failed to kick player');
+  //   }
+  // }
 }
