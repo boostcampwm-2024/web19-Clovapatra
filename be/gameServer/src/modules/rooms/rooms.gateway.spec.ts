@@ -140,7 +140,7 @@ describe('RoomsGateway', () => {
       expect(mockClient.join).toHaveBeenCalledWith(roomId);
       expect(mockClient.data.roomId).toBe(roomId);
       expect(mockClient.data.playerNickname).toBe(playerNickname);
-      expect(mockClient.to(roomId).emit).toHaveBeenCalledWith('updateUsers', [
+      expect(mockServer.to(roomId).emit).toHaveBeenCalledWith('updateUsers', [
         { playerNickname: 'host', isReady: false },
         { playerNickname, isReady: false },
       ]);
