@@ -213,64 +213,65 @@ export class RoomsGateway implements OnGatewayDisconnect {
     }
   }
 
-  @SubscribeMessage('kickPlayer')
-  async handleKickPlayer(
-    @MessageBody() playerNickname: string,
-    @ConnectedSocket() client: Socket,
-  ) {
-    try {
-      const { roomId } = client.data;
-      const roomDataString = await this.redisService.get<string>(
-        `room:${roomId}`,
-      );
-      const roomData: RoomDataDto = JSON.parse(roomDataString);
+  // @SubscribeMessage('kickPlayer')
+  // async handleKickPlayer(
+  //   @MessageBody() playerNickname: string,
+  //   @ConnectedSocket() client: Socket,
+  // ) {
+  //   try {
+  //     const { roomId } = client.data;
+  //     const roomDataString = await this.redisService.get<string>(
+  //       `room:${roomId}`,
+  //     );
+  //     const roomData: RoomDataDto = JSON.parse(roomDataString);
 
-      if (roomData.hostNickname !== client.data.playerNickname) {
-        client.emit('error', 'Only host can kick players');
-        return;
-      }
+  //     if (roomData.hostNickname !== client.data.playerNickname) {
+  //       client.emit('error', 'Only host can kick players');
+  //       return;
+  //     }
 
-      const playerIndex = roomData.players.findIndex(
-        (p) => p.playerNickname === playerNickname,
-      );
+  //     const playerIndex = roomData.players.findIndex(
+  //       (p) => p.playerNickname === playerNickname,
+  //     );
 
-      if (playerIndex === -1) {
-        client.emit('error', 'Player not found in room');
-        return;
-      }
+  //     if (playerIndex === -1) {
+  //       client.emit('error', 'Player not found in room');
+  //       return;
+  //     }
 
-      const roomSockets = this.server.sockets.adapter.rooms.get(roomId);
-      if (!roomSockets) {
-        client.emit('error', 'Room not found');
-        return;
-      }
+  //     const roomSockets = this.server.sockets.adapter.rooms.get(roomId);
+  //     console.log('Server Sockets Adapter:', this.server.sockets.adapter);
+  //     if (!roomSockets) {
+  //       client.emit('error', 'Room not found');
+  //       return;
+  //     }
 
-      let targetSocketId: string | undefined;
-      for (const socketId of roomSockets) {
-        const socket = this.server.sockets.sockets.get(socketId);
-        if (socket?.data.playerNickname === playerNickname) {
-          targetSocketId = socketId;
-          break;
-        }
-      }
+  //     let targetSocketId: string | undefined;
+  //     // `roomSockets`는 `Set` 형태이므로 직접 순회하여 찾음
+  //     for (const socketId of roomSockets) {
+  //       const socket = this.server.sockets.sockets.get(socketId);
+  //       if (socket?.data.playerNickname === playerNickname) {
+  //         targetSocketId = socketId;
+  //         break;
+  //       }
+  //     }
 
-      if (!targetSocketId) {
-        client.emit('error', 'Target player is not connected');
-        return;
-      }
+  //     roomData.players.splice(playerIndex, 1);
+  //     await this.redisService.set(
+  //       `room:${roomId}`,
+  //       JSON.stringify(roomData),
+  //       'roomUpdate',
+  //     );
 
-      roomData.players.splice(playerIndex, 1);
-      await this.redisService.set(`room:${roomId}`, JSON.stringify(roomData));
+  //     const targetClient = this.server.sockets.sockets.get(targetSocketId);
+  //     targetClient?.disconnect();
 
-      const targetClient = this.server.sockets.sockets.get(targetSocketId);
-      targetClient?.disconnect();
+  //     this.server.to(roomId).emit('updateUsers', roomData.players);
 
-      this.server.to(roomId).emit('updateUsers', roomData.players);
-
-      this.logger.log(`Player ${playerNickname} kicked from room ${roomId}`);
-    } catch (error) {
-      this.logger.error(`Error kicking player: ${error.message}`);
-      client.emit('error', 'Failed to kick player');
-    }
-  }
+  //     this.logger.log(`Player ${playerNickname} kicked from room ${roomId}`);
+  //   } catch (error) {
+  //     this.logger.error(`Error kicking player: ${error.message}`);
+  //     client.emit('error', 'Failed to kick player');
+  //   }
+  // }
 }
