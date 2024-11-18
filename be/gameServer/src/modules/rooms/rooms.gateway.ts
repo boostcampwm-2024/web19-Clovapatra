@@ -115,7 +115,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
 
       client.join(roomId);
       client.data = { roomId, playerNickname: playerNickname };
-      client.to(roomId).emit('updateUsers', roomData.players);
+      this.server.to(roomId).emit('updateUsers', roomData.players);
 
       this.logger.log(`User ${playerNickname} joined room ${roomId}`);
     } catch (error) {
