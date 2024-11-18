@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { RedisModule } from 'src/redis/redis.module';
+import { RedisModule } from '../../redis/redis.module';
 import { RoomsGateway } from './rooms.gateway';
 import { RoomsWebSocketOnController } from './rooms.websocket.on.controller';
 import { RoomsWebSocketEmitController } from './rooms.websocket.emit.controller';

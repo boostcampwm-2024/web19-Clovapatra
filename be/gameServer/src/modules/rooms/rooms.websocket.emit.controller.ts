@@ -16,7 +16,6 @@ export class RoomsWebSocketEmitController {
     type: RoomDataDto,
   })
   createRoom(): RoomDataDto {
-    // This method does not execute any logic. It's for Swagger documentation only.
     return {
       roomId: 'example-room-id',
       roomName: 'example-room-name',
