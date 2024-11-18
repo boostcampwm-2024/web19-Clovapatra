@@ -26,6 +26,7 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
   const navigate = useNavigate();
   const { rooms, setCurrentRoom } = useRoomStore();
   const currentRoom = rooms.find((room) => room.roomId === roomId);
+  const setCurrentPlayer = useRoomStore((state) => state.setCurrentPlayer);
 
   const resetAndClose = () => {
     setPlayerNickname('');
@@ -43,9 +44,10 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
 
       // 참가자 닉네임 저장
       sessionStorage.setItem('user_nickname', playerNickname.trim());
-      // sessionStorage.setItem('user_role', 'player');
 
       setCurrentRoom(currentRoom);
+      setCurrentPlayer(playerNickname.trim());
+
       gameSocket.joinRoom(roomId, playerNickname.trim());
       await signalingSocket.joinRoom(currentRoom);
 

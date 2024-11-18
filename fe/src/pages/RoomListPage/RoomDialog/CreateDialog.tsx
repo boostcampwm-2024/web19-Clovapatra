@@ -22,6 +22,7 @@ const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
   const [hostNickname, setHostNickname] = useState('');
   const navigate = useNavigate();
   const currentRoom = useRoomStore((state) => state.currentRoom);
+  const setCurrentPlayer = useRoomStore((state) => state.setCurrentPlayer);
 
   useEffect(() => {
     if (currentRoom) {
@@ -45,8 +46,8 @@ const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
 
       // 방장 닉네임 저장
       sessionStorage.setItem('user_nickname', hostNickname.trim());
-      // sessionStorage.setItem('room_name', roomName.trim());
-      // sessionStorage.setItem('user_role', 'host');
+
+      setCurrentPlayer(hostNickname.trim());
 
       gameSocket.connect();
       signalingSocket.connect();
