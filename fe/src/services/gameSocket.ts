@@ -50,8 +50,6 @@ class GameSocket extends SocketService {
     this.socket.on('updateUsers', (players: PlayerProps[]) => {
       const { currentRoom, setCurrentRoom } = useRoomStore.getState();
 
-      console.log(players);
-
       if (currentRoom) {
         setCurrentRoom({
           ...currentRoom,
