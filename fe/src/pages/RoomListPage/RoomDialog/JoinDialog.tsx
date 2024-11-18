@@ -13,7 +13,7 @@ import { gameSocket } from '@/services/gameSocket';
 import { signalingSocket } from '@/services/signalingSocket';
 import useRoomStore from '@/stores/zustand/useRoomStore';
 import { RoomDialogProps } from '@/types/roomTypes';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface JoinDialogProps extends RoomDialogProps {
@@ -26,6 +26,7 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
   const navigate = useNavigate();
   const { rooms, setCurrentRoom } = useRoomStore();
   const currentRoom = rooms.find((room) => room.roomId === roomId);
+  const setCurrentPlayer = useRoomStore((state) => state.setCurrentPlayer);
 
   const resetAndClose = () => {
     setPlayerNickname('');
@@ -43,9 +44,10 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
 
       // 참가자 닉네임 저장
       sessionStorage.setItem('user_nickname', playerNickname.trim());
-      // sessionStorage.setItem('user_role', 'player');
 
       setCurrentRoom(currentRoom);
+      setCurrentPlayer(playerNickname.trim());
+
       gameSocket.joinRoom(roomId, playerNickname.trim());
       await signalingSocket.joinRoom(currentRoom);
 
