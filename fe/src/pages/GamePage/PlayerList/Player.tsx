@@ -14,7 +14,6 @@ const Player = ({ playerNickname, isReady }: PlayerProps) => {
   const isPlayerHost = isHost(playerNickname);
   const isCurrentPlayer = currentPlayer === playerNickname;
   const [isMuted, setIsMuted] = useState(false);
-  const localStream = signalingSocket.getLocalStream();
 
   const handleKick = () => {
     // TODO: 강퇴 로직 구현
@@ -22,15 +21,19 @@ const Player = ({ playerNickname, isReady }: PlayerProps) => {
   };
 
   const handleMuteToggle = () => {
-    setIsMuted(!isMuted);
+    setIsMuted((prevMuted) => {
+      const newMutedState = !prevMuted;
+      const stream = signalingSocket.getLocalStream();
 
-    // WebRTC 오디오 스트림 음소거 처리
-    if (localStream) {
-      const audioTrack = localStream.getAudioTracks()[0];
-      if (audioTrack) {
-        audioTrack.enabled = !isMuted;
+      if (stream) {
+        const audioTrack = stream.getAudioTracks()[0];
+        if (audioTrack) {
+          audioTrack.enabled = !newMutedState;
+        }
       }
-    }
+
+      return newMutedState;
+    });
   };
 
   return (
