@@ -7,27 +7,29 @@
 - 훅/컴포넌트 내부에서 사용: useRoomStore()
 - React 외부의 비동기 작업, 이벤트 핸들러: useRoomStore.getState()
 
-### 방 나가기 버튼 & 뒤로가기 시 Dialog 띄우고 나가기 처리
+### 본인 닉네임 상태 저장
 
-- 소켓 전부 끊고 RoomList Page로 잘 이동은 되는데, 오디오 정리가 안 된다..! 어떻게 해야하는 거지?
-  - 마이크가 안 끊기는 줄 알았는데, 조금 기다리면 꺼진다.
-- Game Page로 이동하면 뒤로가기 히스토리 스택에 2번 쌓인다. -> 뒤로가기 버튼을 2번 눌러야 RoomList Page로 이동
-- 뒤로가기는 이미 생성된 방에 참가하려는 사용자만 된다. 방을 새로 생성한 사람은 뒤로가기 했을 때 ExitDialog가 안 뜸
-- 결론: 뒤로가기 모르겠다.🤯
+- 방장 여부에 따라 게임 시작/게임 준비, 강퇴 버튼 보임/안 보임이 결정 됨
+- GameScreen에서 자기자신이 방장이 아닌 걸 알기 위해서 currentPlayer 상태 저장하고, 새로고침 시 sessionStorage에서 가져와서 다시 저장
 
-## 뒤로가기 2번 눌러야 ExitDialog 뜨는 문제
+### 오디오 권한 요청 hook 분리
 
-- replaceState, pushState 2번 해서 그런 것 같음. 그래서 replaceState를 제거하니까 한 번만 눌러도 제대로 동작함
-- 그래도 여전히 히스토리 스택에는 2번 쌓이고 있다. 진.짜. 모르겠음. 흐린눈..하면 안 될까..
+- 마이크 권한 허용하지 않을 시 게임방 입장 불가
+  - hook으로 마이크 허용 확인 후 signalingSocket join
+  - TODO: 허용하지 않을 시 Error 메시지 사용자에게 띄워야 함
+- CreateDialog, JoinDialog에 마이크 허용 안내 문구 추가
 
-### Game Page 새로고침 문제
+### 새로고침 시 오디오 꺼짐 문제
 
-- 새로고침 되면 소켓이 끊어지기 때문에 다시 연결해 줘야 한다. = 재입장의 개념이다.
-- 세션 스토리지에 본인의 닉네임을 저장해서 gameSocket, signalingSocket 모두 다시 연결하고, join을 해준다.
-- 그런데 방장의 경우 joinRoom이 아닌 createRoom으로 currentRoom 상태를 저장하고 있다. 그러면, 세션 스토리지에 방장 여부도 저장해야 하나?
-  - 방장이어서 문제가 아니라, 방에 혼자 남았을 때 뒤로가기를 하면 방이 사라지게 됨
-  - 404 에러 컴포넌트를 띄우고 메인 페이지로 이동할 수 있도록 하기로 함
-- 문제가 발생하는 케이스가 더 있는 것 같다.
-  - 새로고침 후 뒤로가기 하면, 404 에러가 뜬다. getCurrentRoomQuery가 안 되는 것 같음. reconnect할 때 뭘 더 해줘야 하나..?
-- currentRoom이 null일 때 에러를 띄우도록 했더니, reconnect가 되는 중(loading)에 에러 컴포넌트가 잠깐 보인다..ㅠ 너무 어렵다,,
-  - 일단 이 문제는 나중에 다시 처리해 보기로
+- signalingSocket connect되기 전(초기화되기 전) 이벤트 emit하지 않도록 setTimeout 설정
+- useReconnect hook에서 오디오 재연결 처리해 줘야 함
+
+### 본인을 제외한 사용자들의 볼륨 조절
+
+- 시그널링 소켓에서 Audio Element의 id를 peerId(소켓 id)로 설정하고 있음
+- 그런데 클라이언트 쪽에서 사용자 닉네임과 peerId가 매칭되는 정보를 알 수 없음
+- 어떤 사용자의 볼륨을 줄이려면 해당 사용자의 peerId로 Audio Element를 찾아야 함
+- 그래서 시그널링 소켓 join_room 이벤트 송신 시 playerNickname을 같이 전달하고, room_info 이벤트를 수신할 때 playerNickname을 key, peerId를 value로 하는 데이터를 받아온 후 해당 데이터를 가지고 Audio Element를 찾는 것으로 서버 측과 합의
+- signalingSocket에서 로그 찍어보고 동작하고 있는 건 확인했는데, 로컬에서 테스트는 불가
+  - 왜냐하면 둘 다 나이기 때문.. 다른 사람의 볼륨을 조절 하려면 결국 한 사용자는 마이크를 켜야 하는데, 둘 다 내 목소리니까 구분이 안 됨
+  - 본인 마이크 음소거는 테스트 완
