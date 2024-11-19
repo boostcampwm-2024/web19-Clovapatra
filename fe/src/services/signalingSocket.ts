@@ -96,22 +96,56 @@ class SignalingSocket extends SocketService {
    * @throws Error 마이크 접근 실패 시 에러 발생
    */
   async joinRoom(room: Room) {
-    this.roomId = room.roomId;
-    // console.log('[WebRTCClient] 방 참가 시도:', this.roomId);
-
     try {
-      // 서버에 방 참가 요청 전송
-      this.socket.emit('join_room', {
-        roomId: this.roomId,
-        deviceId: this.deviceId,
-        sdp: null, // 초기 연결 시에는 SDP 정보 없음
-        candidates: [], // 초기 연결 시에는 ICE candidate 없음
-      });
+      // 1. 소켓 연결 확인 및 연결 시도
+      if (!this.socket?.connected) {
+        this.connect();
 
-      // console.log('[WebRTCClient] 방 참가 요청 전송됨');
+        // 소켓 연결 완료 대기
+        await new Promise<void>((resolve, reject) => {
+          if (!this.socket)
+            return reject(new Error('Socket initialization failed'));
+
+          const onConnect = () => {
+            this.socket?.off('connect', onConnect);
+            this.socket?.off('connect_error', onError);
+            resolve();
+          };
+
+          const onError = (error: Error) => {
+            this.socket?.off('connect', onConnect);
+            this.socket?.off('connect_error', onError);
+            reject(error);
+          };
+
+          this.socket.on('connect', onConnect);
+          this.socket.on('connect_error', onError);
+
+          // 5초 타임아웃
+          setTimeout(() => {
+            this.socket?.off('connect', onConnect);
+            this.socket?.off('connect_error', onError);
+            reject(new Error('Connection timeout'));
+          }, 5000);
+        });
+      }
+
+      this.roomId = room.roomId;
+
+      // 2. 소켓이 연결된 상태에서 emit
+      if (this.socket?.connected) {
+        this.socket.emit('join_room', {
+          roomId: this.roomId,
+          deviceId: this.deviceId,
+          sdp: null,
+          candidates: [],
+        });
+      } else {
+        throw new Error('Socket is not connected');
+      }
     } catch (error) {
       console.error('[WebRTCClient] 방 참가 실패:', error);
-      throw error; // 상위로 에러 전파
+      throw error;
     }
   }
 
