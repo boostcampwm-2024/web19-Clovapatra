@@ -19,6 +19,7 @@ class RoomService {
    *   sdp: RTCSessionDescription,
    *   candidates: RTCIceCandidate[],
    *   deviceId: string, // 오디오 장치 ID
+   *   playerNickname: string, // 닉네임
    *   timestamp: number // 마지막 업데이트 시간
    * }
    */
