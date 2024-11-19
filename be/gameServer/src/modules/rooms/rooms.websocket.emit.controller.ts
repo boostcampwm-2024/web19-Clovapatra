@@ -16,14 +16,8 @@ export class RoomsWebSocketEmitController {
     description: 'Room created successfully',
     type: RoomDataDto,
   })
-  createRoom(): RoomDataDto {
-    return {
-      roomId: 'example-room-id',
-      roomName: 'example-room-name',
-      hostNickname: 'example-room-name',
-      players: [{ playerNickname: 'hostNickname', isReady: false }],
-      status: 'waiting',
-    };
+  createRoom() {
+    return;
   }
 
   @Post('updateUsers')
@@ -32,12 +26,27 @@ export class RoomsWebSocketEmitController {
     description:
       '방의 사용자들에게 "updateUsers" 이벤트를 통해 갱신된 사용자 목록을 제공합니다.',
   })
-  updateUsers(): PlayerDataDto[] {
+  @ApiResponse({
+    description: '플레이어 데이터 객체 배열',
+    type: [PlayerDataDto],
+  })
+  updateUsers() {
     // This method does not execute any logic. It's for Swagger documentation only.
-    return [
-      { playerNickname: 'hostNickname', isReady: true },
-      { playerNickname: 'Player1', isReady: false },
-    ];
+    return;
+  }
+
+  @Post('kicked')
+  @ApiOperation({
+    summary: '강퇴 이벤트 발생',
+    description: '방의 사용자들에게 다른 사용자의 강퇴 이벤트를 알립니다.',
+  })
+  @ApiResponse({
+    description: '해당 강퇴 사용자 닉네임',
+    type: String,
+  })
+  kicked() {
+    // This method does not execute any logic. It's for Swagger documentation only.
+    return;
   }
 
   @Post('error')
