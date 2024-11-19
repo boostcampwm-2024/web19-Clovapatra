@@ -3,6 +3,7 @@ import {
   WebSocketServer,
   SubscribeMessage,
   ConnectedSocket,
+  OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { RedisService } from '../../redis/redis.service';
@@ -29,7 +30,7 @@ const VOICE_SERVERS = 'voice-servers';
   },
 })
 @UseFilters(WsExceptionsFilter)
-export class GamesGateway {
+export class GamesGateway implements OnGatewayDisconnect {
   private readonly logger = new Logger(GamesGateway.name);
 
   @WebSocketServer()
@@ -108,4 +109,7 @@ export class GamesGateway {
       client.emit('error', errorResponse);
     }
   }
+
+  @SubscribeMessage('disconnect')
+  async handleDisconnect() {}
 }
