@@ -12,6 +12,7 @@ describe('RoomsGateway', () => {
   let redisService: RedisService;
   let mockServer: Server;
   let mockClient: Socket;
+  let mockLogger: Logger;
 
   beforeEach(async () => {
     const redisServiceMock = {
@@ -24,7 +25,7 @@ describe('RoomsGateway', () => {
       providers: [
         RoomsGateway,
         { provide: RedisService, useValue: redisServiceMock },
-        Logger,
+        { provide: Logger, useValue: mockLogger },
       ],
     }).compile();
 
@@ -46,6 +47,13 @@ describe('RoomsGateway', () => {
       }),
       data: {},
     } as unknown as Socket;
+
+    mockLogger = {
+      log: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+      debug: jest.fn(),
+    } as unknown as Logger;
 
     gateway.server = mockServer;
   });
