@@ -1,4 +1,4 @@
-import { MEDIA_CONSTRAINTS } from '@/constants/webRTC';
+import { MEDIA_CONSTRAINTS } from '@/constants/audio';
 import { useState } from 'react';
 
 export const useAudioPermission = () => {
