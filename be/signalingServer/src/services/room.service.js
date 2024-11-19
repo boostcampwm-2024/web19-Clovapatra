@@ -156,6 +156,10 @@ class RoomService {
         socketId,
         ...info,
       })),
+      userMappings: Array.from(room.users.entries()).reduce((mappings, [socketId, info]) => {
+        mappings[info.playerNickname] = socketId;
+        return mappings;
+      }, {}),
     };
   }
 }
