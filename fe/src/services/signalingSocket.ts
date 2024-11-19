@@ -21,6 +21,10 @@ class SignalingSocket extends SocketService {
     super();
   }
 
+  getLocalStream() {
+    return this.localStream;
+  }
+
   // 시그널링 서버 연결 설정
   connect() {
     if (this.socket?.connected) return;
