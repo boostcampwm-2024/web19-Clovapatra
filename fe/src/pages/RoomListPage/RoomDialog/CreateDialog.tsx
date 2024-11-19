@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useAudioPermission } from '@/hooks/useAudioPermission';
 import { gameSocket } from '@/services/gameSocket';
 import { signalingSocket } from '@/services/signalingSocket';
 import useRoomStore from '@/stores/zustand/useRoomStore';
@@ -23,6 +24,7 @@ const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
   const navigate = useNavigate();
   const currentRoom = useRoomStore((state) => state.currentRoom);
   const setCurrentPlayer = useRoomStore((state) => state.setCurrentPlayer);
+  const { requestPermission } = useAudioPermission();
 
   useEffect(() => {
     if (currentRoom) {
@@ -46,15 +48,19 @@ const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
 
       // 방장 닉네임 저장
       sessionStorage.setItem('user_nickname', hostNickname.trim());
-
       setCurrentPlayer(hostNickname.trim());
 
+      // 오디오 권한 요청 -> 허용하지 않을 시 입장 불가
+      const stream = await requestPermission();
+
+      // 소켓 연결
       gameSocket.connect();
       signalingSocket.connect();
 
+      // 스트림 생성 후 방 생성
+      signalingSocket.setupLocalStream(stream);
       gameSocket.createRoom(roomName.trim(), hostNickname.trim());
 
-      // 방 생성 후 currentRoom이 설정될 때까지 대기
       resetAndClose();
     } catch (error) {
       console.error('방 생성 실패:', error);
@@ -67,9 +73,12 @@ const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="font-galmuri sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>방 만들기</DialogTitle>
+          <DialogTitle className="mb-2">방 만들기</DialogTitle>
           <DialogDescription>
             방 제목과 사용하실 닉네임을 입력해주세요.
+          </DialogDescription>
+          <DialogDescription className="text-red-500">
+            마이크 권한을 허용하지 않으면 게임방에 입장할 수 없습니다.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">

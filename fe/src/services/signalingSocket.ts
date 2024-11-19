@@ -6,7 +6,6 @@ import {
   SignalingData,
   SignalingEvents,
 } from '@/types/webrtcTypes';
-import { MEDIA_CONSTRAINTS } from '@/constants/webRTC';
 import { ENV } from '@/config/env';
 
 class SignalingSocket extends SocketService {
@@ -97,9 +96,6 @@ class SignalingSocket extends SocketService {
     // console.log('[WebRTCClient] 방 참가 시도:', this.roomId);
 
     try {
-      // 로컬 오디오 스트림 설정
-      await this.setupLocalStream();
-
       // 서버에 방 참가 요청 전송
       this.socket.emit('join_room', {
         roomId: this.roomId,
@@ -119,17 +115,28 @@ class SignalingSocket extends SocketService {
    * 로컬 오디오 스트림 설정
    * @throws Error 마이크 접근 권한이 없는 경우
    */
-  private async setupLocalStream() {
+  async setupLocalStream(stream: MediaStream) {
     // console.log('[WebRTCClient] 로컬 스트림 설정 시도');
 
     try {
       // 마이크 권한 요청 및 스트림 획득
-      this.localStream =
-        await navigator.mediaDevices.getUserMedia(MEDIA_CONSTRAINTS);
+      this.localStream = stream;
 
       // 사용 중인 오디오 트랙의 설정 정보 획득
       const audioTrack = this.localStream.getAudioTracks()[0];
       this.deviceId = audioTrack.getSettings().deviceId;
+
+      // Web Audio API를 사용하여 볼륨 제어
+      const audioContext = new AudioContext();
+      const source = audioContext.createMediaStreamSource(this.localStream);
+      const gainNode = audioContext.createGain();
+
+      // 볼륨을 최대로 설정 (1.0이 기본값)
+      gainNode.gain.value = 1.0;
+
+      // 노드 연결
+      source.connect(gainNode);
+      gainNode.connect(audioContext.destination);
 
       // console.log(
       //   '[WebRTCClient] 로컬 스트림 설정 완료, 장치 ID:',
