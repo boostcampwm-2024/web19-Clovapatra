@@ -55,7 +55,7 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
 
       // 스트림 생성 후 방 입장
       await signalingSocket.setupLocalStream(stream);
-      await signalingSocket.joinRoom(currentRoom);
+      await signalingSocket.joinRoom(currentRoom, playerNickname.trim());
       gameSocket.joinRoom(roomId, playerNickname.trim());
 
       resetAndClose();

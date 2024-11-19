@@ -29,7 +29,7 @@ const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
   useEffect(() => {
     if (currentRoom) {
       navigate(`/game/${currentRoom.roomId}`);
-      signalingSocket.joinRoom(currentRoom);
+      signalingSocket.joinRoom(currentRoom, hostNickname.trim());
     }
   }, [currentRoom, navigate]);
 
@@ -58,7 +58,7 @@ const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
       signalingSocket.connect();
 
       // 스트림 생성 후 방 생성
-      signalingSocket.setupLocalStream(stream);
+      await signalingSocket.setupLocalStream(stream);
       gameSocket.createRoom(roomName.trim(), hostNickname.trim());
 
       resetAndClose();

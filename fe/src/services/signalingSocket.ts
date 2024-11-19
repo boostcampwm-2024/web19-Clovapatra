@@ -7,6 +7,7 @@ import {
   SignalingEvents,
 } from '@/types/webrtcTypes';
 import { ENV } from '@/config/env';
+import usePeerStore from '@/stores/zustand/usePeerStore';
 
 class SignalingSocket extends SocketService {
   // WebRTC 연결을 관리하는 객체 - key: peerId, value: RTCPeerConnection
@@ -16,13 +17,11 @@ class SignalingSocket extends SocketService {
   // WebRTC 연결 초기화 관련 상태
   private roomId: string | null = null;
   private deviceId: string | null = null;
+  private audioContexts: Map<string, AudioContext> = new Map();
+  private gainNodes: Map<string, GainNode> = new Map();
 
   constructor() {
     super();
-  }
-
-  getLocalStream() {
-    return this.localStream;
   }
 
   // 시그널링 서버 연결 설정
@@ -53,6 +52,9 @@ class SignalingSocket extends SocketService {
     // 서버로부터 방 정보 업데이트 수신
     this.socket.on('room_info', (roomInfo) => {
       // console.log('[WebRTCClient] 방 정보 수신:', roomInfo);
+      const { setUserMappings } = usePeerStore.getState();
+      setUserMappings(roomInfo.userMappings);
+
       this.handleRoomInfo();
     });
 
@@ -84,9 +86,9 @@ class SignalingSocket extends SocketService {
     });
 
     // 사용자 연결 해제 이벤트 수신
-    this.socket.on('user_disconnected', (socketId) => {
-      // console.log('[WebRTCClient] 사용자 연결 해제:', socketId);
-      this.handleUserDisconnect(socketId);
+    this.socket.on('user_disconnected', (peerId) => {
+      // console.log('[WebRTCClient] 사용자 연결 해제:', peerId);
+      this.handleUserDisconnect(peerId);
     });
   }
 
@@ -95,7 +97,7 @@ class SignalingSocket extends SocketService {
    * @param room - 참가할 방
    * @throws Error 마이크 접근 실패 시 에러 발생
    */
-  async joinRoom(room: Room) {
+  async joinRoom(room: Room, nickName: string) {
     try {
       // 1. 소켓 연결 확인 및 연결 시도
       if (!this.socket?.connected) {
@@ -139,6 +141,7 @@ class SignalingSocket extends SocketService {
           deviceId: this.deviceId,
           sdp: null,
           candidates: [],
+          playerNickname: nickName,
         });
       } else {
         throw new Error('Socket is not connected');
@@ -163,18 +166,6 @@ class SignalingSocket extends SocketService {
       // 사용 중인 오디오 트랙의 설정 정보 획득
       const audioTrack = this.localStream.getAudioTracks()[0];
       this.deviceId = audioTrack.getSettings().deviceId;
-
-      // Web Audio API를 사용하여 볼륨 제어
-      const audioContext = new AudioContext();
-      const source = audioContext.createMediaStreamSource(this.localStream);
-      const gainNode = audioContext.createGain();
-
-      // 볼륨을 최대로 설정 (1.0이 기본값)
-      gainNode.gain.value = 1.0;
-
-      // 노드 연결
-      source.connect(gainNode);
-      gainNode.connect(audioContext.destination);
 
       // console.log(
       //   '[WebRTCClient] 로컬 스트림 설정 완료, 장치 ID:',
@@ -381,7 +372,6 @@ class SignalingSocket extends SocketService {
    */
   private handleRemoteStream(stream: MediaStream, peerId: string) {
     // console.log('[WebRTCClient] 원격 스트림 처리:', peerId);
-
     const audioId = `audio-${peerId}`;
     const existingAudio = document.getElementById(
       audioId
@@ -395,6 +385,28 @@ class SignalingSocket extends SocketService {
     audioElement.id = audioId;
     audioElement.srcObject = stream;
     audioElement.autoplay = true;
+    audioElement.controls = false; // UI 컨트롤 숨김 처리
+
+    // AudioContext 및 GainNode 설정
+    const audioContext = new AudioContext();
+    const source = audioContext.createMediaElementSource(audioElement);
+    const gainNode = audioContext.createGain();
+
+    // 초기 볼륨 설정 (50%)
+    gainNode.gain.value = 0.5;
+
+    // 연결 설정
+    source.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    // Map에 저장
+    this.audioContexts.set(peerId, audioContext);
+    this.gainNodes.set(peerId, gainNode);
+
+    // Maps 상태 확인
+    // console.log('Current audioContexts:', this.audioContexts);
+    // console.log('Current gainNodes:', this.gainNodes);
+
     document.body.appendChild(audioElement);
 
     // console.log('[WebRTCClient] 오디오 엘리먼트 생성 완료:', audioId);
@@ -402,39 +414,51 @@ class SignalingSocket extends SocketService {
 
   /**
    * 사용자 연결 해제 처리
-   * @param socketId - 연결 해제된 사용자의 소켓 ID
+   * @param peerId - 연결 해제된 사용자의 소켓 ID
    */
-  private handleUserDisconnect(socketId: string) {
-    // console.log('[WebRTCClient] 사용자 연결 해제 처리:', socketId);
+  private handleUserDisconnect(peerId: string) {
+    // console.log('[WebRTCClient] 사용자 연결 해제 처리:', peerId);
 
     // Peer Connection 정리
-    if (this.peerConnections.has(socketId)) {
-      const pc = this.peerConnections.get(socketId);
+    if (this.peerConnections.has(peerId)) {
+      const pc = this.peerConnections.get(peerId);
       pc.close();
-      this.peerConnections.delete(socketId);
+      this.peerConnections.delete(peerId);
     }
 
     // 오디오 엘리먼트 제거
-    const audioElement = document.getElementById(`audio-${socketId}`);
+    const audioElement = document.getElementById(`audio-${peerId}`);
     if (audioElement) {
       audioElement.remove();
     }
 
-    // console.log('[WebRTCClient] 연결 해제 처리 완료:', socketId);
+    // AudioContext 및 GainNode cleanup
+    const audioContext = this.audioContexts.get(peerId);
+    if (audioContext) {
+      audioContext.close();
+      this.audioContexts.delete(peerId);
+      this.gainNodes.delete(peerId);
+    }
+
+    // console.log('[WebRTCClient] 연결 해제 처리 완료:', peerId);
   }
 
   // WebRTC 관련 리소스 정리
   private cleanupResources() {
     // 1. Peer Connections 정리
-    for (const [peerId, pc] of this.peerConnections) {
+    for (const [_, pc] of this.peerConnections) {
       pc.close();
-      // 2. 오디오 엘리먼트 제거
-      const audioElement = document.getElementById(`audio-${peerId}`);
-      if (audioElement) {
-        audioElement.remove();
-      }
+      // // 2. 오디오 엘리먼트 제거
+      // const audioElement = document.getElementById(`audio-${peerId}`);
+      // if (audioElement) {
+      //   audioElement.remove();
+      // }
     }
     this.peerConnections.clear();
+
+    // 2. 모든 오디오 엘리먼트 제거
+    const audioElements = document.querySelectorAll('audio');
+    audioElements.forEach((audioElement) => audioElement.remove());
 
     // 3. 로컬 스트림 정리
     if (this.localStream) {
@@ -445,6 +469,14 @@ class SignalingSocket extends SocketService {
     // 상태 초기화
     this.roomId = null;
     this.deviceId = null;
+  }
+
+  // 볼륨 조절을 위한 메서드
+  setVolume(peerId: string, volume: number) {
+    const gainNode = this.gainNodes.get(peerId);
+    if (gainNode) {
+      gainNode.gain.value = volume;
+    }
   }
 
   override disconnect() {
@@ -459,6 +491,14 @@ class SignalingSocket extends SocketService {
     super.disconnect();
 
     console.log('[WebRTCClient] 연결 종료 완료');
+  }
+
+  getLocalStream() {
+    return this.localStream;
+  }
+
+  getPeersInfo() {
+    return this.peerConnections;
   }
 }
 

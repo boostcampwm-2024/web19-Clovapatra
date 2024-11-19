@@ -30,7 +30,7 @@ export const useReconnect = ({ currentRoom }) => {
 
           // 4. 방 참가
           gameSocket.joinRoom(roomId, nickname);
-          signalingSocket.joinRoom(room);
+          signalingSocket.joinRoom(room, nickname);
         }
       } catch (error) {
         console.error('Reconnection failed:', error);

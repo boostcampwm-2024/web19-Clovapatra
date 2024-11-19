@@ -63,7 +63,7 @@ const Player = ({ playerNickname, isReady }: PlayerProps) => {
               )}
             </Button>
           ) : (
-            <VolumeBar isOn={true} />
+            <VolumeBar playerNickname={playerNickname} />
           )}
           {isCurrentPlayerHost && !isPlayerHost && (
             <Button
