@@ -7,6 +7,7 @@ import useRoomStore from '@/stores/zustand/useRoomStore';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { signalingSocket } from '@/services/signalingSocket';
+import { gameSocket } from '@/services/gameSocket';
 
 const Player = ({ playerNickname, isReady }: PlayerProps) => {
   const { currentRoom, currentPlayer } = useRoomStore();
@@ -15,9 +16,8 @@ const Player = ({ playerNickname, isReady }: PlayerProps) => {
   const isCurrentPlayer = currentPlayer === playerNickname;
   const [isMuted, setIsMuted] = useState(false);
 
-  const handleKick = () => {
-    // TODO: 강퇴 로직 구현
-    console.log(`강퇴: ${playerNickname}`);
+  const handleKick = async () => {
+    gameSocket.kickPlayer(playerNickname);
   };
 
   const handleMuteToggle = () => {
