@@ -6,18 +6,21 @@ interface RoomStore {
   rooms: Room[];
   currentRoom: Room | null;
   currentPlayer: string | null;
+  kickedPlayer: string | null;
 }
 
 interface RoomActions {
   setRooms: (rooms: Room[]) => void;
   setCurrentRoom: (room: Room) => void;
   setCurrentPlayer: (nickname: string) => void;
+  setKickedPlayer: (nickname: string) => void;
 }
 
 const initialState: RoomStore = {
   rooms: [],
   currentRoom: null,
   currentPlayer: null,
+  kickedPlayer: null,
 };
 
 const useRoomStore = create<RoomStore & RoomActions>()(
@@ -37,6 +40,11 @@ const useRoomStore = create<RoomStore & RoomActions>()(
     setCurrentPlayer: (nickname) =>
       set(() => ({
         currentPlayer: nickname,
+      })),
+
+    setKickedPlayer: (nickname) =>
+      set(() => ({
+        kickedPlayer: nickname,
       })),
   }))
 );
