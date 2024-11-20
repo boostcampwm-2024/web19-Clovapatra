@@ -42,13 +42,13 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
     try {
       setIsLoading(true);
 
+      // 오디오 권한 요청 -> 허용하지 않을 시 입장 불가
+      const stream = await requestPermission();
+
       // 참가자 닉네임 저장
       sessionStorage.setItem('user_nickname', playerNickname.trim());
       setCurrentRoom(currentRoom);
       setCurrentPlayer(playerNickname.trim());
-
-      // 오디오 권한 요청 -> 허용하지 않을 시 입장 불가
-      const stream = await requestPermission();
 
       gameSocket.connect();
       signalingSocket.connect();

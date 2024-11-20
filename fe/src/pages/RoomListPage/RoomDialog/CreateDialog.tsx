@@ -14,7 +14,7 @@ import { gameSocket } from '@/services/gameSocket';
 import { signalingSocket } from '@/services/signalingSocket';
 import useRoomStore from '@/stores/zustand/useRoomStore';
 import { RoomDialogProps } from '@/types/roomTypes';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
@@ -25,13 +25,6 @@ const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
   const currentRoom = useRoomStore((state) => state.currentRoom);
   const setCurrentPlayer = useRoomStore((state) => state.setCurrentPlayer);
   const { requestPermission } = useAudioPermission();
-
-  useEffect(() => {
-    if (currentRoom) {
-      navigate(`/game/${currentRoom.roomId}`);
-      signalingSocket.joinRoom(currentRoom, hostNickname.trim());
-    }
-  }, [currentRoom, navigate]);
 
   const resetAndClose = () => {
     setRoomName('');
@@ -46,12 +39,12 @@ const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
     try {
       setIsLoading(true);
 
+      // 오디오 권한 요청 -> 허용하지 않을 시 입장 불가
+      const stream = await requestPermission();
+
       // 방장 닉네임 저장
       sessionStorage.setItem('user_nickname', hostNickname.trim());
       setCurrentPlayer(hostNickname.trim());
-
-      // 오디오 권한 요청 -> 허용하지 않을 시 입장 불가
-      const stream = await requestPermission();
 
       // 소켓 연결
       gameSocket.connect();
@@ -59,6 +52,20 @@ const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
 
       // 스트림 생성 후 방 생성
       await signalingSocket.setupLocalStream(stream);
+
+      // 한 번만 실행되는 이벤트 리스너 등록
+      gameSocket.socket?.once('roomCreated', async (room) => {
+        try {
+          // 시그널링 서버 접속
+          await signalingSocket.joinRoom(room, hostNickname.trim());
+          // 페이지 이동
+          navigate(`/game/${room.roomId}`);
+        } catch (error) {
+          console.error('시그널링 서버 접속 실패:', error);
+          alert('음성 채팅 연결에 실패했습니다.');
+        }
+      });
+
       gameSocket.createRoom(roomName.trim(), hostNickname.trim());
 
       resetAndClose();
