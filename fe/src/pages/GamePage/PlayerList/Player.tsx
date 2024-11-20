@@ -7,6 +7,7 @@ import useRoomStore from '@/stores/zustand/useRoomStore';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { signalingSocket } from '@/services/signalingSocket';
+import KickDialog from '../GameDialog/KickDialog';
 
 const Player = ({ playerNickname, isReady }: PlayerProps) => {
   const { currentRoom, currentPlayer } = useRoomStore();
@@ -14,10 +15,10 @@ const Player = ({ playerNickname, isReady }: PlayerProps) => {
   const isPlayerHost = isHost(playerNickname);
   const isCurrentPlayer = currentPlayer === playerNickname;
   const [isMuted, setIsMuted] = useState(false);
+  const [showKickDialog, setShowKickDialog] = useState(false);
 
   const handleKick = () => {
-    // TODO: 강퇴 로직 구현
-    console.log(`강퇴: ${playerNickname}`);
+    setShowKickDialog(true);
   };
 
   const handleMuteToggle = () => {
@@ -77,6 +78,12 @@ const Player = ({ playerNickname, isReady }: PlayerProps) => {
           )}
         </div>
       </CardContent>
+
+      <KickDialog
+        open={showKickDialog}
+        onOpenChange={setShowKickDialog}
+        playerNickname={playerNickname}
+      />
     </Card>
   );
 };

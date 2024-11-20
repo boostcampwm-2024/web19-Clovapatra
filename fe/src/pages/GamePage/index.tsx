@@ -9,15 +9,17 @@ import { NotFound } from '@/components/common/NotFound';
 import GameScreen from './GameScreen/GameScreen';
 import { useAudioManager } from '@/hooks/useAudioManager';
 import { signalingSocket } from '@/services/signalingSocket';
+import { toast } from 'react-toastify';
 
 const GamePage = () => {
   const [showExitDialog, setShowExitDialog] = useState(false);
-  const { currentRoom } = useRoomStore();
+  const { currentRoom, kickedPlayer, setKickedPlayer } = useRoomStore();
   const audioManager = useAudioManager();
 
   useReconnect({ currentRoom });
   useBackExit({ setShowExitDialog });
 
+  // 오디오 매니저 설정
   useEffect(() => {
     signalingSocket.setAudioManager(audioManager);
 
@@ -25,6 +27,21 @@ const GamePage = () => {
       signalingSocket.setAudioManager(null);
     };
   }, [audioManager]);
+
+  // 강퇴 알림 처리 추가
+  useEffect(() => {
+    if (kickedPlayer) {
+      toast.error(`${kickedPlayer}님이 강퇴되었습니다.`, {
+        position: 'bottom-right',
+        autoClose: 2000,
+        style: {
+          fontFamily: 'Galmuri11, monospace',
+        },
+      });
+
+      setKickedPlayer(null);
+    }
+  }, [kickedPlayer, setKickedPlayer, toast]);
 
   const handleClickExit = () => {
     setShowExitDialog(true);

@@ -58,6 +58,27 @@ class GameSocket extends SocketService {
         });
       }
     });
+
+    this.socket.on('kicked', (playerNickname: string) => {
+      const {
+        currentRoom,
+        currentPlayer,
+        setCurrentRoom,
+        setCurrentPlayer,
+        setKickedPlayer,
+      } = useRoomStore.getState();
+
+      if (!currentRoom) return;
+
+      if (currentPlayer === playerNickname) {
+        setCurrentRoom(null);
+        setCurrentPlayer(null);
+        window.location.href = '/';
+        return;
+      }
+
+      setKickedPlayer(playerNickname);
+    });
   }
 
   createRoom(roomName: string, hostNickname: string) {
@@ -66,6 +87,10 @@ class GameSocket extends SocketService {
 
   joinRoom(roomId: string, playerNickname: string) {
     this.socket?.emit('joinRoom', { roomId, playerNickname });
+  }
+
+  kickPlayer(playerNickname: string) {
+    this.socket?.emit('kickPlayer', playerNickname);
   }
 }
 
