@@ -34,6 +34,9 @@ const GamePage = () => {
       toast.error(`${kickedPlayer}님이 강퇴되었습니다.`, {
         position: 'bottom-right',
         autoClose: 2000,
+        style: {
+          fontFamily: 'Galmuri11, monospace',
+        },
       });
 
       setKickedPlayer(null);
