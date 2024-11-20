@@ -3,6 +3,7 @@ import {
   WebSocketServer,
   SubscribeMessage,
   ConnectedSocket,
+  OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { RedisService } from '../../redis/redis.service';
@@ -12,12 +13,13 @@ import { RoomDataDto } from '../rooms/dto/room-data.dto';
 import { GameDataDto } from './dto/game-data.dto';
 import { TurnDataDto } from './dto/turn-data.dto';
 import { ErrorResponse } from '../rooms/dto/error-response.dto';
-import { io, Socket as ClientSocket } from 'socket.io-client';
 import {
   createTurnData,
   selectCurrentPlayer,
   checkPlayersReady,
 } from './games-utils';
+
+const VOICE_SERVERS = 'voice-servers';
 
 @WebSocketGateway({
   namespace: '/rooms',
@@ -28,20 +30,13 @@ import {
   },
 })
 @UseFilters(WsExceptionsFilter)
-export class GamesGateway {
+export class GamesGateway implements OnGatewayDisconnect {
   private readonly logger = new Logger(GamesGateway.name);
 
   @WebSocketServer()
   server: Server;
 
-  private voiceProcessingSocket: ClientSocket;
-
-  constructor(private readonly redisService: RedisService) {
-    this.voiceProcessingSocket = io(`wss://voice-processing.clovapatra.com`);
-    this.voiceProcessingSocket.on('connect', () => {
-      this.logger.log('Successfully connected to the voice processing server');
-    });
-  }
+  constructor(private readonly redisService: RedisService) {}
 
   @SubscribeMessage('startGame')
   async handleStartGame(@ConnectedSocket() client: Socket) {
@@ -100,8 +95,8 @@ export class GamesGateway {
 
       const turnData: TurnDataDto = createTurnData(roomData, gameData);
 
+      this.server.to(VOICE_SERVERS).emit('turnChanged', turnData);
       this.server.to(roomId).emit('turnChanged', turnData);
-      this.voiceProcessingSocket.emit('turnChanged', turnData);
 
       this.logger.log(`Game started successfully in room: ${roomId}`);
     } catch (error) {
@@ -114,4 +109,7 @@ export class GamesGateway {
       client.emit('error', errorResponse);
     }
   }
+
+  @SubscribeMessage('disconnect')
+  async handleDisconnect() {}
 }
