@@ -38,12 +38,11 @@ const Player = ({ playerNickname, isReady }: PlayerProps) => {
   };
 
   return (
-    <Card className="h-full">
+    <Card className={`h-full ${isReady ? 'bg-cyan-50' : ''}`}>
       <CardContent className="flex h-[4.7rem] items-center justify-between p-4">
         <div className="flex items-center gap-2">
           {isPlayerHost ? <FaCrown className="text-yellow-500" /> : ''}
           <span className="font-galmuri">{playerNickname}</span>
-          {isReady && <span className="text-sm text-green-500">준비 완료</span>}
         </div>
         <div className="flex items-center gap-4">
           {isCurrentPlayer ? (
@@ -54,13 +53,13 @@ const Player = ({ playerNickname, isReady }: PlayerProps) => {
               className={`rounded-full border ${
                 isMuted
                   ? 'border-destructive text-destructive'
-                  : 'border-green-500 text-green-500'
+                  : 'border-cyan-500 text-cyan-500'
               } hover:bg-transparent`}
             >
               {isMuted ? (
                 <FaMicrophoneSlash className="h-5 w-5 text-destructive" />
               ) : (
-                <FaMicrophone className="h-5 w-5 text-green-500" />
+                <FaMicrophone className="h-5 w-5 text-cyan-500" />
               )}
             </Button>
           ) : (

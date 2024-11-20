@@ -58,7 +58,7 @@ const GamePage = () => {
         <PlayerList
           players={currentRoom.players.map((player) => ({
             playerNickname: player.playerNickname,
-            isReady: false,
+            isReady: player.isReady,
           }))}
         />
       </div>

@@ -2,6 +2,7 @@ import { io, Socket } from 'socket.io-client';
 import {
   ClientToServerEvents,
   ServerToClientEvents,
+  TurnData,
 } from '@/types/socketTypes';
 import { PlayerProps, Room } from '@/types/roomTypes';
 import { SocketService } from './SocketService';
@@ -79,6 +80,10 @@ class GameSocket extends SocketService {
 
       setKickedPlayer(playerNickname);
     });
+
+    this.socket.on('turnChanged', (turnData: TurnData) => {
+      console.log(turnData);
+    });
   }
 
   createRoom(roomName: string, hostNickname: string) {
@@ -91,6 +96,14 @@ class GameSocket extends SocketService {
 
   kickPlayer(playerNickname: string) {
     this.socket?.emit('kickPlayer', playerNickname);
+  }
+
+  setReady() {
+    this.socket?.emit('setReady');
+  }
+
+  startGame() {
+    this.socket?.emit('startGame');
   }
 }
 

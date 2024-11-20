@@ -11,3 +11,11 @@ export interface ClientToServerEvents {
   createRoom: (data: { roomName: string; hostNickname: string }) => void;
   joinRoom: (data: { roomId: string; playerNickname: string }) => void;
 }
+
+export interface TurnData {
+  roomId: string;
+  playerNickname: string;
+  gameMode: string;
+  timeLimit: number;
+  lyrics: string;
+}

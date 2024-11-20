@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Gamepad2, CheckCircle2 } from 'lucide-react';
 import useRoomStore from '@/stores/zustand/useRoomStore';
+import { gameSocket } from '@/services/gameSocket';
 
 const GameScreen = () => {
   const [isReady, setIsReady] = useState(false);
@@ -20,21 +21,22 @@ const GameScreen = () => {
 
   const isHost = currentPlayer === currentRoom.hostNickname;
 
-  // 방장을 제외한 나머지 플레이어들의 준비 상태 체크
   const allPlayersReady = currentRoom.players
-    .slice(1) // 첫 번째 플레이어(방장)를 제외
+    .slice(1)
     .every((player) => player.isReady);
 
-  const handleReady = () => {
-    setIsReady(true);
-    // TODO: 서버에 준비 상태 전송 로직 추가 필요
+  const toggleReady = () => {
+    const newReadyState = !isReady;
+    setIsReady(newReadyState);
+
+    gameSocket.setReady();
   };
 
   const handleGameStart = () => {
-    // TODO: 게임 시작 로직 추가 필요
+    // TODO: 게임 시작 후 화면 중앙 버튼 display: none
+    gameSocket.startGame();
   };
 
-  // 방장인지 아닌지로 버튼 분기
   return (
     <div className="h-[27rem] bg-muted rounded-lg flex flex-col items-center justify-center space-y-4">
       {isHost ? (
@@ -50,16 +52,15 @@ const GameScreen = () => {
       ) : (
         <Button
           size="lg"
-          disabled={isReady}
-          onClick={handleReady}
-          className={`font-galmuri px-8 py-6 text-lg ${isReady ? 'bg-green-500 hover:bg-green-500' : ''}`}
+          onClick={toggleReady}
+          className={`font-galmuri px-8 py-6 text-lg ${isReady ? 'bg-cyan-500 hover:bg-cyan-500' : ''}`}
         >
           <CheckCircle2 className="mr-2 h-5 w-5" />
           {isReady ? '준비 완료' : '게임 준비'}
         </Button>
       )}
 
-      {isHost && !allPlayersReady && (
+      {!allPlayersReady && (
         <p className="font-galmuri text-sm text-muted-foreground mt-2">
           모든 플레이어가 준비를 완료해야 게임을 시작할 수 있습니다.
         </p>
