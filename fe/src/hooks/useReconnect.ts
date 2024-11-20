@@ -5,6 +5,7 @@ import useRoomStore from '@/stores/zustand/useRoomStore';
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAudioPermission } from './useAudioPermission';
+import { useAudioManager } from './useAudioManager';
 
 export const useReconnect = ({ currentRoom }) => {
   const { roomId } = useParams();
@@ -12,6 +13,7 @@ export const useReconnect = ({ currentRoom }) => {
   const nickname = sessionStorage.getItem('user_nickname');
   const { data: room } = getCurrentRoomQuery(roomId);
   const { requestPermission } = useAudioPermission();
+  const audioManager = useAudioManager();
 
   useEffect(() => {
     const handleReconnect = async () => {
@@ -24,19 +26,30 @@ export const useReconnect = ({ currentRoom }) => {
           gameSocket.connect();
           signalingSocket.connect();
 
-          // 3. 마이크 권한 요청 및 스트림 설정
+          // 3. audioManager 설정 (소켓 연결 후)
+          console.log('Reconnect - audioManager 설정');
+          signalingSocket.setAudioManager(audioManager);
+
+          // 4. 마이크 권한 요청 및 스트림 설정
           const stream = await requestPermission();
           signalingSocket.setupLocalStream(stream);
 
-          // 4. 방 참가
+          // 5. 방 참가
           gameSocket.joinRoom(roomId, nickname);
           signalingSocket.joinRoom(room, nickname);
         }
       } catch (error) {
         console.error('Reconnection failed:', error);
+        // 실패 시 audioManager 제거
+        signalingSocket.setAudioManager(null);
       }
     };
 
     handleReconnect();
-  }, [room, requestPermission]);
+
+    // cleanup
+    return () => {
+      signalingSocket.setAudioManager(null);
+    };
+  }, [room, currentRoom, audioManager, requestPermission, roomId, nickname]);
 };
