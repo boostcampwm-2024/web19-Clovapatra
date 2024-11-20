@@ -33,3 +33,42 @@
 - signalingSocket에서 로그 찍어보고 동작하고 있는 건 확인했는데, 로컬에서 테스트는 불가
   - 왜냐하면 둘 다 나이기 때문.. 다른 사람의 볼륨을 조절 하려면 결국 한 사용자는 마이크를 켜야 하는데, 둘 다 내 목소리니까 구분이 안 됨
   - 본인 마이크 음소거는 테스트 완
+- 문제 발견: 게임방에 처음 입장하면 gainNode가 없음 -> 새로고침 하면 되는데 왜지..?  
+  느낌상 room_info에서 데이터를 받아와서 상태 저장하기 전에 setVolume을 하려고 해서 그런 것 같음
+  ```tsx
+  setVolume(peerId: string, volume: number) {
+    const gainNode = this.gainNodes.get(peerId);
+    if (gainNode) {
+      gainNode.gain.value = volume;
+      console.log(gainNode.gain.value);
+    }
+  }
+  ```
+
+### 방을 처음 생성할 때 room_info 이벤트로 수신하는 userMappings에 hostNickname이 안 담기는 문제
+
+- useEffect 내에서 signalingSocket에 join 하고 있어서 안 됨
+- resetAndClose로 Dialog 컴포넌트 언마운트 되는데 useEffect 실행 시도
+  - Dialog가 너무 일찍 언마운트돼서 useEffect 실행이 제대로 안 됨
+  - 비동기 작업 순서가 보장되지 않음
+- 이벤트 리스너 방식
+  - 이벤트 리스너를 먼저 등록하고 방 생성 요청하여 작업 순서 보장
+  - 컴포넌트 생명주기와 관계없이 이벤트 리스너 동작
+
+### AudioContext -> HTMLAudioElement 사용으로 변경
+
+- 단순 볼륨 조절만 필요하기 때문에 AudioContext를 사용할 필요가 없다고 판단
+- useAudioManager hook에서 원격 스트림 설정(Audio Element 생성), 볼륨 조절, 특정 Audio Element 제거, 모든 Audio Elements 제거 함수를 제공하여 signalingSocket 및 VolumeBar에서 사용할 수 있도록 함
+- GamePage에서 useEffect에 audioManager 의존성 주입이 필요한 이유
+
+  - signalingSocket은 클래스로 구현되어 있어 React hook을 직접 사용할 수 없다.
+  - GamePage 컴포넌트가 언마운트될 때 audioManager를 null로 설정하여 메모리 누수를 방지하고, 페이지를 나간 후에도 오디오가 계속 재생되는 것을 막음
+  - useEffect가 없으면 원격 스트림을 받았을 때 audioManager가 없어 오디오를 처리할 수 없다.
+  - 아래와 같이 하게 되면 컴포넌트가 언마운트될 때 audioManager를 null로 설정하는 정리 작업을 할 수 없고, 컴포넌트가 리렌더링될 때마다 setAudioManager가 호출된다. useEffect를 사용하면 audioManager가 변경될 때만 호출 됨
+
+    ```tsx
+    const GamePage = () => {
+      const audioManager = useAudioManager();
+      signalingSocket.setAudioManager(audioManager);
+    };
+    ```
