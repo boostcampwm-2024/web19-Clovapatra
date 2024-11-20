@@ -256,6 +256,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
       );
 
       this.server.to(roomId).emit('kicked', playerNickname);
+      this.server.to(roomId).emit('updateUsers', roomData.players);
 
       this.logger.log(`Player ${playerNickname} kicked from room ${roomId}`);
     } catch (error) {
