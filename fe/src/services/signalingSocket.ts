@@ -55,7 +55,6 @@ class SignalingSocket extends SocketService {
       // console.log('[WebRTCClient] 방 정보 수신:', roomInfo);
       const { setUserMappings } = usePeerStore.getState();
 
-      console.log(roomInfo);
       setUserMappings(roomInfo.userMappings);
 
       this.handleRoomInfo();
@@ -379,35 +378,11 @@ class SignalingSocket extends SocketService {
    */
   private handleRemoteStream(stream: MediaStream, peerId: string) {
     // console.log('[WebRTCClient] 원격 스트림 처리:', peerId);
-    console.log('1. Remote Stream 수신:', {
-      peerId,
-      streamActive: stream.active,
-      audioTracks: stream.getAudioTracks().length,
-    });
 
     const audioManager = this.audioManager;
-    console.log('2. audioManager 상태:', {
-      exists: !!audioManager,
-    });
 
     if (audioManager) {
-      try {
-        console.log('3. 오디오 스트림 설정 시작');
-        audioManager.setAudioStream(peerId, stream);
-        console.log('4. 오디오 스트림 설정 완료');
-
-        // 오디오 엘리먼트 생성 확인
-        setTimeout(() => {
-          const audioElement = document.getElementById(`audio-${peerId}`);
-          console.log('5. 생성된 오디오 엘리먼트 확인:', {
-            exists: !!audioElement,
-            srcObject: !!(audioElement as HTMLAudioElement)?.srcObject,
-            volume: (audioElement as HTMLAudioElement)?.volume,
-          });
-        }, 100);
-      } catch (error) {
-        console.error('오디오 스트림 설정 실패:', error);
-      }
+      audioManager.setAudioStream(peerId, stream);
     } else {
       console.error('audioManager가 설정되지 않음');
     }
