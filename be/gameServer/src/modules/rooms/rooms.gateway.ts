@@ -242,23 +242,22 @@ export class RoomsGateway implements OnGatewayDisconnect {
       );
 
       if (targetSocket) {
+        roomData.players.splice(playerIndex, 1);
+        await this.redisService.set(
+          `room:${roomId}`,
+          JSON.stringify(roomData),
+          'roomUpdate',
+        );
+
+        this.server.to(roomId).emit('kicked', playerNickname);
+        this.server.to(roomId).emit('updateUsers', roomData.players);
+
         targetSocket.disconnect(true);
         this.logger.log(
           `Player ${playerNickname} disconnected from room ${roomId}`,
         );
+        this.logger.log(`Player ${playerNickname} kicked from room ${roomId}`);
       }
-
-      roomData.players.splice(playerIndex, 1);
-      await this.redisService.set(
-        `room:${roomId}`,
-        JSON.stringify(roomData),
-        'roomUpdate',
-      );
-
-      this.server.to(roomId).emit('kicked', playerNickname);
-      this.server.to(roomId).emit('updateUsers', roomData.players);
-
-      this.logger.log(`Player ${playerNickname} kicked from room ${roomId}`);
     } catch (error) {
       this.logger.error(`Error kicking player: ${error.message}`);
       client.emit('error', 'Failed to kick player');
