@@ -88,7 +88,9 @@ class VoiceSocket extends SocketService {
 
       this.mediaRecorder = new MediaRecorder(mediaStream, {
         mimeType: 'audio/webm;codecs=opus',
-        bitsPerSecond: 16000,
+        bitsPerSecond: 128000,
+        audioBitsPerSecond: 96000,
+        videoBitsPerSecond: 0,
       });
 
       this.mediaRecorder.ondataavailable = async (event: BlobEvent) => {
@@ -106,7 +108,7 @@ class VoiceSocket extends SocketService {
         }
       };
 
-      this.mediaRecorder.start(200);
+      this.mediaRecorder.start(100);
       this.recordingStartTime = Date.now();
       console.log('Recording started');
 

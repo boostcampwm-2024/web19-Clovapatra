@@ -23,8 +23,13 @@ export const useReconnect = ({ currentRoom }) => {
           setCurrentRoom(room);
 
           // 2. 소켓 연결
-          gameSocket.connect();
-          signalingSocket.connect();
+          if (!gameSocket.socket?.connected) {
+            gameSocket.connect();
+          }
+
+          if (!signalingSocket.socket?.connected) {
+            signalingSocket.connect();
+          }
 
           // 3. audioManager 설정 (소켓 연결 후)
           signalingSocket.setAudioManager(audioManager);
