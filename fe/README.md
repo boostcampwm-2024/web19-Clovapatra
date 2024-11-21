@@ -72,3 +72,9 @@
       signalingSocket.setAudioManager(audioManager);
     };
     ```
+
+### Voice Server Error: Invalid session
+
+- 방장이 게임 시작 버튼을 눌렀을 때, 제대로 동작할 때도 있고 이 에러가 뜰 때도 있다.
+- 에러가 뜨고 다시 눌렀을 때 다시 동작할 때도 있고, 계속 안 될 때도 있다.
+- 왜 그러는지 모르겠다..!
