@@ -28,9 +28,9 @@ export class TurnDataDto {
   gameMode: GameMode;
 
   @ApiProperty({
-    example: 10,
+    example: 7,
     type: Number,
-    description: '해당 단계 게임 모드를 수행할 때의 제한시간',
+    description: '해당 단계 게임 모드를 수행할 때의 제한시간 (sec)',
   })
   timeLimit: number;
 
@@ -38,8 +38,7 @@ export class TurnDataDto {
     example:
       '도토리가 문을 도로록, 드르륵, 두루룩 열었는가? 드로록, 두루륵, 두르룩 열었는가.',
     type: String,
-    description: '게임모드가 PRONUNCIATION일 때 가사',
-    required: false,
+    description: '가사',
   })
-  lyrics?: string;
+  lyrics: string;
 }
