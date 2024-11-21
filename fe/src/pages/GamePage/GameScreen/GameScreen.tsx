@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Gamepad2, CheckCircle2 } from 'lucide-react';
 import useRoomStore from '@/stores/zustand/useRoomStore';
@@ -21,9 +21,15 @@ const GameScreen = () => {
 
   const isHost = currentPlayer === currentRoom.hostNickname;
 
-  const allPlayersReady = currentRoom.players
-    .slice(1)
-    .every((player) => player.isReady);
+  const canStartGame = useMemo(() => {
+    if (!currentRoom) return false;
+    if (currentRoom.players.length <= 1) return false;
+
+    return currentRoom.players.every((player) => {
+      const isPlayerHost = player.playerNickname === currentRoom.hostNickname;
+      return isPlayerHost || player.isReady;
+    });
+  }, [currentRoom]);
 
   const toggleReady = () => {
     const newReadyState = !isReady;
@@ -42,7 +48,7 @@ const GameScreen = () => {
       {isHost ? (
         <Button
           size="lg"
-          disabled={!allPlayersReady}
+          disabled={!canStartGame}
           onClick={handleGameStart}
           className="font-galmuri px-8 py-6 text-lg"
         >
@@ -60,7 +66,7 @@ const GameScreen = () => {
         </Button>
       )}
 
-      {!allPlayersReady && (
+      {!canStartGame && (
         <p className="font-galmuri text-sm text-muted-foreground mt-2">
           모든 플레이어가 준비를 완료해야 게임을 시작할 수 있습니다.
         </p>
