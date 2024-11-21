@@ -28,7 +28,7 @@ const SAMPLE_DATA = [
 ];
 
 export function createTurnData(
-  roomData: RoomDataDto,
+  roomId: string,
   gameData: GameDataDto,
 ): TurnDataDto {
   const gameModes = [GameMode.PRONUNCIATION, GameMode.CLEOPATRA];
@@ -36,7 +36,7 @@ export function createTurnData(
 
   if (gameMode === GameMode.CLEOPATRA) {
     return {
-      roomId: roomData.roomId,
+      roomId: roomId,
       playerNickname: gameData.currentPlayer,
       gameMode,
       timeLimit: 7,
@@ -47,7 +47,7 @@ export function createTurnData(
     SAMPLE_DATA[Math.floor(Math.random() * SAMPLE_DATA.length)];
 
   return {
-    roomId: roomData.roomId,
+    roomId: roomId,
     playerNickname: gameData.currentPlayer,
     gameMode,
     timeLimit: randomSentence.timeLimit,
@@ -60,7 +60,15 @@ export function selectCurrentPlayer(
   previousPlayers: string[],
 ): string {
   let candidates = alivePlayers;
-  if (previousPlayers[0] === previousPlayers[1]) {
+
+  if (candidates.length === 0) {
+    return null;
+  }
+
+  if (
+    previousPlayers.length >= 2 &&
+    previousPlayers[0] === previousPlayers[1]
+  ) {
     candidates = alivePlayers.filter((player) => player !== previousPlayers[0]);
   }
   const randomIndex = Math.floor(Math.random() * candidates.length);
@@ -80,4 +88,57 @@ export function removePlayerFromGame(
   gameData.alivePlayers = gameData.alivePlayers.filter(
     (player: string) => player !== playerNickname,
   );
+}
+
+export function noteToNumber(note: string): number {
+  const matches = note.match(/([A-G]#?)(\d+)/);
+  if (!matches) return null;
+
+  const [, noteName, octave] = matches;
+  const noteBase = {
+    C: 0,
+    'C#': 1,
+    D: 2,
+    'D#': 3,
+    E: 4,
+    F: 5,
+    'F#': 6,
+    G: 7,
+    'G#': 8,
+    A: 9,
+    'A#': 10,
+    B: 11,
+  }[noteName];
+
+  return noteBase + (parseInt(octave) + 1) * 12;
+}
+
+export function numberToNote(number: number): string {
+  const notes = [
+    'C',
+    'C#',
+    'D',
+    'D#',
+    'E',
+    'F',
+    'F#',
+    'G',
+    'G#',
+    'A',
+    'A#',
+    'B',
+  ];
+  const octave = Math.floor(number / 12) - 1;
+  const noteIndex = Math.round(number) % 12;
+  return `${notes[noteIndex]}${octave}`;
+}
+
+export function updatePreviousPlayers(
+  gameData: GameDataDto,
+  playerNickname: string,
+): void {
+  if (gameData.previousPlayers.length >= 2) {
+    gameData.previousPlayers.shift(); // 맨 앞의 플레이어 제거
+  }
+  gameData.previousPlayers.push(playerNickname);
 }

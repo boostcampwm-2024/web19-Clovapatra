@@ -4,6 +4,7 @@ import {
   SubscribeMessage,
   ConnectedSocket,
   OnGatewayDisconnect,
+  MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { RedisService } from '../../redis/redis.service';
@@ -12,12 +13,15 @@ import { WsExceptionsFilter } from '../../common/filters/ws-exceptions.filter';
 import { RoomDataDto } from '../rooms/dto/room-data.dto';
 import { GameDataDto } from './dto/game-data.dto';
 import { TurnDataDto } from './dto/turn-data.dto';
+import { VoiceResultFromServerDto } from './dto/Voice-result-from-server.dto';
 import { ErrorResponse } from '../rooms/dto/error-response.dto';
 import {
   createTurnData,
   selectCurrentPlayer,
   checkPlayersReady,
   removePlayerFromGame,
+  noteToNumber,
+  updatePreviousPlayers,
 } from './games-utils';
 
 const VOICE_SERVERS = 'voice-servers';
@@ -94,9 +98,13 @@ export class GamesGateway implements OnGatewayDisconnect {
       };
       await this.redisService.set(`game:${roomId}`, JSON.stringify(gameData));
 
-      const turnData: TurnDataDto = createTurnData(roomData, gameData);
+      const turnData: TurnDataDto = createTurnData(roomId, gameData);
 
-      this.server.to(VOICE_SERVERS).emit('turnChanged', turnData);
+      await new Promise<void>((resolve) => {
+        this.server.to(VOICE_SERVERS).emit('turnChanged', turnData, () => {
+          resolve();
+        });
+      });
       this.logger.log('Turn data sent to voice servers:', turnData);
       this.server.to(roomId).emit('turnChanged', turnData);
       this.logger.log('Turn data sent to clients in room:', roomId);
@@ -113,11 +121,104 @@ export class GamesGateway implements OnGatewayDisconnect {
     }
   }
 
-  // // 음성 처리 결과 수신
-  // socket.on("voiceResult", (result) => {
-  //   console.log("Voice result received:", result);
-  //   io.to(result.roomId).emit("voiceProcessingResult", result);
-  // });
+  @SubscribeMessage('voiceResult')
+  async handleVoiceResult(
+    @MessageBody() voiceResultFromServerDto: VoiceResultFromServerDto,
+    @ConnectedSocket() client: Socket,
+  ) {
+    try {
+      const { roomId, playerNickname, averageNote, pronounceScore } =
+        voiceResultFromServerDto;
+
+      this.logger.log(
+        `Received voice result for roomId: ${roomId}, player: ${playerNickname}`,
+      );
+
+      const gameDataString = await this.redisService.get<string>(
+        `game:${roomId}`,
+      );
+      if (!gameDataString) {
+        return client.emit('error', { message: `game ${roomId} not found` });
+      }
+
+      const gameData: GameDataDto = JSON.parse(gameDataString);
+
+      if (averageNote) {
+        const note = noteToNumber(averageNote);
+        this.logger.log(
+          `Processing averageNote for player ${playerNickname}: ${note}`,
+        );
+        if (gameData.previousPitch < note) {
+          this.logger.log(
+            `Success: Player ${playerNickname} has a higher note (${note}) than required pitch.`,
+          );
+          this.server.to(roomId).emit('voiceProcessingResult', {
+            playerNickname,
+            result: 'SUCCESS',
+          });
+          gameData.previousPitch = note;
+        } else {
+          this.logger.log(
+            `Failure: Player ${playerNickname} failed to meet the required pitch.`,
+          );
+          this.server.to(roomId).emit('voiceProcessingResult', {
+            playerNickname,
+            result: 'FAILURE',
+          });
+          removePlayerFromGame(gameData, playerNickname);
+        }
+      } else if (pronounceScore) {
+        this.logger.log(
+          `Processing pronounceScore for player ${playerNickname}: ${pronounceScore}`,
+        );
+        if (pronounceScore >= 98) {
+          this.server.to(roomId).emit('voiceProcessingResult', {
+            playerNickname,
+            result: 'SUCCESS',
+          });
+        } else {
+          this.server.to(roomId).emit('voiceProcessingResult', {
+            playerNickname,
+            result: 'FAILURE',
+          });
+          removePlayerFromGame(gameData, playerNickname);
+        }
+      }
+      updatePreviousPlayers(gameData, playerNickname);
+      gameData.currentTurn++;
+      this.logger.log(`Turn updated: ${gameData.currentTurn}`);
+      gameData.currentPlayer = selectCurrentPlayer(
+        gameData.alivePlayers,
+        gameData.previousPlayers,
+      );
+
+      if (gameData.currentPlayer === null) {
+        // 게임종료
+      }
+
+      this.logger.log(
+        `Saving updated game data to Redis for roomId: ${roomId}`,
+      );
+      await this.redisService.set(`game:${roomId}`, JSON.stringify(gameData));
+
+      const turnData: TurnDataDto = createTurnData(roomId, gameData);
+
+      await new Promise<void>((resolve) => {
+        this.server.to(VOICE_SERVERS).emit('turnChanged', turnData, () => {
+          resolve();
+        });
+      });
+      this.logger.log('Turn data sent to voice servers:', turnData);
+
+      this.server.to(roomId).emit('turnChanged', turnData);
+      this.logger.log('Turn data sent to clients in room:', roomId);
+    } catch (error) {
+      this.logger.error('Error handling voiceResult:', error);
+      client.emit('error', { message: 'Internal server error' });
+
+      // 오류 일때는 일단 성공
+    }
+  }
 
   @SubscribeMessage('disconnect')
   async handleDisconnect(@ConnectedSocket() client: Socket) {
