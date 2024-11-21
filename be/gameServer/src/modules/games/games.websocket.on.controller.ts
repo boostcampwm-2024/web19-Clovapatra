@@ -1,6 +1,6 @@
 import { Controller, Post } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBody } from '@nestjs/swagger';
-import { VoiceResultFromServerDto } from './dto/Voice-result-from-server.dto';
+import { VoiceResultFromServerDto } from './dto/voice-result-from-server.dto';
 
 @ApiTags('Rooms (WebSocket: 서버에서 수신하는 이벤트)')
 @Controller('rooms')
