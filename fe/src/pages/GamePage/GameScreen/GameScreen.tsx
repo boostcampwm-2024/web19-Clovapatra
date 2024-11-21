@@ -9,6 +9,7 @@ import useGameStore from '@/stores/zustand/useGameStore';
 
 const GameScreen = () => {
   const [isReady, setIsReady] = useState(false);
+  const [isGameStarted, setIsGameStarted] = useState(true);
   const { currentRoom, currentPlayer, setCurrentPlayer } = useRoomStore();
   const { turnData } = useGameStore();
 
@@ -21,26 +22,42 @@ const GameScreen = () => {
     }
   }, [currentPlayer, setCurrentPlayer]);
 
-  // 타이머 관리
-  useEffect(() => {
-    if (turnData && turnData.timeLimit) {
-      console.log(`Setting disconnect timer for ${turnData.timeLimit} seconds`);
-
-      const timer = setTimeout(() => {
-        voiceSocket.disconnect();
-        console.log('Voice socket disconnected after time limit');
-      }, turnData.timeLimit * 1000);
-
-      return () => {
-        clearTimeout(timer);
-        console.log('Cleared previous timer');
-      };
-    }
-  }, [turnData]);
-
   if (!currentRoom) return null;
 
   const isHost = currentPlayer === currentRoom.hostNickname;
+
+  useEffect(() => {
+    const startRecording = async () => {
+      if (
+        !turnData ||
+        turnData.playerNickname !== currentPlayer ||
+        !isGameStarted
+      )
+        return;
+
+      try {
+        console.log('Recording turn for:', turnData);
+
+        await voiceSocket.startRecording(
+          signalingSocket.getLocalStream(),
+          currentRoom.roomId,
+          currentPlayer
+        );
+        console.log('Voice recording started');
+
+        setTimeout(() => {
+          voiceSocket.disconnect();
+          console.log(`Voice socket disconnected after ${turnData.timeLimit}s`);
+        }, turnData.timeLimit * 1000);
+
+        setIsGameStarted(!isGameStarted);
+      } catch (error) {
+        console.error('Voice recording error:', error);
+      }
+    };
+
+    startRecording();
+  }, [turnData]);
 
   const canStartGame = useMemo(() => {
     if (!currentRoom) return false;
@@ -61,20 +78,13 @@ const GameScreen = () => {
     }
   };
 
-  const handleGameStart = async () => {
-    if (!isHost) return;
+  const handleGameStart = () => {
+    if (!isHost || !isGameStarted) return;
 
     try {
       console.log('Starting game...');
       gameSocket.startGame();
       console.log('Game socket event emitted');
-
-      await voiceSocket.startRecording(
-        signalingSocket.getLocalStream(),
-        currentRoom.roomId,
-        currentPlayer
-      );
-      console.log('Voice recording started');
     } catch (error) {
       console.error('Game start error:', error);
     }
