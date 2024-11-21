@@ -3,10 +3,14 @@ import { Button } from '@/components/ui/button';
 import { Gamepad2, CheckCircle2 } from 'lucide-react';
 import useRoomStore from '@/stores/zustand/useRoomStore';
 import { gameSocket } from '@/services/gameSocket';
+import { voiceSocket } from '@/services/voiceSocket';
+import { signalingSocket } from '../../../services/signalingSocket';
+import useGameStore from '@/stores/zustand/useGameStore';
 
 const GameScreen = () => {
   const [isReady, setIsReady] = useState(false);
   const { currentRoom, currentPlayer, setCurrentPlayer } = useRoomStore();
+  const { turnData } = useGameStore();
 
   useEffect(() => {
     if (!currentPlayer) {
@@ -16,6 +20,25 @@ const GameScreen = () => {
       }
     }
   }, [currentPlayer, setCurrentPlayer]);
+
+  // 타이머 관리
+  useEffect(() => {
+    if (turnData && turnData.timeLimit) {
+      console.log(`Setting disconnect timer for ${turnData.timeLimit} seconds`);
+
+      console.log(turnData);
+
+      const timer = setTimeout(() => {
+        voiceSocket.disconnect();
+        console.log('Voice socket disconnected after time limit');
+      }, turnData.timeLimit * 1000);
+
+      return () => {
+        clearTimeout(timer);
+        console.log('Cleared previous timer');
+      };
+    }
+  }, [turnData]);
 
   if (!currentRoom) return null;
 
@@ -38,9 +61,15 @@ const GameScreen = () => {
     gameSocket.setReady();
   };
 
-  const handleGameStart = () => {
+  const handleGameStart = async () => {
     // TODO: 게임 시작 후 화면 중앙 버튼 display: none
     gameSocket.startGame();
+
+    await voiceSocket.startRecording(
+      signalingSocket.getLocalStream(),
+      currentRoom.roomId,
+      currentPlayer
+    );
   };
 
   return (
