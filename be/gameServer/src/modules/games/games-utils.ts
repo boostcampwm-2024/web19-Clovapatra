@@ -42,3 +42,12 @@ export function checkPlayersReady(roomData: RoomDataDto): boolean {
     .filter((player) => player.playerNickname !== roomData.hostNickname)
     .every((player) => player.isReady);
 }
+
+export function removePlayerFromGame(
+  gameData: GameDataDto,
+  playerNickname: string,
+): void {
+  gameData.alivePlayers = gameData.alivePlayers.filter(
+    (player: string) => player !== playerNickname,
+  );
+}

@@ -159,7 +159,9 @@ export class RoomsGateway implements OnGatewayDisconnect {
           );
 
           this.logger.log(`host ${playerNickname} leave room`);
-          this.logger.log(`host changed to ${roomData.players[0]}`);
+          this.logger.log(
+            `host changed to ${roomData.players[0].playerNickname}`,
+          );
           this.server.to(roomId).emit('updateUsers', roomData.players);
         } else {
           this.logger.log(`${roomId} deleting room`);

@@ -17,6 +17,7 @@ import {
   createTurnData,
   selectCurrentPlayer,
   checkPlayersReady,
+  removePlayerFromGame,
 } from './games-utils';
 
 const VOICE_SERVERS = 'voice-servers';
@@ -111,5 +112,31 @@ export class GamesGateway implements OnGatewayDisconnect {
   }
 
   @SubscribeMessage('disconnect')
-  async handleDisconnect() {}
+  async handleDisconnect(@ConnectedSocket() client: Socket) {
+    try {
+      const { roomId, playerNickname } = client.data;
+      const gameDataString = await this.redisService.get<string>(
+        `game:${roomId}`,
+      );
+
+      if (!gameDataString) {
+        this.logger.log(`Game not found: ${roomId}`);
+        return;
+      }
+
+      const gameData: GameDataDto = JSON.parse(gameDataString);
+
+      removePlayerFromGame(gameData, playerNickname);
+
+      if (gameData.alivePlayers.length <= 0) {
+        this.logger.log(`${roomId} deleting game`);
+        await this.redisService.delete(`game:${roomId}`);
+      } else {
+        await this.redisService.set(`game:${roomId}`, JSON.stringify(gameData));
+      }
+      this.logger.log(`${playerNickname} leave game`);
+    } catch (error) {
+      this.logger.error('Error handling disconnect: ', error.message);
+    }
+  }
 }
