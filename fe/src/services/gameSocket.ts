@@ -87,6 +87,10 @@ class GameSocket extends SocketService {
 
       setTurnData(turnData);
     });
+
+    this.socket.on('voiceProcessingResult', (result) => {
+      console.log(result);
+    });
   }
 
   createRoom(roomName: string, hostNickname: string) {
