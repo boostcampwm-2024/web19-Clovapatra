@@ -19,3 +19,10 @@ export interface TurnData {
   timeLimit: number;
   lyrics: string;
 }
+
+// 음성 처리 서버 이벤트 타입
+export interface VoiceSocketEvents {
+  audio_data: (buffer: ArrayBuffer) => void;
+  start_recording: () => void;
+  error: (error: Error) => void;
+}
