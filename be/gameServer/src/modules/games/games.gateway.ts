@@ -100,7 +100,11 @@ export class GamesGateway implements OnGatewayDisconnect {
 
       const turnData: TurnDataDto = createTurnData(roomId, gameData);
 
-      this.server.to(VOICE_SERVERS).emit('turnChanged', turnData);
+      await new Promise<void>((resolve) => {
+        this.server.to(VOICE_SERVERS).emit('turnChanged', turnData, () => {
+          resolve();
+        });
+      });
       this.logger.log('Turn data sent to voice servers:', turnData);
       this.server.to(roomId).emit('turnChanged', turnData);
       this.logger.log('Turn data sent to clients in room:', roomId);
@@ -199,7 +203,11 @@ export class GamesGateway implements OnGatewayDisconnect {
 
       const turnData: TurnDataDto = createTurnData(roomId, gameData);
 
-      this.server.to(VOICE_SERVERS).emit('turnChanged', turnData);
+      await new Promise<void>((resolve) => {
+        this.server.to(VOICE_SERVERS).emit('turnChanged', turnData, () => {
+          resolve();
+        });
+      });
       this.logger.log('Turn data sent to voice servers:', turnData);
 
       this.server.to(roomId).emit('turnChanged', turnData);
