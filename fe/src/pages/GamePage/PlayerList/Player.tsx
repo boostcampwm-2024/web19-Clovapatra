@@ -38,7 +38,7 @@ const Player = ({ playerNickname, isReady }: PlayerProps) => {
   };
 
   return (
-    <Card className={`h-full ${isReady ? 'bg-cyan-50' : ''}`}>
+    <Card className={`h-full ${!isPlayerHost && isReady ? 'bg-cyan-50' : ''}`}>
       <CardContent className="flex h-[4.7rem] items-center justify-between p-4">
         <div className="flex items-center gap-2">
           {isPlayerHost ? <FaCrown className="text-yellow-500" /> : ''}
