@@ -8,6 +8,7 @@ import { PlayerProps, Room } from '@/types/roomTypes';
 import { SocketService } from './SocketService';
 import useRoomStore from '@/stores/zustand/useRoomStore';
 import { ENV } from '@/config/env';
+import useGameStore from '@/stores/zustand/useGameStore';
 
 class GameSocket extends SocketService {
   constructor() {
@@ -82,7 +83,13 @@ class GameSocket extends SocketService {
     });
 
     this.socket.on('turnChanged', (turnData: TurnData) => {
-      console.log(turnData);
+      const { setTurnData } = useGameStore.getState();
+
+      setTurnData(turnData);
+    });
+
+    this.socket.on('voiceProcessingResult', (result) => {
+      console.log(result);
     });
   }
 

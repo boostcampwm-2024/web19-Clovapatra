@@ -1,4 +1,3 @@
-import { Room } from '@/types/roomTypes';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 

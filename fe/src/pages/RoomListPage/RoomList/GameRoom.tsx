@@ -9,7 +9,7 @@ interface GameRoomProps {
 
 const GameRoom = ({ room, onJoinRoom }: GameRoomProps) => {
   const isGameStarted = (status: string) => {
-    return status === 'playing';
+    return status === 'progress';
   };
   const isRoomFull = room.players.length >= 4;
 
