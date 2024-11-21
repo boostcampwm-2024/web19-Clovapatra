@@ -48,26 +48,23 @@ class VoiceSocket extends SocketService {
       }) as Socket<VoiceSocketEvents>;
 
       this.setSocket(socket);
-      this.setupEventListeners(resolve, reject);
-    });
-  }
 
-  private setupEventListeners(
-    resolve: () => void,
-    reject: (error: Error) => void
-  ) {
-    if (!this.socket) return;
+      this.socket.on('connect', () => {
+        console.log('Voice server connected');
+        this.socket.emit('start_recording');
+        resolve();
+      });
 
-    this.socket.on('connect', () => {
-      console.log('Voice server connected');
-      this.socket?.emit('start_recording');
-      resolve();
-    });
+      this.socket.on('error', (error) => {
+        console.error('Voice server error:', error);
+        this.handleError(error);
+        reject(error);
+      });
 
-    this.socket.on('error', (error: Error) => {
-      console.error('Voice server error:', error);
-      this.handleError(error);
-      reject(error);
+      this.socket.on('connect_error', (error) => {
+        console.error('Voice server connection error:', error);
+        reject(error);
+      });
     });
   }
 
@@ -122,7 +119,6 @@ class VoiceSocket extends SocketService {
   }
 
   private handleError(error: Error) {
-    console.error('Voice processor error:', error);
     if (this.onErrorCallback) {
       this.onErrorCallback(
         error.message || '음성 처리 중 오류가 발생했습니다.'
@@ -139,11 +135,13 @@ class VoiceSocket extends SocketService {
     }
     this.mediaRecorder = null;
 
-    if (this.socket?.connected) {
-      this.socket.disconnect();
-    }
+    if (this.socket) {
+      if (this.socket?.connected) {
+        this.socket.disconnect();
+      }
 
-    this.setSocket(null);
+      this.setSocket(null);
+    }
 
     this.recordingStartTime = null;
     this.audioChunks = [];
@@ -155,10 +153,6 @@ class VoiceSocket extends SocketService {
 
   isRecording() {
     return this.mediaRecorder && this.mediaRecorder.state === 'recording';
-  }
-
-  isConnected() {
-    return this.socket ? this.socket.connected : false;
   }
 
   override disconnect() {
