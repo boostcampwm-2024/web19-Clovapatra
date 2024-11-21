@@ -27,7 +27,6 @@ export const useReconnect = ({ currentRoom }) => {
           signalingSocket.connect();
 
           // 3. audioManager 설정 (소켓 연결 후)
-          console.log('Reconnect - audioManager 설정');
           signalingSocket.setAudioManager(audioManager);
 
           // 4. 마이크 권한 요청 및 스트림 설정

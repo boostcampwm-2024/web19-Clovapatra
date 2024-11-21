@@ -42,8 +42,6 @@ class VoiceSocket extends SocketService {
         this.setSocket(null);
       }
 
-      console.log('Connecting to voice server:', { roomId, playerNickname });
-
       const socket = io(this.VOICE_SERVER_URL, {
         transports: ['websocket'],
         query: { roomId, playerNickname },
@@ -70,11 +68,6 @@ class VoiceSocket extends SocketService {
       console.error('Voice server error:', error);
       this.handleError(error);
       reject(error);
-    });
-
-    this.socket.on('disconnect', () => {
-      console.log('Voice server disconnected');
-      this.cleanupRecording();
     });
   }
 
