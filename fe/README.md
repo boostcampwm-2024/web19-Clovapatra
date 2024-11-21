@@ -73,8 +73,15 @@
     };
     ```
 
-### Voice Server Error: Invalid session
+### Voice Server Error: Invalid session? 비동기 문제
 
 - 방장이 게임 시작 버튼을 눌렀을 때, 제대로 동작할 때도 있고 이 에러가 뜰 때도 있다.
 - 에러가 뜨고 다시 눌렀을 때 다시 동작할 때도 있고, 계속 안 될 때도 있다.
-- 왜 그러는지 모르겠다..!
+- 왜 그러는지 모르겠다..! -> 비동기 문제😭
+- 로직 순서: gameSocket.startGame -> turnChanged 수신 turnData 상태 저장 -> voiceSocket.startRecording(turnData에 현재 차례 사용자 정보 있음) 그런데 startRecording은 비동기 함수,,
+- 원인: gameSocket.startGame으로 수신하는 turnData가 상태로 저장되기 전에 voiceSocket.startRecording을 해버렸기 때문
+- 해결
+  - handleGameStart 내에서 startGame, startRecording 둘 다 해버리면 죽어도 해결할 수 없다는 것을 깨달음
+  - startRecording에 await 하면 되겠지 했던 게 잘못된 생각이었다,,
+  - useEffect로 turnData 상태가 변할 때 startRecording을 하도록 바꿨다.
+  - 그리고 isGameStarted라는 flag를 두고 한 명씩 턴이 끝날 때마다 이 flag를 바꿔주면서 차례대로 게임을 진행할 수 있도록 함
