@@ -9,7 +9,7 @@ import useGameStore from '@/stores/zustand/useGameStore';
 
 const GameScreen = () => {
   const [isReady, setIsReady] = useState(false);
-  const [isGameStarted, setIsGameStarted] = useState(true);
+  const [isGameStarted, setIsGameStarted] = useState(false);
   const { currentRoom, currentPlayer, setCurrentPlayer } = useRoomStore();
   const { turnData } = useGameStore();
 
@@ -28,12 +28,7 @@ const GameScreen = () => {
 
   useEffect(() => {
     const startRecording = async () => {
-      if (
-        !turnData ||
-        turnData.playerNickname !== currentPlayer ||
-        !isGameStarted
-      )
-        return;
+      if (!turnData || turnData.playerNickname !== currentPlayer) return;
 
       try {
         console.log('Recording turn for:', turnData);
@@ -50,7 +45,7 @@ const GameScreen = () => {
           console.log(`Voice socket disconnected after ${turnData.timeLimit}s`);
         }, turnData.timeLimit * 1000);
 
-        setIsGameStarted(!isGameStarted);
+        setIsGameStarted((prev) => !prev);
       } catch (error) {
         console.error('Voice recording error:', error);
       }
@@ -79,11 +74,12 @@ const GameScreen = () => {
   };
 
   const handleGameStart = () => {
-    if (!isHost || !isGameStarted) return;
+    if (!isHost || isGameStarted) return;
 
     try {
       console.log('Starting game...');
       gameSocket.startGame();
+      setIsGameStarted((prev) => !prev);
       console.log('Game socket event emitted');
     } catch (error) {
       console.error('Game start error:', error);
