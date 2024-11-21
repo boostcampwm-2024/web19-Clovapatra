@@ -26,8 +26,6 @@ const GameScreen = () => {
     if (turnData && turnData.timeLimit) {
       console.log(`Setting disconnect timer for ${turnData.timeLimit} seconds`);
 
-      console.log(turnData);
-
       const timer = setTimeout(() => {
         voiceSocket.disconnect();
         console.log('Voice socket disconnected after time limit');
@@ -58,18 +56,28 @@ const GameScreen = () => {
     const newReadyState = !isReady;
     setIsReady(newReadyState);
 
-    gameSocket.setReady();
+    if (!isHost) {
+      gameSocket.setReady();
+    }
   };
 
   const handleGameStart = async () => {
-    // TODO: 게임 시작 후 화면 중앙 버튼 display: none
-    gameSocket.startGame();
+    if (!isHost) return;
 
-    await voiceSocket.startRecording(
-      signalingSocket.getLocalStream(),
-      currentRoom.roomId,
-      currentPlayer
-    );
+    try {
+      console.log('Starting game...');
+      gameSocket.startGame();
+      console.log('Game socket event emitted');
+
+      await voiceSocket.startRecording(
+        signalingSocket.getLocalStream(),
+        currentRoom.roomId,
+        currentPlayer
+      );
+      console.log('Voice recording started');
+    } catch (error) {
+      console.error('Game start error:', error);
+    }
   };
 
   return (
