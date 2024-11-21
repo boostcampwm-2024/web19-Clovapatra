@@ -1,10 +1,11 @@
 const io = require("socket.io-client");
 
 class GameServerService {
-  constructor(gameServerUrl, redis) {
+  constructor(gameServerUrl, redis, expireTime) {
     this.gameServerUrl = gameServerUrl;
     this.redis = redis;
     this.socket = null;
+    this.expireTime = expireTime;
   }
 
   initialize() {
@@ -31,7 +32,7 @@ class GameServerService {
           timestamp: Date.now(),
         });
 
-        await this.redis.expire(redisKey, 60);
+        await this.redis.expire(redisKey, this.expireTime);
 
         await this.redis.publish(
           "turnUpdate",

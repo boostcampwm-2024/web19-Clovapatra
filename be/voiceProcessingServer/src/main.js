@@ -29,6 +29,7 @@ if (cluster.isMaster) {
   const REDIS_HOST = process.env.REDIS_HOST;
   const REDIS_PORT = process.env.REDIS_PORT;
   const REDIS_PASSWORD = process.env.REDIS_PASSWORD;
+  const REDIS_ROOM_KEY_EXPIRE_TIME = process.env.REDIS_ROOM_KEY_EXPIRE_TIME;
 
   const app = express();
   const server = http.createServer(app);
@@ -77,7 +78,7 @@ if (cluster.isMaster) {
   // Game Server Connection (Primary Worker Only)
   if (cluster.worker.id === 1) {
     const GameServerService = require("./services/game-server.service");
-    const gameServerService = new GameServerService(GAME_SERVER_URL, redis);
+    const gameServerService = new GameServerService(GAME_SERVER_URL, redis, REDIS_ROOM_KEY_EXPIRE_TIME);
     gameServerService.initialize();
 
     // Subscribe to voice results in Primary Worker
