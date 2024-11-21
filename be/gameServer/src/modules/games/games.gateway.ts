@@ -13,7 +13,7 @@ import { WsExceptionsFilter } from '../../common/filters/ws-exceptions.filter';
 import { RoomDataDto } from '../rooms/dto/room-data.dto';
 import { GameDataDto } from './dto/game-data.dto';
 import { TurnDataDto } from './dto/turn-data.dto';
-import { VoiceResultFromServerDto } from './dto/Voice-result-from-server.dto';
+import { VoiceResultFromServerDto } from './dto/voice-result-from-server.dto';
 import { ErrorResponse } from '../rooms/dto/error-response.dto';
 import {
   createTurnData,
