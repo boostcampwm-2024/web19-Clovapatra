@@ -17,6 +17,7 @@ import {
   createTurnData,
   selectCurrentPlayer,
   checkPlayersReady,
+  removePlayerFromGame,
 } from './games-utils';
 
 const VOICE_SERVERS = 'voice-servers';
@@ -87,7 +88,7 @@ export class GamesGateway implements OnGatewayDisconnect {
         gameId: roomId,
         alivePlayers,
         currentTurn: 1,
-        currentPlayer: selectCurrentPlayer(alivePlayers),
+        currentPlayer: selectCurrentPlayer(alivePlayers, []),
         previousPitch: 0,
         previousPlayers: [],
       };
@@ -96,7 +97,9 @@ export class GamesGateway implements OnGatewayDisconnect {
       const turnData: TurnDataDto = createTurnData(roomData, gameData);
 
       this.server.to(VOICE_SERVERS).emit('turnChanged', turnData);
+      this.logger.log('Turn data sent to voice servers:', turnData);
       this.server.to(roomId).emit('turnChanged', turnData);
+      this.logger.log('Turn data sent to clients in room:', roomId);
 
       this.logger.log(`Game started successfully in room: ${roomId}`);
     } catch (error) {
@@ -110,6 +113,38 @@ export class GamesGateway implements OnGatewayDisconnect {
     }
   }
 
+  // // 음성 처리 결과 수신
+  // socket.on("voiceResult", (result) => {
+  //   console.log("Voice result received:", result);
+  //   io.to(result.roomId).emit("voiceProcessingResult", result);
+  // });
+
   @SubscribeMessage('disconnect')
-  async handleDisconnect() {}
+  async handleDisconnect(@ConnectedSocket() client: Socket) {
+    try {
+      const { roomId, playerNickname } = client.data;
+      const gameDataString = await this.redisService.get<string>(
+        `game:${roomId}`,
+      );
+
+      if (!gameDataString) {
+        this.logger.log(`Game not found: ${roomId}`);
+        return;
+      }
+
+      const gameData: GameDataDto = JSON.parse(gameDataString);
+
+      removePlayerFromGame(gameData, playerNickname);
+
+      if (gameData.alivePlayers.length <= 0) {
+        this.logger.log(`${roomId} deleting game`);
+        await this.redisService.delete(`game:${roomId}`);
+      } else {
+        await this.redisService.set(`game:${roomId}`, JSON.stringify(gameData));
+      }
+      this.logger.log(`${playerNickname} leave game`);
+    } catch (error) {
+      this.logger.error('Error handling disconnect: ', error.message);
+    }
+  }
 }
