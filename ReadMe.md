@@ -99,7 +99,7 @@
 
 ## 🏛️ 시스템 아키텍처
 
-![시스템 아키텍처](https://github.com/user-attachments/assets/dc8c7236-9963-4d6a-b7e0-1346d24e8cb9)
+![시스템 아키텍처](https://github.com/user-attachments/assets/25683f10-1daa-41d8-a82f-5fe7f2b3f55f)
 
 ```mermaid
 flowchart TB
@@ -127,7 +127,7 @@ flowchart TB
     %% ===========================================
     
     %% 로드 밸런서
-    subgraph LoadBalancer["로드 밸런서"]
+    subgraph LoadBalancer["라우팅"]
         direction TB
         NGINXMain["NGINX"]
     end
@@ -148,7 +148,7 @@ flowchart TB
     end
 
     %% 음성 처리 서버 클러스터
-    subgraph VoiceProcessing["음성 처리 서버 (Express) 클러스터"]
+    subgraph VoiceProcessing["음성 처리 서버 (Express)<br/>클러스터"]
         direction TB
         VoiceServer1["음성 처리 서버 1"]
         VoiceServer2["음성 처리 서버 2"]
@@ -180,10 +180,9 @@ flowchart TB
     %% 3. 데이터 저장소 연결
     GameServer <--> Redis
     GameServer <--> MySQL
-    SignalingServer <--> Redis
 
     %% 4. 서비스 간 연결
-    VoiceProcessing --> |음성 데이터 처리 결과| GameServer
+    VoiceProcessing <--> |음성 데이터 처리 요청 & 결과 반환| GameServer
     GameServer <--> |게임 데이터| ClientGroup
 
     %% 5. 외부 API 연결
