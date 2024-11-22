@@ -15,8 +15,8 @@ class SocketService {
 
     // 방 참가 요청 처리
     socket.on("join_room", (data) => {
-      const { roomId, sdp, candidates, deviceId } = data;
-      console.log(`[SocketService] 사용자 ${socket.id}가 방 ${roomId} 참가 요청`);
+      const { roomId, sdp, candidates, deviceId, playerNickname } = data;
+      console.log(`[SocketService] 사용자 ${socket.id}(닉네임 ${playerNickname})가 방 ${roomId} 참가 요청`);
 
       // 방에 사용자 추가
       socket.join(roomId);
@@ -24,6 +24,7 @@ class SocketService {
         sdp,
         candidates,
         deviceId,
+        playerNickname,
       });
 
       // 방의 모든 사용자에게 업데이트된 정보 전송

@@ -43,6 +43,10 @@ export class RedisService implements OnModuleDestroy {
     await this.pubClient.publish(channel, message);
   }
 
+  async flushAll(): Promise<void> {
+    await this.redisClient.flushall();
+  }
+
   subscribeToChannel(
     channel: string,
     callback: (message: string) => void,
