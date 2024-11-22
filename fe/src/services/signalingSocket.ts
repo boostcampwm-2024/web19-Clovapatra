@@ -6,8 +6,9 @@ import {
   SignalingData,
   SignalingEvents,
 } from '@/types/webrtcTypes';
-import { MEDIA_CONSTRAINTS } from '@/constants/webRTC';
 import { ENV } from '@/config/env';
+import usePeerStore from '@/stores/zustand/usePeerStore';
+import { useAudioManager } from '@/hooks/useAudioManager';
 
 class SignalingSocket extends SocketService {
   // WebRTC 연결을 관리하는 객체 - key: peerId, value: RTCPeerConnection
@@ -17,6 +18,8 @@ class SignalingSocket extends SocketService {
   // WebRTC 연결 초기화 관련 상태
   private roomId: string | null = null;
   private deviceId: string | null = null;
+  // 오디오 관련
+  private audioManager: ReturnType<typeof useAudioManager> | null = null;
 
   constructor() {
     super();
@@ -50,6 +53,10 @@ class SignalingSocket extends SocketService {
     // 서버로부터 방 정보 업데이트 수신
     this.socket.on('room_info', (roomInfo) => {
       // console.log('[WebRTCClient] 방 정보 수신:', roomInfo);
+      const { setUserMappings } = usePeerStore.getState();
+
+      setUserMappings(roomInfo.userMappings);
+
       this.handleRoomInfo();
     });
 
@@ -81,9 +88,9 @@ class SignalingSocket extends SocketService {
     });
 
     // 사용자 연결 해제 이벤트 수신
-    this.socket.on('user_disconnected', (socketId) => {
-      // console.log('[WebRTCClient] 사용자 연결 해제:', socketId);
-      this.handleUserDisconnect(socketId);
+    this.socket.on('user_disconnected', (peerId) => {
+      // console.log('[WebRTCClient] 사용자 연결 해제:', peerId);
+      this.handleUserDisconnect(peerId);
     });
   }
 
@@ -92,26 +99,58 @@ class SignalingSocket extends SocketService {
    * @param room - 참가할 방
    * @throws Error 마이크 접근 실패 시 에러 발생
    */
-  async joinRoom(room: Room) {
-    this.roomId = room.roomId;
-    // console.log('[WebRTCClient] 방 참가 시도:', this.roomId);
-
+  async joinRoom(room: Room, nickName: string) {
     try {
-      // 로컬 오디오 스트림 설정
-      await this.setupLocalStream();
+      // 1. 소켓 연결 확인 및 연결 시도
+      if (!this.socket?.connected) {
+        this.connect();
 
-      // 서버에 방 참가 요청 전송
-      this.socket.emit('join_room', {
-        roomId: this.roomId,
-        deviceId: this.deviceId,
-        sdp: null, // 초기 연결 시에는 SDP 정보 없음
-        candidates: [], // 초기 연결 시에는 ICE candidate 없음
-      });
+        // 소켓 연결 완료 대기
+        await new Promise<void>((resolve, reject) => {
+          if (!this.socket)
+            return reject(new Error('Socket initialization failed'));
 
-      // console.log('[WebRTCClient] 방 참가 요청 전송됨');
+          const onConnect = () => {
+            this.socket?.off('connect', onConnect);
+            this.socket?.off('connect_error', onError);
+            resolve();
+          };
+
+          const onError = (error: Error) => {
+            this.socket?.off('connect', onConnect);
+            this.socket?.off('connect_error', onError);
+            reject(error);
+          };
+
+          this.socket.on('connect', onConnect);
+          this.socket.on('connect_error', onError);
+
+          // 5초 타임아웃
+          setTimeout(() => {
+            this.socket?.off('connect', onConnect);
+            this.socket?.off('connect_error', onError);
+            reject(new Error('Connection timeout'));
+          }, 5000);
+        });
+      }
+
+      this.roomId = room.roomId;
+
+      // 2. 소켓이 연결된 상태에서 emit
+      if (this.socket?.connected) {
+        this.socket.emit('join_room', {
+          roomId: this.roomId,
+          deviceId: this.deviceId,
+          sdp: null,
+          candidates: [],
+          playerNickname: nickName,
+        });
+      } else {
+        throw new Error('Socket is not connected');
+      }
     } catch (error) {
       console.error('[WebRTCClient] 방 참가 실패:', error);
-      throw error; // 상위로 에러 전파
+      throw error;
     }
   }
 
@@ -119,13 +158,12 @@ class SignalingSocket extends SocketService {
    * 로컬 오디오 스트림 설정
    * @throws Error 마이크 접근 권한이 없는 경우
    */
-  private async setupLocalStream() {
+  async setupLocalStream(stream: MediaStream) {
     // console.log('[WebRTCClient] 로컬 스트림 설정 시도');
 
     try {
       // 마이크 권한 요청 및 스트림 획득
-      this.localStream =
-        await navigator.mediaDevices.getUserMedia(MEDIA_CONSTRAINTS);
+      this.localStream = stream;
 
       // 사용 중인 오디오 트랙의 설정 정보 획득
       const audioTrack = this.localStream.getAudioTracks()[0];
@@ -329,6 +367,10 @@ class SignalingSocket extends SocketService {
     return pc;
   }
 
+  setAudioManager(manager: ReturnType<typeof useAudioManager>) {
+    this.audioManager = manager;
+  }
+
   /**
    * 원격 미디어 스트림 처리
    * @param stream - 수신된 미디어 스트림
@@ -337,45 +379,34 @@ class SignalingSocket extends SocketService {
   private handleRemoteStream(stream: MediaStream, peerId: string) {
     // console.log('[WebRTCClient] 원격 스트림 처리:', peerId);
 
-    const audioId = `audio-${peerId}`;
-    const existingAudio = document.getElementById(
-      audioId
-    ) as HTMLAudioElement | null;
+    const audioManager = this.audioManager;
 
-    if (existingAudio) {
-      existingAudio.remove();
+    if (audioManager) {
+      audioManager.setAudioStream(peerId, stream);
+    } else {
+      console.error('audioManager가 설정되지 않음');
     }
-
-    const audioElement = new Audio();
-    audioElement.id = audioId;
-    audioElement.srcObject = stream;
-    audioElement.autoplay = true;
-    document.body.appendChild(audioElement);
-
     // console.log('[WebRTCClient] 오디오 엘리먼트 생성 완료:', audioId);
   }
 
   /**
    * 사용자 연결 해제 처리
-   * @param socketId - 연결 해제된 사용자의 소켓 ID
+   * @param peerId - 연결 해제된 사용자의 소켓 ID
    */
-  private handleUserDisconnect(socketId: string) {
-    // console.log('[WebRTCClient] 사용자 연결 해제 처리:', socketId);
+  private handleUserDisconnect(peerId: string) {
+    // console.log('[WebRTCClient] 사용자 연결 해제 처리:', peerId);
 
     // Peer Connection 정리
-    if (this.peerConnections.has(socketId)) {
-      const pc = this.peerConnections.get(socketId);
+    if (this.peerConnections.has(peerId)) {
+      const pc = this.peerConnections.get(peerId);
       pc.close();
-      this.peerConnections.delete(socketId);
+      this.peerConnections.delete(peerId);
     }
 
     // 오디오 엘리먼트 제거
-    const audioElement = document.getElementById(`audio-${socketId}`);
-    if (audioElement) {
-      audioElement.remove();
-    }
+    this.audioManager?.removeAudio(peerId);
 
-    // console.log('[WebRTCClient] 연결 해제 처리 완료:', socketId);
+    // console.log('[WebRTCClient] 연결 해제 처리 완료:', peerId);
   }
 
   // WebRTC 관련 리소스 정리
@@ -383,13 +414,11 @@ class SignalingSocket extends SocketService {
     // 1. Peer Connections 정리
     for (const [peerId, pc] of this.peerConnections) {
       pc.close();
-      // 2. 오디오 엘리먼트 제거
-      const audioElement = document.getElementById(`audio-${peerId}`);
-      if (audioElement) {
-        audioElement.remove();
-      }
     }
     this.peerConnections.clear();
+
+    // 2. 오디오 엘리먼트 제거
+    this.audioManager?.cleanup();
 
     // 3. 로컬 스트림 정리
     if (this.localStream) {
@@ -414,6 +443,14 @@ class SignalingSocket extends SocketService {
     super.disconnect();
 
     console.log('[WebRTCClient] 연결 종료 완료');
+  }
+
+  getLocalStream() {
+    return this.localStream;
+  }
+
+  getPeersInfo() {
+    return this.peerConnections;
   }
 }
 

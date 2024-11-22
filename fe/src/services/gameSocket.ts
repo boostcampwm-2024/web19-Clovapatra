@@ -2,11 +2,13 @@ import { io, Socket } from 'socket.io-client';
 import {
   ClientToServerEvents,
   ServerToClientEvents,
+  TurnData,
 } from '@/types/socketTypes';
-import { Room } from '@/types/roomTypes';
+import { PlayerProps, Room } from '@/types/roomTypes';
 import { SocketService } from './SocketService';
 import useRoomStore from '@/stores/zustand/useRoomStore';
 import { ENV } from '@/config/env';
+import useGameStore from '@/stores/zustand/useGameStore';
 
 class GameSocket extends SocketService {
   constructor() {
@@ -39,7 +41,6 @@ class GameSocket extends SocketService {
 
     this.socket.on('error', (error) => {
       console.error('Socket error:', error);
-      window.location.href = '/';
     });
 
     this.socket.on('roomCreated', (room: Room) => {
@@ -48,16 +49,47 @@ class GameSocket extends SocketService {
       store.setCurrentRoom(room);
     });
 
-    this.socket.on('updateUsers', (players: string[]) => {
+    this.socket.on('updateUsers', (players: PlayerProps[]) => {
       const { currentRoom, setCurrentRoom } = useRoomStore.getState();
 
       if (currentRoom) {
         setCurrentRoom({
           ...currentRoom,
           players,
-          hostNickname: players[0],
+          hostNickname: players[0].playerNickname,
         });
       }
+    });
+
+    this.socket.on('kicked', (playerNickname: string) => {
+      const {
+        currentRoom,
+        currentPlayer,
+        setCurrentRoom,
+        setCurrentPlayer,
+        setKickedPlayer,
+      } = useRoomStore.getState();
+
+      if (!currentRoom) return;
+
+      if (currentPlayer === playerNickname) {
+        setCurrentRoom(null);
+        setCurrentPlayer(null);
+        window.location.href = '/';
+        return;
+      }
+
+      setKickedPlayer(playerNickname);
+    });
+
+    this.socket.on('turnChanged', (turnData: TurnData) => {
+      const { setTurnData } = useGameStore.getState();
+
+      setTurnData(turnData);
+    });
+
+    this.socket.on('voiceProcessingResult', (result) => {
+      console.log(result);
     });
   }
 
@@ -67,6 +99,18 @@ class GameSocket extends SocketService {
 
   joinRoom(roomId: string, playerNickname: string) {
     this.socket?.emit('joinRoom', { roomId, playerNickname });
+  }
+
+  kickPlayer(playerNickname: string) {
+    this.socket?.emit('kickPlayer', playerNickname);
+  }
+
+  setReady() {
+    this.socket?.emit('setReady');
+  }
+
+  startGame() {
+    this.socket?.emit('startGame');
   }
 }
 

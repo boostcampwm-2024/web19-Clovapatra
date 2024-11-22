@@ -12,8 +12,10 @@ const RoomHeader = () => {
   return (
     <>
       <div className="flex justify-between items-center">
-        <span className="text-2xl font-bold">방 목록</span>
-        <Button onClick={handleDialogOpen}>방 만들기</Button>
+        <span className="font-galmuri text-2xl">방 목록</span>
+        <Button className="font-galmuri" onClick={handleDialogOpen}>
+          방 만들기
+        </Button>
       </div>
 
       <RoomDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />

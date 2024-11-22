@@ -1,7 +1,17 @@
+@import url('https://cdn.jsdelivr.net/npm/galmuri@latest/dist/galmuri.css');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 @layer base {
+  @font-face {
+    font-family: 'DOSGothic';
+    src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_eight@1.0/DOSGothic.woff')
+      format('woff');
+    font-weight: normal;
+    font-style: normal;
+  }
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;

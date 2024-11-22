@@ -9,7 +9,7 @@ interface GameRoomProps {
 
 const GameRoom = ({ room, onJoinRoom }: GameRoomProps) => {
   const isGameStarted = (status: string) => {
-    return status === 'playing';
+    return status === 'progress';
   };
   const isRoomFull = room.players.length >= 4;
 
@@ -21,7 +21,7 @@ const GameRoom = ({ room, onJoinRoom }: GameRoomProps) => {
 
   return (
     <Card
-      className={`flex w-full mt-2 ${
+      className={`flex font-galmuri w-full mt-2 ${
         !isGameStarted(room.status) && !isRoomFull
           ? 'cursor-pointer hover:bg-gray-50'
           : 'opacity-70'

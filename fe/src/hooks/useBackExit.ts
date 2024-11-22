@@ -1,38 +1,37 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 
-export const useBackExit = ({ onBack }) => {
+export const useBackExit = ({ setShowExitDialog }) => {
   const location = useLocation();
   const isInitialRender = useRef(true);
+  const popStateListenerRef = useRef<(() => void) | null>(null);
 
+  // 컴포넌트 마운트 시 한 번만 실행
   useEffect(() => {
-    if (isInitialRender.current) {
-      // 페이지 첫 렌더링 시에만 state 추가
-      window.history.replaceState(
-        { shouldConfirm: true },
-        '',
-        location.pathname
-      );
-      window.history.pushState({ shouldConfirm: true }, '', location.pathname);
-      isInitialRender.current = false;
+    // 이전에 등록된 리스너가 있다면 제거
+    if (popStateListenerRef.current) {
+      window.removeEventListener('popstate', popStateListenerRef.current);
     }
 
-    const handlePopState = (event: PopStateEvent) => {
-      // state가 있고 shouldConfirm이 true인 경우에만 처리
-      if (event.state && event.state.shouldConfirm) {
-        // 뒤로가기 실행 시 다이얼로그 표시
-        onBack();
-        // 현재 URL 유지
-        window.history.pushState(
-          { shouldConfirm: true },
-          '',
-          location.pathname
-        );
-      }
+    // 새로운 popstate 이벤트 리스너 생성
+    const handlePopState = () => {
+      setShowExitDialog(true);
+      window.history.pushState(null, '', window.location.pathname);
     };
 
+    // 현재 리스너를 ref에 저장 (cleanup을 위해)
+    popStateListenerRef.current = handlePopState;
+
+    // 초기 history 상태 설정 및 이벤트 리스너 등록
+    window.history.pushState(null, '', window.location.pathname);
     window.addEventListener('popstate', handlePopState);
 
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, [location.pathname, onBack]);
+    // cleanup 함수
+    return () => {
+      if (popStateListenerRef.current) {
+        window.removeEventListener('popstate', popStateListenerRef.current);
+        popStateListenerRef.current = null;
+      }
+    };
+  }, []); // 빈 의존성 배열로 마운트 시에만 실행
 };

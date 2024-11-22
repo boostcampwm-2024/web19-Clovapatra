@@ -45,7 +45,7 @@ const RoomList = () => {
       )}
 
       {isEmpty && (
-        <div className="text-center py-8 text-muted-foreground">
+        <div className="font-galmuri text-center py-8 text-muted-foreground">
           생성된 방이 없습니다.
         </div>
       )}

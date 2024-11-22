@@ -1,6 +1,6 @@
 import { RULES } from '@/constants/rules';
-import { PlayerProps } from '@/types/playerTypes';
 import Player from './Player';
+import { PlayerProps } from '@/types/roomTypes';
 
 interface PlayerListProps {
   players: PlayerProps[];
