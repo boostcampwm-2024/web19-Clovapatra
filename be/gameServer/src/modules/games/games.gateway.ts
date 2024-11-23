@@ -185,7 +185,7 @@ export class GamesGateway implements OnGatewayDisconnect {
           );
           this.server.to(roomId).emit('voiceProcessingResult', {
             playerNickname,
-            result: 'SUCCESS',
+            result: 'PASS',
           });
           gameData.previousPitch = note;
         } else {
@@ -194,7 +194,7 @@ export class GamesGateway implements OnGatewayDisconnect {
           );
           this.server.to(roomId).emit('voiceProcessingResult', {
             playerNickname,
-            result: 'FAILURE',
+            result: 'FAIL',
           });
           removePlayerFromGame(gameData, playerNickname);
         }
@@ -202,15 +202,15 @@ export class GamesGateway implements OnGatewayDisconnect {
         this.logger.log(
           `Processing pronounceScore for player ${playerNickname}: ${pronounceScore}`,
         );
-        if (pronounceScore >= 98) {
+        if (pronounceScore >= 99) {
           this.server.to(roomId).emit('voiceProcessingResult', {
             playerNickname,
-            result: 'SUCCESS',
+            result: 'PASS',
           });
         } else {
           this.server.to(roomId).emit('voiceProcessingResult', {
             playerNickname,
-            result: 'FAILURE',
+            result: 'FAIL',
           });
           removePlayerFromGame(gameData, playerNickname);
         }
