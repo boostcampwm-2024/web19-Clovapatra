@@ -121,6 +121,37 @@ export class GamesGateway implements OnGatewayDisconnect {
     }
   }
 
+  @SubscribeMessage('next')
+  async handleNext(@ConnectedSocket() client: Socket) {
+    try {
+      const { roomId } = client.data;
+
+      const gameDataString = await this.redisService.get<string>(
+        `game:${roomId}`,
+      );
+      if (!gameDataString) {
+        return client.emit('error', { message: `game ${roomId} not found` });
+      }
+
+      const gameData: GameDataDto = JSON.parse(gameDataString);
+
+      const turnData: TurnDataDto = createTurnData(roomId, gameData);
+
+      await new Promise<void>((resolve) => {
+        this.server.to(VOICE_SERVERS).emit('turnChanged', turnData, () => {
+          resolve();
+        });
+      });
+      this.logger.log('Turn data sent to voice servers:', turnData);
+
+      this.server.to(roomId).emit('turnChanged', turnData);
+      this.logger.log('Turn data sent to clients in room:', roomId);
+    } catch (error) {
+      this.logger.error('Error handling next:', error);
+      client.emit('error', { message: 'Internal server error' });
+    }
+  }
+
   @SubscribeMessage('voiceResult')
   async handleVoiceResult(
     @MessageBody() voiceResultFromServerDto: VoiceResultFromServerDto,
@@ -200,18 +231,6 @@ export class GamesGateway implements OnGatewayDisconnect {
         `Saving updated game data to Redis for roomId: ${roomId}`,
       );
       await this.redisService.set(`game:${roomId}`, JSON.stringify(gameData));
-
-      const turnData: TurnDataDto = createTurnData(roomId, gameData);
-
-      await new Promise<void>((resolve) => {
-        this.server.to(VOICE_SERVERS).emit('turnChanged', turnData, () => {
-          resolve();
-        });
-      });
-      this.logger.log('Turn data sent to voice servers:', turnData);
-
-      this.server.to(roomId).emit('turnChanged', turnData);
-      this.logger.log('Turn data sent to clients in room:', roomId);
     } catch (error) {
       this.logger.error('Error handling voiceResult:', error);
       client.emit('error', { message: 'Internal server error' });
