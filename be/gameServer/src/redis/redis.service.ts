@@ -16,8 +16,22 @@ export class RedisService implements OnModuleDestroy {
     this.subClient.quit();
   }
 
-  async set<T>(key: string, value: T, channel?: string): Promise<void> {
-    await this.redisClient.set(key, JSON.stringify(value));
+  async set<T>(
+    key: string,
+    value: T,
+    channel?: string,
+    ttlInSeconds?: number,
+  ): Promise<void> {
+    if (ttlInSeconds) {
+      await this.redisClient.set(
+        key,
+        JSON.stringify(value),
+        'EX',
+        ttlInSeconds,
+      );
+    } else {
+      await this.redisClient.set(key, JSON.stringify(value));
+    }
     if (channel) {
       await this.publishToChannel(channel, `Updated: ${key}`);
     }

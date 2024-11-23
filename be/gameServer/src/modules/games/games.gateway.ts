@@ -126,6 +126,14 @@ export class GamesGateway implements OnGatewayDisconnect {
     try {
       const { roomId } = client.data;
 
+      const isProcessing = await this.redisService.get<string>(
+        `next:${roomId}`,
+      );
+      if (isProcessing) {
+        return;
+      }
+      await this.redisService.set(`next:${roomId}`, 'processing', undefined, 5);
+
       const gameDataString = await this.redisService.get<string>(
         `game:${roomId}`,
       );
