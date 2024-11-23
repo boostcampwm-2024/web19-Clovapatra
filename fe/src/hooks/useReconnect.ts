@@ -28,11 +28,14 @@ export const useReconnect = ({ currentRoom }) => {
           }
 
           if (!signalingSocket.socket?.connected) {
+            console.log('Connecting signalingSocket...');
             signalingSocket.connect();
           }
 
           // 3. audioManager 설정 (소켓 연결 후)
-          signalingSocket.setAudioManager(audioManager);
+          if (!signalingSocket.hasAudioManager()) {
+            signalingSocket.setAudioManager(audioManager);
+          }
 
           // 4. 마이크 권한 요청 및 스트림 설정
           const stream = await requestPermission();

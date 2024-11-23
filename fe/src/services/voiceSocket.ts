@@ -143,6 +143,7 @@ class VoiceSocket extends SocketService {
 
   override disconnect() {
     this.cleanupRecording();
+    super.disconnect();
   }
 }
 
