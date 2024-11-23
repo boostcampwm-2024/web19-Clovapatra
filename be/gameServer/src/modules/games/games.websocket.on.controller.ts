@@ -16,6 +16,16 @@ export class GamesWebSocketOnController {
     return;
   }
 
+  @Post('next')
+  @ApiOperation({
+    summary: '다음 턴 데이터 받기',
+    description:
+      'wss://clovapatra.com/rooms 에서 "next" 이벤트를 emit해 사용합니다. turnData를 client, voice-processing-server 에 turnChanged 이벤트로 전달합니다.',
+  })
+  next() {
+    return;
+  }
+
   @Post('voiceResult')
   @ApiOperation({
     summary: '음성 처리서버에서 처리한 결과 받기',
