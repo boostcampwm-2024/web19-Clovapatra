@@ -16,8 +16,6 @@ class VoiceSocket extends SocketService {
   }
 
   initialize(
-    onSpeechRecognitionResult: (result: string) => void,
-    onPitchResult: (pitch: number) => void,
     onError: (error: string) => void,
     onStateChange: (isRecording: boolean) => void
   ) {
