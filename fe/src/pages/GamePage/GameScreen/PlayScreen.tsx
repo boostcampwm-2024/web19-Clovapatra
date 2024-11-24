@@ -54,7 +54,7 @@ const PlayScreen = () => {
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
-        if (prev <= 1) {
+        if (prev === 0) {
           if (currentPlayer === turnData?.playerNickname) {
             voiceSocket.disconnect();
           }
@@ -68,39 +68,31 @@ const PlayScreen = () => {
     return () => clearInterval(timer);
   }, [gamePhase, currentPlayer, turnData]);
 
-  // 결과 처리
+  // 채점 중 -> 결과 화면 전환
   useEffect(() => {
-    if (!resultData || (gamePhase !== 'grading' && gamePhase !== 'result'))
-      return;
-
-    // grading 페이즈에서만 result로 전환
-    if (gamePhase === 'grading') {
-      console.log('결과 수신, result 화면으로 전환');
+    if (resultData && gamePhase === 'grading') {
       setGamePhase('result');
     }
+  }, [resultData, gamePhase]);
 
-    // result 페이즈에서 타이머 시작
-    if (gamePhase === 'result') {
-      console.log('결과 화면 타이머 시작');
-      const resultTimer = setTimeout(() => {
-        console.log('3초 경과, 다음 턴 호출');
-        gameSocket.next();
-        setGameResult(null);
-      }, RESULT_TIME);
+  // 다음 턴 result -> next 처리를 별도로
+  useEffect(() => {
+    if (!resultData || gamePhase !== 'result') return;
 
-      return () => {
-        console.log('결과 처리 cleanup');
-        clearTimeout(resultTimer);
-      };
-    }
-  }, [resultData, gamePhase, setGameResult]);
+    const resultTimer = setTimeout(() => {
+      gameSocket.next();
+      setGameResult(null);
+    }, RESULT_TIME);
+
+    return () => clearTimeout(resultTimer);
+  }, [gamePhase]);
 
   // 디버깅용 phase 변경 로그
   useEffect(() => {
     console.log('현재 게임 페이즈:', gamePhase);
   }, [gamePhase]);
 
-  if (!turnData) return;
+  if (!turnData) return null;
 
   return (
     <div className="relative h-[27rem] bg-muted rounded-lg overflow-hidden">
@@ -125,7 +117,7 @@ const PlayScreen = () => {
         {gamePhase === 'gameplay' && (
           <div key="gameplay" className="relative h-full">
             <div className="font-galmuri absolute top-4 right-4 text-2xl font-bold">
-              {timeLeft}초
+              제한 시간: {timeLeft}초
             </div>
             <Lyric
               text={turnData.lyrics}
