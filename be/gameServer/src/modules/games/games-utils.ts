@@ -88,6 +88,8 @@ export function removePlayerFromGame(
   gameData.alivePlayers = gameData.alivePlayers.filter(
     (player: string) => player !== playerNickname,
   );
+
+  gameData.rank.unshift(playerNickname);
 }
 
 export function noteToNumber(note: string): number {

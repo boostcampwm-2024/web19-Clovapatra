@@ -91,6 +91,7 @@ export class GamesGateway implements OnGatewayDisconnect {
       const gameData: GameDataDto = {
         gameId: roomId,
         alivePlayers,
+        rank: [],
         currentTurn: 1,
         currentPlayer: selectCurrentPlayer(alivePlayers, []),
         previousPitch: 0,
@@ -143,17 +144,31 @@ export class GamesGateway implements OnGatewayDisconnect {
 
       const gameData: GameDataDto = JSON.parse(gameDataString);
 
-      const turnData: TurnDataDto = createTurnData(roomId, gameData);
+      if (gameData.alivePlayers.length > 1) {
+        const turnData: TurnDataDto = createTurnData(roomId, gameData);
 
-      await new Promise<void>((resolve) => {
-        this.server.to(VOICE_SERVERS).emit('turnChanged', turnData, () => {
-          resolve();
+        await new Promise<void>((resolve) => {
+          this.server.to(VOICE_SERVERS).emit('turnChanged', turnData, () => {
+            resolve();
+          });
         });
-      });
-      this.logger.log('Turn data sent to voice servers:', turnData);
+        this.logger.log('Turn data sent to voice servers:', turnData);
 
-      this.server.to(roomId).emit('turnChanged', turnData);
-      this.logger.log('Turn data sent to clients in room:', roomId);
+        this.server.to(roomId).emit('turnChanged', turnData);
+        this.logger.log('Turn data sent to clients in room:', roomId);
+      } else {
+        this.server
+          .to(roomId)
+          .emit('endGame', [...gameData.alivePlayers, ...gameData.rank]);
+
+        this.logger.log('Game ended for room:', roomId);
+        this.logger.log('Final rank:', [
+          ...gameData.alivePlayers,
+          ...gameData.rank,
+        ]);
+        this.logger.log(`${roomId} deleting game`);
+        await this.redisService.delete(`game:${roomId}`);
+      }
     } catch (error) {
       this.logger.error('Error handling next:', error);
       client.emit('error', { message: 'Internal server error' });
@@ -231,10 +246,6 @@ export class GamesGateway implements OnGatewayDisconnect {
         gameData.previousPlayers,
       );
 
-      if (gameData.currentPlayer === null) {
-        // 게임종료
-      }
-
       this.logger.log(
         `Saving updated game data to Redis for roomId: ${roomId}`,
       );
@@ -243,7 +254,7 @@ export class GamesGateway implements OnGatewayDisconnect {
       this.logger.error('Error handling voiceResult:', error);
       client.emit('error', { message: 'Internal server error' });
 
-      // 오류 일때는 일단 성공
+      // 오류 일때
     }
   }
 
