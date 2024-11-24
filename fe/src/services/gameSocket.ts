@@ -84,12 +84,12 @@ class GameSocket extends SocketService {
 
     this.socket.on('turnChanged', (turnData: TurnData) => {
       const { setTurnData } = useGameStore.getState();
-
       setTurnData(turnData);
     });
 
     this.socket.on('voiceProcessingResult', (result) => {
-      console.log(result);
+      const { setGameResult } = useGameStore.getState();
+      setGameResult(result);
     });
   }
 
@@ -111,6 +111,11 @@ class GameSocket extends SocketService {
 
   startGame() {
     this.socket?.emit('startGame');
+  }
+
+  next() {
+    console.log('next called');
+    this.socket?.emit('next');
   }
 }
 
