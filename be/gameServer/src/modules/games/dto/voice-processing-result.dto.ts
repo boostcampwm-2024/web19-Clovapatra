@@ -9,7 +9,7 @@ export class VoiceProcessingResultDto {
   playerNickname: string;
 
   @ApiProperty({
-    example: 'SUCCESS',
+    example: 'PASS',
     type: String,
     description: '결과',
   })
