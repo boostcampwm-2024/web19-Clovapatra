@@ -185,7 +185,7 @@ export class GamesGateway implements OnGatewayDisconnect {
         voiceResultFromServerDto;
 
       this.logger.log(
-        `Received voice result for roomId: ${roomId}, player: ${playerNickname}`,
+        `Received voice result for roomId: ${roomId}, player: ${playerNickname}, averageNote: ${averageNote}, pronounceScore: ${pronounceScore}`,
       );
 
       const gameDataString = await this.redisService.get<string>(
@@ -197,7 +197,7 @@ export class GamesGateway implements OnGatewayDisconnect {
 
       const gameData: GameDataDto = JSON.parse(gameDataString);
 
-      if (averageNote) {
+      if (averageNote !== undefined) {
         const note = noteToNumber(averageNote);
         this.logger.log(
           `Processing averageNote for player ${playerNickname}: ${note}`,
@@ -221,7 +221,7 @@ export class GamesGateway implements OnGatewayDisconnect {
           });
           removePlayerFromGame(gameData, playerNickname);
         }
-      } else if (pronounceScore) {
+      } else if (pronounceScore !== undefined) {
         this.logger.log(
           `Processing pronounceScore for player ${playerNickname}: ${pronounceScore}`,
         );
@@ -237,6 +237,8 @@ export class GamesGateway implements OnGatewayDisconnect {
           });
           removePlayerFromGame(gameData, playerNickname);
         }
+      } else {
+        this.logger.log('pronounceScore nor averageNote');
       }
       updatePreviousPlayers(gameData, playerNickname);
       gameData.currentTurn++;
