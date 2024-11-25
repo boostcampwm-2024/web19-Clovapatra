@@ -12,7 +12,9 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <div className="app">
-        <BrowserRouter>
+        <BrowserRouter
+          future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
+        >
           <Routes>
             <Route path="/" element={<RoomListPage />} />
             <Route path="/game/:roomId" element={<GamePage />} />
