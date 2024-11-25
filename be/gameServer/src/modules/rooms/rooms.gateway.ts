@@ -6,6 +6,7 @@ import {
   ConnectedSocket,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
+import { OnModuleDestroy } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { RedisService } from '../../redis/redis.service';
 import { Logger, UseFilters } from '@nestjs/common';
@@ -32,13 +33,23 @@ import { v4 as uuidv4 } from 'uuid';
   },
 })
 @UseFilters(WsExceptionsFilter)
-export class RoomsGateway implements OnGatewayDisconnect {
+export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
   private readonly logger = new Logger(RoomsGateway.name);
 
   @WebSocketServer()
   server: Server;
 
   constructor(private readonly redisService: RedisService) {}
+
+  async onModuleDestroy() {
+    this.logger.log('Module is being destroyed, cleaning up...');
+
+    const roomKeys = await this.redisService.keys('room:*');
+    for (const roomId of roomKeys) {
+      await this.redisService.delete(`room:${roomId}`);
+      this.logger.log(`Room ${roomId} data deleted from Redis`);
+    }
+  }
 
   @SubscribeMessage('createRoom')
   async handleCreateRoom(
@@ -56,7 +67,9 @@ export class RoomsGateway implements OnGatewayDisconnect {
         roomId,
         roomName,
         hostNickname,
-        players: [{ playerNickname: hostNickname, isReady: false }],
+        players: [
+          { playerNickname: hostNickname, isReady: false, isMuted: false },
+        ],
         status: 'waiting',
       };
       await this.redisService.set(
@@ -106,7 +119,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
         return;
       }
 
-      roomData.players.push({ playerNickname, isReady: false });
+      roomData.players.push({ playerNickname, isReady: false, isMuted: false });
       await this.redisService.set(
         `room:${roomId}`,
         JSON.stringify(roomData),
@@ -201,6 +214,32 @@ export class RoomsGateway implements OnGatewayDisconnect {
 
       if (player) {
         player.isReady = !player.isReady;
+        await this.redisService.set(`room:${roomId}`, JSON.stringify(roomData));
+        this.server.to(roomId).emit('updateUsers', roomData.players);
+      } else {
+        client.emit('error', 'Player not found in room');
+      }
+    } catch (error) {
+      this.logger.error(`Error setting ready status: ${error.message}`);
+      client.emit('error', 'Failed to set ready status');
+    }
+  }
+
+  @SubscribeMessage('setMute')
+  async handleSetMute(@ConnectedSocket() client: Socket) {
+    try {
+      const { roomId, playerNickname } = client.data;
+      const roomDataString = await this.redisService.get<string>(
+        `room:${roomId}`,
+      );
+      const roomData: RoomDataDto = JSON.parse(roomDataString);
+
+      const player = roomData.players.find(
+        (p) => p.playerNickname === playerNickname,
+      );
+
+      if (player) {
+        player.isMuted = !player.isMuted;
         await this.redisService.set(`room:${roomId}`, JSON.stringify(roomData));
         this.server.to(roomId).emit('updateUsers', roomData.players);
       } else {

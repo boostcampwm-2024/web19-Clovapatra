@@ -6,6 +6,7 @@ import {
   OnGatewayDisconnect,
   MessageBody,
 } from '@nestjs/websockets';
+import { OnModuleDestroy } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { RedisService } from '../../redis/redis.service';
 import { Logger, UseFilters } from '@nestjs/common';
@@ -35,13 +36,23 @@ const VOICE_SERVERS = 'voice-servers';
   },
 })
 @UseFilters(WsExceptionsFilter)
-export class GamesGateway implements OnGatewayDisconnect {
+export class GamesGateway implements OnGatewayDisconnect, OnModuleDestroy {
   private readonly logger = new Logger(GamesGateway.name);
 
   @WebSocketServer()
   server: Server;
 
   constructor(private readonly redisService: RedisService) {}
+
+  async onModuleDestroy() {
+    this.logger.log('Module is being destroyed, cleaning up...');
+
+    const gameKeys = await this.redisService.keys('game:*');
+    for (const gameId of gameKeys) {
+      await this.redisService.delete(`game:${gameId}`);
+      this.logger.log(`Game ${gameId} data deleted from Redis`);
+    }
+  }
 
   @SubscribeMessage('startGame')
   async handleStartGame(@ConnectedSocket() client: Socket) {
@@ -161,13 +172,29 @@ export class GamesGateway implements OnGatewayDisconnect {
           .to(roomId)
           .emit('endGame', [...gameData.alivePlayers, ...gameData.rank]);
 
+        const roomDataString = await this.redisService.get<string>(
+          `room:${roomId}`,
+        );
+        if (!roomDataString) {
+          this.logger.warn(`Room not found: ${roomId}`);
+          client.emit('error', 'Room not found');
+          return;
+        }
+        const roomData: RoomDataDto = JSON.parse(roomDataString);
+        roomData.players.forEach((player) => {
+          player.isReady = false;
+        });
+        this.server.to(roomId).emit('updateUsers', roomData.players);
+        await this.redisService.set(`room:${roomId}`, JSON.stringify(roomData));
+
         this.logger.log('Game ended for room:', roomId);
         this.logger.log('Final rank:', [
           ...gameData.alivePlayers,
           ...gameData.rank,
         ]);
-        this.logger.log(`${roomId} deleting game`);
+
         await this.redisService.delete(`game:${roomId}`);
+        this.logger.log(`${roomId} deleting game`);
       }
     } catch (error) {
       this.logger.error('Error handling next:', error);

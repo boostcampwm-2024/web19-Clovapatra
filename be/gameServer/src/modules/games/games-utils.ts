@@ -31,7 +31,12 @@ export function createTurnData(
   roomId: string,
   gameData: GameDataDto,
 ): TurnDataDto {
-  const gameModes = [GameMode.PRONUNCIATION, GameMode.CLEOPATRA];
+  const gameModes = [
+    GameMode.PRONUNCIATION,
+    GameMode.CLEOPATRA,
+    GameMode.CLEOPATRA,
+    GameMode.CLEOPATRA,
+  ];
   const gameMode = gameModes[Math.floor(Math.random() * gameModes.length)];
 
   if (gameMode === GameMode.CLEOPATRA) {

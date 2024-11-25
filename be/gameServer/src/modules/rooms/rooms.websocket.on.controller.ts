@@ -47,6 +47,16 @@ export class RoomsWebSocketOnController {
     return;
   }
 
+  @Post('setMute')
+  @ApiOperation({
+    summary: '플레이어 음소거',
+    description:
+      'wss://clovapatra.com/rooms 에서 "setMute" 이벤트를 emit해 사용합니다. 음소거 상태를 토글합니다. 성공적으로 처리되면 모든 클라이언트에게 "updateUsers" 이벤트를 발행합니다.',
+  })
+  mute() {
+    return;
+  }
+
   @Post('kickPlayer')
   @ApiOperation({
     summary: '플레이어 강퇴',

@@ -6,7 +6,7 @@ import { IoAdapter } from '@nestjs/platform-socket.io';
 
 // Custom IoAdapter with CORS options
 class CustomIoAdapter extends IoAdapter {
-  createIOServer(port: number, options?: any): any {
+  createIOServer(port: number, options?) {
     const server = super.createIOServer(port, {
       ...options,
       cors: {

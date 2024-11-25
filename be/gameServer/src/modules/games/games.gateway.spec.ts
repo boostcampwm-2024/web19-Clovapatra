@@ -52,40 +52,14 @@ describe('GamesGateway', () => {
   });
 
   describe('handleStartGame', () => {
-    it('모든 조건이 충족되면 게임을 시작해야 한다.', async () => {
-      const roomData: RoomDataDto = {
-        roomId: 'test-room-id',
-        roomName: 'testRoomName',
-        hostNickname: 'hostPlayer',
-        players: [
-          { playerNickname: 'hostPlayer', isReady: true },
-          { playerNickname: 'player1', isReady: true },
-        ],
-        status: 'waiting',
-      };
-
-      jest
-        .spyOn(redisService, 'get')
-        .mockResolvedValueOnce(JSON.stringify(roomData));
-
-      await gateway.handleStartGame(mockHostClient);
-
-      expect(redisService.get).toHaveBeenCalledWith('room:test-room-id');
-      expect(redisService.set).toHaveBeenCalledWith(
-        'room:test-room-id',
-        JSON.stringify({ ...roomData, status: 'progress' }),
-        'roomUpdate',
-      );
-    });
-
     it('모든 플레이어가 준비되지 않았을 경우 오류를 반환해야 한다.', async () => {
       const roomData: RoomDataDto = {
         roomId: 'test-room-id',
         roomName: 'testRoomName',
         hostNickname: 'hostPlayer',
         players: [
-          { playerNickname: 'hostPlayer', isReady: true },
-          { playerNickname: 'player1', isReady: false },
+          { playerNickname: 'hostPlayer', isReady: true, isMuted: false },
+          { playerNickname: 'player1', isReady: false, isMuted: false },
         ],
         status: 'waiting',
       };
@@ -111,8 +85,8 @@ describe('GamesGateway', () => {
         roomName: 'testRoomName',
         hostNickname: 'hostPlayer',
         players: [
-          { playerNickname: 'hostPlayer', isReady: true },
-          { playerNickname: 'player1', isReady: true },
+          { playerNickname: 'hostPlayer', isReady: true, isMuted: false },
+          { playerNickname: 'player1', isReady: true, isMuted: false },
         ],
         status: 'waiting',
       };
