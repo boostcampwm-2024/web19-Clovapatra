@@ -8,6 +8,8 @@ import Lyric from './Lyric';
 import GameResult from './GameResult';
 import { Loader2 } from 'lucide-react';
 import { gameSocket } from '@/services/gameSocket';
+import EndScreen from './EndScreen';
+import ReadyScreen from './ReadyScreen';
 
 type GamePhase = 'intro' | 'gameplay' | 'grading' | 'result';
 
@@ -16,6 +18,7 @@ const PlayScreen = () => {
   const { setGameResult } = useGameStore();
   const turnData = useGameStore((state) => state.turnData);
   const resultData = useGameStore((state) => state.resultData);
+  const rank = useGameStore((state) => state.rank);
   const [gamePhase, setGamePhase] = useState<GamePhase>('intro');
   const [timeLeft, setTimeLeft] = useState(0);
 
@@ -92,7 +95,7 @@ const PlayScreen = () => {
     console.log('현재 게임 페이즈:', gamePhase);
   }, [gamePhase]);
 
-  if (!turnData) return null;
+  if (!turnData && !rank.length) return null;
 
   return (
     <div className="relative h-[27rem] bg-muted rounded-lg overflow-hidden">
@@ -151,6 +154,14 @@ const PlayScreen = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {!turnData && rank.length > 0 && <ReadyScreen />}
+
+      {rank.length > 0 && (
+        <div className="absolute inset-0 z-50">
+          <EndScreen />
+        </div>
+      )}
     </div>
   );
 };
