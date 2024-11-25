@@ -10,6 +10,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAudioPermission } from '@/hooks/useAudioPermission';
+import { useDialogForm } from '@/hooks/useDialogForm';
 import { gameSocket } from '@/services/gameSocket';
 import { signalingSocket } from '@/services/signalingSocket';
 import { getCurrentRoomQuery } from '@/stores/queries/getCurrentRoomQuery';
@@ -27,8 +28,7 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { setCurrentRoom } = useRoomStore();
-  const { data: currentRoom, isLoading: isRoomLoading } =
-    getCurrentRoomQuery(roomId);
+  const { data: currentRoom } = getCurrentRoomQuery(roomId);
   const setCurrentPlayer = useRoomStore((state) => state.setCurrentPlayer);
   const { requestPermission } = useAudioPermission();
 
@@ -69,6 +69,19 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
     }
   };
 
+  // 키보드 Enter 동작
+  const { inputRefs, handleKeyDown } = useDialogForm({
+    inputs: [
+      {
+        id: 'playerNickname',
+        value: playerNickname,
+        onChange: setPlayerNickname,
+      },
+    ],
+    onSubmit: handleJoin,
+    isSubmitDisabled: !playerNickname.trim() || isLoading,
+  });
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="font-galmuri sm:max-w-md">
@@ -91,6 +104,8 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
               placeholder="닉네임을 입력하세요"
               className="col-span-3"
               disabled={isLoading}
+              ref={(el) => (inputRefs.current[0] = el)}
+              onKeyDown={(e) => handleKeyDown(e, 0)}
             />
           </div>
         </div>
