@@ -1,6 +1,7 @@
 import { io, Socket } from 'socket.io-client';
 import {
   ClientToServerEvents,
+  GameResultProps,
   ServerToClientEvents,
   TurnData,
 } from '@/types/socketTypes';
@@ -87,9 +88,14 @@ class GameSocket extends SocketService {
       setTurnData(turnData);
     });
 
-    this.socket.on('voiceProcessingResult', (result) => {
+    this.socket.on('voiceProcessingResult', (result: GameResultProps) => {
       const { setGameResult } = useGameStore.getState();
       setGameResult(result);
+    });
+
+    this.socket.on('endGame', (rank: string[]) => {
+      const { setRank } = useGameStore.getState();
+      setRank(rank);
     });
   }
 

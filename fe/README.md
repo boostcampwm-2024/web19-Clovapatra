@@ -25,3 +25,16 @@
 - next 이벤트 쓰고 바로 잘 되는 줄 알았는데 채점 중에서 결과로 안 넘어가질 때가 있다. (안 될 때가 더 많다)
   - 잘 됐다가 안 됐다가 하는 게 너무 화가 난다,, 초반에 낚여서 PR 날릴 뻔 했네,, 진짜 사람 미치게 만드는구만
   - 발음 게임 채점이 제대로 안 됐던 거였다..! 휴우 내 잘못 아니라서 다행이다(?)
+
+### 게임 종료됐는데, startRecording이 계속된다?
+
+```tsx
+// 턴 데이터 변경 시 게임 초기화
+useEffect(() => {
+  if (!turnData && !resultData) return;
+// 순위 데이터가 있으면 종료시켜야 했는데..!
+  if (rank.length > 0) return;
+
+  ...
+}, [turnData, currentRoom, currentPlayer]);
+```
