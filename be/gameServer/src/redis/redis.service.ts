@@ -61,6 +61,38 @@ export class RedisService implements OnModuleDestroy {
     await this.redisClient.flushall();
   }
 
+  async rpush(key: string, value: string): Promise<void> {
+    await this.redisClient.rpush(key, value);
+  }
+
+  async lrange(key: string, start: number, stop: number): Promise<string[]> {
+    const values: string[] = await this.redisClient.lrange(key, start, stop);
+    return values;
+  }
+
+  async lrem(key: string, value: string, count: number = 1): Promise<void> {
+    await this.redisClient.lrem(key, count, value);
+  }
+
+  async zadd(keyPrefix: string, score: number, value: string): Promise<void> {
+    const key = `${keyPrefix}`;
+    await this.redisClient.zadd(key, score, value);
+  }
+
+  async zrangebylex(
+    keyPrefix: string,
+    min: string,
+    max: string,
+  ): Promise<string[]> {
+    const key = `${keyPrefix}`;
+    const values: string[] = await this.redisClient.zrangebylex(key, min, max);
+    return values;
+  }
+
+  async zrem(key: string, ...members: string[]): Promise<number> {
+    return await this.redisClient.zrem(key, ...members);
+  }
+
   subscribeToChannel(
     channel: string,
     callback: (message: string) => void,

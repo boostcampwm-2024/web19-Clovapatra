@@ -77,6 +77,11 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
         JSON.stringify(roomData),
         'roomUpdate',
       );
+
+      // roomName으로 id 검색을 위한 키 (방 이름 중복 허용)
+      await this.redisService.rpush(`roomName:${roomName}`, roomId);
+      await this.redisService.zadd('roomNames', 0, roomName);
+
       client.join(roomId);
       client.data = { roomId, playerNickname: hostNickname };
       this.logger.log(`Room created successfully: ${roomId}`);
@@ -179,6 +184,15 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
         } else {
           this.logger.log(`${roomId} deleting room`);
           await this.redisService.delete(`room:${roomId}`, 'roomUpdate');
+          await this.redisService.lrem(`roomName:${roomData.roomName}`, roomId);
+          const roomList = await this.redisService.lrange(
+            `roomName:${roomData.roomName}`,
+            0,
+            -1,
+          );
+          if (roomList.length === 0) {
+            await this.redisService.zrem('roomNames', roomData.roomName);
+          }
         }
       } else {
         await this.redisService.set(
