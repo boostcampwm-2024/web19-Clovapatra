@@ -13,6 +13,8 @@ import { RoomDataDto } from './dto/room-data.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { Observable, Subject } from 'rxjs';
 
+const ROOM_LIMIT = 9;
+
 @ApiTags('Rooms')
 @Controller('rooms')
 export class RoomController {
@@ -82,9 +84,11 @@ export class RoomController {
       )
     ).flat();
 
-    this.logger.log(`roomIds: ${JSON.stringify(roomIds)} 반환`);
+    const limitedRoomIds = roomIds.slice(0, ROOM_LIMIT);
+
+    this.logger.log(`roomData ${limitedRoomIds.length}개 반환`);
     return await Promise.all(
-      roomIds.map(async (roomId) => {
+      limitedRoomIds.map(async (roomId) => {
         const roomData = await this.redisService.get<string>(`room:${roomId}`);
         return JSON.parse(roomData) as RoomDataDto;
       }),
@@ -140,12 +144,16 @@ export class RoomController {
     description: '게임 방 목록이 성공적으로 반환됩니다.',
     type: [RoomDataDto],
   })
-  async getRooms(): Promise<RoomDataDto[]> {
+  async getRooms(@Query('page') page: number = 1): Promise<RoomDataDto[]> {
     const roomKeys = await this.redisService.keys('room:*');
     this.logger.log('게임 방 목록 조회 시작');
 
+    const start = (page - 1) * ROOM_LIMIT;
+    const end = start + ROOM_LIMIT - 1;
+    const paginatedKeys = roomKeys.slice(start, end + 1);
+
     const rooms = await Promise.all(
-      roomKeys.map(async (key) => {
+      paginatedKeys.map(async (key) => {
         const roomData = await this.redisService.get<string>(key);
         return JSON.parse(roomData) as RoomDataDto;
       }),
