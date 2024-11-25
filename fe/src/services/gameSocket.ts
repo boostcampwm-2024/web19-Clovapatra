@@ -115,6 +115,10 @@ class GameSocket extends SocketService {
     this.socket?.emit('setReady');
   }
 
+  setMute() {
+    this.socket?.emit('setMute');
+  }
+
   startGame() {
     this.socket?.emit('startGame');
   }
