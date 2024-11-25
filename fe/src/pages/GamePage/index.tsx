@@ -10,11 +10,26 @@ import GameScreen from './GameScreen/GameScreen';
 import { useAudioManager } from '@/hooks/useAudioManager';
 import { signalingSocket } from '@/services/signalingSocket';
 import { toast } from 'react-toastify';
+import { useParams } from 'react-router-dom';
+import { getCurrentRoomQuery } from '@/stores/queries/getCurrentRoomQuery';
+import JoinDialog from '../RoomListPage/RoomDialog/JoinDialog';
 
 const GamePage = () => {
+  const [showJoinDialog, setShowJoinDialog] = useState(false);
   const [showExitDialog, setShowExitDialog] = useState(false);
   const { currentRoom, kickedPlayer, setKickedPlayer } = useRoomStore();
   const audioManager = useAudioManager();
+  const { roomId } = useParams();
+  const { data: room } = getCurrentRoomQuery(roomId);
+  const nickname = sessionStorage.getItem('user_nickname');
+
+  useEffect(() => {
+    if (room && !currentRoom) {
+      if (!nickname) {
+        setShowJoinDialog(true);
+      }
+    }
+  }, [room, currentRoom, nickname]);
 
   useReconnect({ currentRoom });
   useBackExit({ setShowExitDialog });
@@ -49,6 +64,16 @@ const GamePage = () => {
 
   if (!currentRoom) {
     return <NotFound />;
+  }
+
+  if (showJoinDialog) {
+    return (
+      <JoinDialog
+        open={true}
+        onOpenChange={setShowJoinDialog}
+        roomId={roomId}
+      />
+    );
   }
 
   return (
