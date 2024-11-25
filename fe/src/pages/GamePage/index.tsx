@@ -84,6 +84,7 @@ const GamePage = () => {
           players={currentRoom.players.map((player) => ({
             playerNickname: player.playerNickname,
             isReady: player.isReady,
+            isMuted: player.isMuted,
           }))}
         />
       </div>
