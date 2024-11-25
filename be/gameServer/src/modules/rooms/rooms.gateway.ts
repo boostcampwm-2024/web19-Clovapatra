@@ -6,6 +6,7 @@ import {
   ConnectedSocket,
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
+import { OnModuleDestroy } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { RedisService } from '../../redis/redis.service';
 import { Logger, UseFilters } from '@nestjs/common';
@@ -32,13 +33,23 @@ import { v4 as uuidv4 } from 'uuid';
   },
 })
 @UseFilters(WsExceptionsFilter)
-export class RoomsGateway implements OnGatewayDisconnect {
+export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
   private readonly logger = new Logger(RoomsGateway.name);
 
   @WebSocketServer()
   server: Server;
 
   constructor(private readonly redisService: RedisService) {}
+
+  async onModuleDestroy() {
+    this.logger.log('Module is being destroyed, cleaning up...');
+
+    const roomKeys = await this.redisService.keys('room:*');
+    for (const roomId of roomKeys) {
+      await this.redisService.delete(`room:${roomId}`);
+      this.logger.log(`Room ${roomId} data deleted from Redis`);
+    }
+  }
 
   @SubscribeMessage('createRoom')
   async handleCreateRoom(
