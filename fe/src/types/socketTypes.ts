@@ -8,6 +8,7 @@ export interface ServerToClientEvents {
   kicked: (playerNickname: string) => void;
   turnChanged: (turnData: TurnData) => void;
   voiceProcessingResult: (result: GameResultProps) => void;
+  endGame: (rank: string[]) => void;
 }
 
 export interface ClientToServerEvents {
