@@ -6,6 +6,7 @@ import {
   MessageEvent,
   Param,
   NotFoundException,
+  Query,
 } from '@nestjs/common';
 import { RedisService } from '../../redis/redis.service';
 import { RoomDataDto } from './dto/room-data.dto';
@@ -44,6 +45,50 @@ export class RoomController {
   })
   getRoomUpdates(): Observable<MessageEvent> {
     return this.roomUpdateSubject.asObservable();
+  }
+
+  @Get('/search')
+  @ApiOperation({
+    summary: '게임 방 이름으로 검색',
+    description:
+      '게임 방 이름으로 검색하여 관련된 방을 반환합니다. ex)/api/rooms/search?roomName=w ',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '검색된 게임 방 목록이 성공적으로 반환됩니다.',
+    type: [RoomDataDto],
+  })
+  async searchRooms(
+    @Query('roomName') roomName: string,
+  ): Promise<RoomDataDto[]> {
+    this.logger.log(`방 이름으로 검색 시작: ${roomName}`);
+
+    const roomNames: string[] = await this.redisService.zrangebylex(
+      'roomNames',
+      `[${roomName}`,
+      `[${roomName}\udbff\udfff`,
+    );
+
+    if (roomNames.length === 0) {
+      this.logger.warn(`검색된 방이 없습니다: ${roomName}`);
+      return [];
+    }
+
+    const roomIds = (
+      await Promise.all(
+        roomNames.map(async (roomName) => {
+          return this.redisService.lrange(`roomName:${roomName}`, 0, -1);
+        }),
+      )
+    ).flat();
+
+    this.logger.log(`roomIds: ${JSON.stringify(roomIds)} 반환`);
+    return await Promise.all(
+      roomIds.map(async (roomId) => {
+        const roomData = await this.redisService.get<string>(`room:${roomId}`);
+        return JSON.parse(roomData) as RoomDataDto;
+      }),
+    );
   }
 
   @Get(':roomId')
