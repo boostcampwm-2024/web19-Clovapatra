@@ -5,11 +5,17 @@ export interface ServerToClientEvents {
   roomCreated: (room: Room) => void;
   updateUsers: (players: string[]) => void;
   error: (error: { code: string; message: string }) => void;
+  kicked: (playerNickname: string) => void;
+  turnChanged: (turnData: TurnData) => void;
+  voiceProcessingResult: (result: GameResultProps) => void;
 }
 
 export interface ClientToServerEvents {
   createRoom: (data: { roomName: string; hostNickname: string }) => void;
   joinRoom: (data: { roomId: string; playerNickname: string }) => void;
+  kickPlayer: (playerNickname: string) => void;
+  setReady: () => void;
+  startGame: () => void;
 }
 
 export interface TurnData {
@@ -18,6 +24,11 @@ export interface TurnData {
   gameMode: string;
   timeLimit: number;
   lyrics: string;
+}
+
+export interface GameResultProps {
+  playerNickname: string;
+  result: string;
 }
 
 // 음성 처리 서버 이벤트 타입
