@@ -27,7 +27,7 @@ class ErrorDetails {
     type: Array,
     example: [],
   })
-  children: any[];
+  children: [];
 
   @ApiProperty({
     description: '실패한 유효성 검사에 대한 제약 조건',
