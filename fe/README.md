@@ -57,5 +57,19 @@ react-router-dom.js?v=ceca9ee8:4374 ⚠️ React Router Future Flag Warning: Rea
 npm install react@latest react-dom@latest
 ```
 
-업데이트하고 나서 라우팅 문제 생겨서 다운그레이드 함.. 방 나가기 시 나가기 처리가 제대로 안 됨  
+업데이트하고 나서 라우팅 문제 생겨서 다운그레이드함.. 방 나가기 시 나가기 처리가 제대로 안 됨  
 어떻게 해야 하는지 모르겠다ㅜㅜ
+
+### **VolumeBar 스피커 버튼을 토글하여 볼륨 0 ↔ 50으로 조절할 수 있도록 함**
+
+- 진성님이 피드백 주신 부분 반영
+
+### 키보드 Enter로도 동작하도록 함
+
+- Dialog에서 항상 마우스로 Input 필드를 눌러 입력하고, 확인 버튼을 클릭해야만 하는 게 불편했다.
+- 그래서 다음과 같은 것들이 가능하도록 했다.
+  - Dialog Open 시 첫 Input 필드에 포커싱
+  - Input 필드가 여러 개인 경우 Enter로 다음 Input 필드 이동
+  - Enter로 Submit(확인 버튼 클릭과 동일한 동작)
+- shadcn/ui Dialog 컴포넌트는 ESC 키를 눌렀을 때 Dialog Close를 해줘서 이건 따로 처리가 필요 없었다.
+- SearchBar(방 검색)에도 적용할 생각!
