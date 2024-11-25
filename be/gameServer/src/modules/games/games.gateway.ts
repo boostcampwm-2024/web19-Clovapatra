@@ -184,6 +184,7 @@ export class GamesGateway implements OnGatewayDisconnect, OnModuleDestroy {
         roomData.players.forEach((player) => {
           player.isReady = false;
         });
+        this.server.to(roomId).emit('updateUsers', roomData.players);
         await this.redisService.set(`room:${roomId}`, JSON.stringify(roomData));
 
         this.logger.log('Game ended for room:', roomId);
