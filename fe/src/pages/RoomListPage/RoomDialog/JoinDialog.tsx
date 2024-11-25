@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { useAudioPermission } from '@/hooks/useAudioPermission';
 import { gameSocket } from '@/services/gameSocket';
 import { signalingSocket } from '@/services/signalingSocket';
+import { getCurrentRoomQuery } from '@/stores/queries/getCurrentRoomQuery';
 import useRoomStore from '@/stores/zustand/useRoomStore';
 import { RoomDialogProps } from '@/types/roomTypes';
 import { useState } from 'react';
@@ -25,8 +26,9 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
   const [playerNickname, setPlayerNickname] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { rooms, setCurrentRoom } = useRoomStore();
-  const currentRoom = rooms.find((room) => room.roomId === roomId);
+  const { setCurrentRoom } = useRoomStore();
+  const { data: currentRoom, isLoading: isRoomLoading } =
+    getCurrentRoomQuery(roomId);
   const setCurrentPlayer = useRoomStore((state) => state.setCurrentPlayer);
   const { requestPermission } = useAudioPermission();
 
