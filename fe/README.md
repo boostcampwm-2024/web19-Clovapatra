@@ -38,3 +38,24 @@ useEffect(() => {
   ...
 }, [turnData, currentRoom, currentPlayer]);
 ```
+
+### react-router-dom 경고
+
+정체: React Router v7에서 상대 경로의 해석 방식이 변경될 예정이고, 이를 사전에 알려주는 경고 메시지
+
+```
+react-router-dom.js?v=ceca9ee8:4374 ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the v7_relativeSplatPath future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+```
+
+```
+react-router-dom.js?v=ceca9ee8:4374 ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in React.startTransition in v7. You can use the v7_startTransition future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+```
+
+최신 버전으로 업데이트하니까 경고 사라졌음
+
+```bash
+npm install react@latest react-dom@latest
+```
+
+업데이트하고 나서 라우팅 문제 생겨서 다운그레이드 함.. 방 나가기 시 나가기 처리가 제대로 안 됨  
+어떻게 해야 하는지 모르겠다ㅜㅜ
