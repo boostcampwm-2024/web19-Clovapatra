@@ -185,7 +185,12 @@ export class GamesGateway implements OnGatewayDisconnect, OnModuleDestroy {
           player.isReady = false;
         });
         this.server.to(roomId).emit('updateUsers', roomData.players);
-        await this.redisService.set(`room:${roomId}`, JSON.stringify(roomData));
+        roomData.status = 'waiting';
+        await this.redisService.set(
+          `room:${roomId}`,
+          JSON.stringify(roomData),
+          'roomUpdate',
+        );
 
         this.logger.log('Game ended for room:', roomId);
         this.logger.log('Final rank:', [
