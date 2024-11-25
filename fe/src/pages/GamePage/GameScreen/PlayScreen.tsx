@@ -28,6 +28,7 @@ const PlayScreen = () => {
   // 턴 데이터 변경 시 게임 초기화
   useEffect(() => {
     if (!turnData && !resultData) return;
+    if (rank.length > 0) return;
 
     setGamePhase('intro');
     setTimeLeft(turnData.timeLimit);
@@ -95,7 +96,7 @@ const PlayScreen = () => {
     console.log('현재 게임 페이즈:', gamePhase);
   }, [gamePhase]);
 
-  if (!turnData && !rank.length) return null;
+  if (!turnData && !rank.length) return;
 
   return (
     <div className="relative h-[27rem] bg-muted rounded-lg overflow-hidden">

@@ -3,27 +3,12 @@ import podiumAnimation from '@/assets/lottie/podium.json';
 import useGameStore from '@/stores/zustand/useGameStore';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import useRoomStore from '@/stores/zustand/useRoomStore';
 
 const EndScreen = () => {
   const rank = useGameStore((state) => state.rank);
   const resetGame = useGameStore((state) => state.resetGame);
-  const { currentRoom, setCurrentRoom } = useRoomStore();
 
   const handleGameEnd = () => {
-    if (currentRoom) {
-      // 모든 플레이어의 isReady를 false로 초기화
-      const resetPlayers = currentRoom.players.map((player) => ({
-        ...player,
-        isReady: false,
-      }));
-
-      setCurrentRoom({
-        ...currentRoom,
-        players: resetPlayers,
-      });
-    }
-
     resetGame();
   };
 

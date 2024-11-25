@@ -95,7 +95,6 @@ class GameSocket extends SocketService {
 
     this.socket.on('endGame', (rank: string[]) => {
       const { setRank } = useGameStore.getState();
-
       setRank(rank);
     });
   }

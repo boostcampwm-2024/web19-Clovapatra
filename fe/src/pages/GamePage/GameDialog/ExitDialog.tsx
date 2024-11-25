@@ -10,12 +10,14 @@ import {
 } from '@/components/ui/alert-dialog';
 import { gameSocket } from '@/services/gameSocket';
 import { signalingSocket } from '@/services/signalingSocket';
+import useGameStore from '@/stores/zustand/useGameStore';
 import useRoomStore from '@/stores/zustand/useRoomStore';
 import { RoomDialogProps } from '@/types/roomTypes';
 import { useNavigate } from 'react-router-dom';
 
 const ExitDialog = ({ open, onOpenChange }: RoomDialogProps) => {
   const { setCurrentRoom } = useRoomStore();
+  const resetGame = useGameStore((state) => state.resetGame);
   const navigate = useNavigate();
 
   const handleExit = () => {
@@ -23,7 +25,7 @@ const ExitDialog = ({ open, onOpenChange }: RoomDialogProps) => {
     signalingSocket.disconnect();
 
     setCurrentRoom(null);
-
+    resetGame();
     navigate('/');
   };
 
