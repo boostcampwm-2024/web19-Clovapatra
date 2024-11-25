@@ -85,7 +85,11 @@ describe('RoomsGateway', () => {
           roomName: createRoomDto.roomName,
           hostNickname: createRoomDto.hostNickname,
           players: expect.arrayContaining([
-            { playerNickname: createRoomDto.hostNickname, isReady: false },
+            {
+              playerNickname: createRoomDto.hostNickname,
+              isReady: false,
+              isMuted: false,
+            },
           ]),
           status: 'waiting',
         }),
@@ -135,7 +139,7 @@ describe('RoomsGateway', () => {
       const playerNickname = 'Player1';
       const roomData = {
         roomId,
-        players: [{ playerNickname: 'host', isReady: false }],
+        players: [{ playerNickname: 'host', isReady: false, isMuted: false }],
       };
 
       jest
@@ -150,16 +154,16 @@ describe('RoomsGateway', () => {
       expect(mockClient.data.roomId).toBe(roomId);
       expect(mockClient.data.playerNickname).toBe(playerNickname);
       expect(mockServer.to(roomId).emit).toHaveBeenCalledWith('updateUsers', [
-        { playerNickname: 'host', isReady: false },
-        { playerNickname, isReady: false },
+        { playerNickname: 'host', isReady: false, isMuted: false },
+        { playerNickname, isReady: false, isMuted: false },
       ]);
       expect(redisService.set).toHaveBeenCalledWith(
         `room:${roomId}`,
         JSON.stringify({
           roomId,
           players: [
-            { playerNickname: 'host', isReady: false },
-            { playerNickname, isReady: false },
+            { playerNickname: 'host', isReady: false, isMuted: false },
+            { playerNickname, isReady: false, isMuted: false },
           ],
         }),
         'roomUpdate',
@@ -192,7 +196,7 @@ describe('RoomsGateway', () => {
       const playerNickname = 'host';
       const roomData = {
         roomId,
-        players: [{ playerNickname: 'host', isReady: false }],
+        players: [{ playerNickname: 'host', isReady: false, isMuted: false }],
       };
 
       jest
@@ -254,8 +258,8 @@ describe('RoomsGateway', () => {
         roomId,
         roomName: 'testRoom',
         players: [
-          { playerNickname: 'host', isReady: false },
-          { playerNickname: 'Player1', isReady: false },
+          { playerNickname: 'host', isReady: false, isMuted: false },
+          { playerNickname: 'Player1', isReady: false, isMuted: false },
         ],
         hostNickname: 'host',
         status: 'wating',
@@ -274,7 +278,7 @@ describe('RoomsGateway', () => {
         JSON.stringify({
           roomId,
           roomName: 'testRoom',
-          players: [{ playerNickname: 'host', isReady: false }],
+          players: [{ playerNickname: 'host', isReady: false, isMuted: false }],
           hostNickname: 'host',
           status: 'wating',
         }),
@@ -282,7 +286,7 @@ describe('RoomsGateway', () => {
       );
 
       expect(mockServer.to(roomId).emit).toHaveBeenCalledWith('updateUsers', [
-        { playerNickname: 'host', isReady: false },
+        { playerNickname: 'host', isReady: false, isMuted: false },
       ]);
     });
 
@@ -293,8 +297,8 @@ describe('RoomsGateway', () => {
         roomId,
         roomName: 'testRoom',
         players: [
-          { playerNickname: 'host', isReady: false },
-          { playerNickname: 'Player1', isReady: false },
+          { playerNickname: 'host', isReady: false, isMuted: false },
+          { playerNickname: 'Player1', isReady: false, isMuted: false },
         ],
         hostNickname: 'host',
         status: 'wating',
@@ -313,7 +317,9 @@ describe('RoomsGateway', () => {
         JSON.stringify({
           roomId,
           roomName: 'testRoom',
-          players: [{ playerNickname: 'Player1', isReady: false }],
+          players: [
+            { playerNickname: 'Player1', isReady: false, isMuted: false },
+          ],
           hostNickname: 'Player1',
           status: 'wating',
         }),
@@ -321,7 +327,7 @@ describe('RoomsGateway', () => {
       );
 
       expect(mockServer.to(roomId).emit).toHaveBeenCalledWith('updateUsers', [
-        { playerNickname: 'Player1', isReady: false },
+        { playerNickname: 'Player1', isReady: false, isMuted: false },
       ]);
     });
 
@@ -331,7 +337,7 @@ describe('RoomsGateway', () => {
       const roomData = {
         roomId,
         roomName: 'testRoom',
-        players: [{ playerNickname: 'host', isReady: false }],
+        players: [{ playerNickname: 'host', isReady: false, isMuted: false }],
         hostNickname: 'host',
         status: 'wating',
       };
@@ -392,8 +398,8 @@ describe('RoomsGateway', () => {
         roomName: 'testRoom',
         hostNickname: 'host',
         players: [
-          { playerNickname: 'host', isReady: false },
-          { playerNickname: 'Player1', isReady: false },
+          { playerNickname: 'host', isReady: false, isMuted: false },
+          { playerNickname: 'Player1', isReady: false, isMuted: false },
         ],
         status: 'waiting',
       };
@@ -411,14 +417,14 @@ describe('RoomsGateway', () => {
         JSON.stringify({
           ...roomData,
           players: [
-            { playerNickname: 'host', isReady: false },
-            { playerNickname: 'Player1', isReady: true },
+            { playerNickname: 'host', isReady: false, isMuted: false },
+            { playerNickname: 'Player1', isReady: true, isMuted: false },
           ],
         }),
       );
       expect(mockServer.to(roomId).emit).toHaveBeenCalledWith('updateUsers', [
-        { playerNickname: 'host', isReady: false },
-        { playerNickname: 'Player1', isReady: true },
+        { playerNickname: 'host', isReady: false, isMuted: false },
+        { playerNickname: 'Player1', isReady: true, isMuted: false },
       ]);
     });
 
@@ -430,8 +436,8 @@ describe('RoomsGateway', () => {
         roomName: 'testRoom',
         hostNickname: 'host',
         players: [
-          { playerNickname: 'host', isReady: false },
-          { playerNickname: 'Player1', isReady: false },
+          { playerNickname: 'host', isReady: false, isMuted: false },
+          { playerNickname: 'Player1', isReady: false, isMuted: false },
         ],
         status: 'waiting',
       };
@@ -460,8 +466,8 @@ describe('RoomsGateway', () => {
         roomName: 'testRoom',
         hostNickname: 'host',
         players: [
-          { playerNickname: 'host', isReady: false },
-          { playerNickname: 'Player1', isReady: false },
+          { playerNickname: 'host', isReady: false, isMuted: false },
+          { playerNickname: 'Player1', isReady: false, isMuted: false },
         ],
         status: 'waiting',
       };
@@ -488,8 +494,8 @@ describe('RoomsGateway', () => {
         roomName: 'testRoom',
         hostNickname: 'host',
         players: [
-          { playerNickname: 'host', isReady: false },
-          { playerNickname: 'Player1', isReady: false },
+          { playerNickname: 'host', isReady: false, isMuted: false },
+          { playerNickname: 'Player1', isReady: false, isMuted: false },
         ],
         status: 'waiting',
       };

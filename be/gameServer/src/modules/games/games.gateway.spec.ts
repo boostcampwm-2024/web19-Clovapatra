@@ -58,8 +58,8 @@ describe('GamesGateway', () => {
         roomName: 'testRoomName',
         hostNickname: 'hostPlayer',
         players: [
-          { playerNickname: 'hostPlayer', isReady: true },
-          { playerNickname: 'player1', isReady: false },
+          { playerNickname: 'hostPlayer', isReady: true, isMuted: false },
+          { playerNickname: 'player1', isReady: false, isMuted: false },
         ],
         status: 'waiting',
       };
@@ -85,8 +85,8 @@ describe('GamesGateway', () => {
         roomName: 'testRoomName',
         hostNickname: 'hostPlayer',
         players: [
-          { playerNickname: 'hostPlayer', isReady: true },
-          { playerNickname: 'player1', isReady: true },
+          { playerNickname: 'hostPlayer', isReady: true, isMuted: false },
+          { playerNickname: 'player1', isReady: true, isMuted: false },
         ],
         status: 'waiting',
       };

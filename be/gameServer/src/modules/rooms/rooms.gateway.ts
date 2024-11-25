@@ -67,7 +67,9 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
         roomId,
         roomName,
         hostNickname,
-        players: [{ playerNickname: hostNickname, isReady: false }],
+        players: [
+          { playerNickname: hostNickname, isReady: false, isMuted: false },
+        ],
         status: 'waiting',
       };
       await this.redisService.set(
@@ -117,7 +119,7 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
         return;
       }
 
-      roomData.players.push({ playerNickname, isReady: false });
+      roomData.players.push({ playerNickname, isReady: false, isMuted: false });
       await this.redisService.set(
         `room:${roomId}`,
         JSON.stringify(roomData),
@@ -212,6 +214,32 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
 
       if (player) {
         player.isReady = !player.isReady;
+        await this.redisService.set(`room:${roomId}`, JSON.stringify(roomData));
+        this.server.to(roomId).emit('updateUsers', roomData.players);
+      } else {
+        client.emit('error', 'Player not found in room');
+      }
+    } catch (error) {
+      this.logger.error(`Error setting ready status: ${error.message}`);
+      client.emit('error', 'Failed to set ready status');
+    }
+  }
+
+  @SubscribeMessage('setMute')
+  async handleSetMute(@ConnectedSocket() client: Socket) {
+    try {
+      const { roomId, playerNickname } = client.data;
+      const roomDataString = await this.redisService.get<string>(
+        `room:${roomId}`,
+      );
+      const roomData: RoomDataDto = JSON.parse(roomDataString);
+
+      const player = roomData.players.find(
+        (p) => p.playerNickname === playerNickname,
+      );
+
+      if (player) {
+        player.isMuted = !player.isMuted;
         await this.redisService.set(`room:${roomId}`, JSON.stringify(roomData));
         this.server.to(roomId).emit('updateUsers', roomData.players);
       } else {
