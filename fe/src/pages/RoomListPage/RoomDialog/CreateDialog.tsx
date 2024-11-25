@@ -10,6 +10,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAudioPermission } from '@/hooks/useAudioPermission';
+import { useDialogForm } from '@/hooks/useDialogForm';
 import { gameSocket } from '@/services/gameSocket';
 import { signalingSocket } from '@/services/signalingSocket';
 import useRoomStore from '@/stores/zustand/useRoomStore';
@@ -22,7 +23,6 @@ const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [hostNickname, setHostNickname] = useState('');
   const navigate = useNavigate();
-  const currentRoom = useRoomStore((state) => state.currentRoom);
   const setCurrentPlayer = useRoomStore((state) => state.setCurrentPlayer);
   const { requestPermission } = useAudioPermission();
 
@@ -76,6 +76,16 @@ const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
     }
   };
 
+  // 키보드 Enter 동작
+  const { inputRefs, handleKeyDown } = useDialogForm({
+    inputs: [
+      { id: 'roomName', value: roomName, onChange: setRoomName },
+      { id: 'nickname', value: hostNickname, onChange: setHostNickname },
+    ],
+    onSubmit: handleSubmit,
+    isSubmitDisabled: !roomName.trim() || !hostNickname.trim() || isLoading,
+  });
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="font-galmuri sm:max-w-md">
@@ -102,6 +112,8 @@ const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
               placeholder="방 제목을 입력하세요"
               className="col-span-3"
               disabled={isLoading}
+              ref={(el) => (inputRefs.current[0] = el)}
+              onKeyDown={(e) => handleKeyDown(e, 0)}
             />
           </div>
           <div className="space-y-2">
@@ -117,6 +129,8 @@ const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
               placeholder="닉네임을 입력하세요"
               className="col-span-3"
               disabled={isLoading}
+              ref={(el) => (inputRefs.current[1] = el)}
+              onKeyDown={(e) => handleKeyDown(e, 1)}
             />
           </div>
         </div>
