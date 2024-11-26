@@ -47,7 +47,7 @@ const GamePage = () => {
   useEffect(() => {
     if (kickedPlayer) {
       toast.error(`${kickedPlayer}님이 강퇴되었습니다.`, {
-        position: 'bottom-right',
+        position: 'top-right',
         autoClose: 2000,
         style: {
           fontFamily: 'Galmuri11, monospace',
@@ -60,6 +60,35 @@ const GamePage = () => {
 
   const handleClickExit = () => {
     setShowExitDialog(true);
+  };
+
+  const handleCopyLink = () => {
+    // 현재 URL을 구성
+    const currentURL = `${window.location.origin}/game/${roomId}`;
+
+    // 클립보드에 복사
+    navigator.clipboard
+      .writeText(currentURL)
+      .then(() => {
+        toast.success('링크가 클립보드에 복사되었습니다!', {
+          position: 'top-right',
+          autoClose: 2000,
+          style: {
+            width: '25rem',
+            fontFamily: 'Galmuri11, monospace',
+          },
+        });
+      })
+      .catch((err) => {
+        console.error('링크 복사 실패:', err);
+        toast.error('링크 복사에 실패했습니다.', {
+          position: 'top-right',
+          autoClose: 2000,
+          style: {
+            fontFamily: 'Galmuri11, monospace',
+          },
+        });
+      });
   };
 
   if (!currentRoom) {
@@ -89,9 +118,14 @@ const GamePage = () => {
         />
       </div>
       <div className="flex mt-6">
-        <Button onClick={handleClickExit} className="font-galmuri ml-auto">
-          나가기
-        </Button>
+        <div className="ml-auto">
+          <Button onClick={handleCopyLink} className="font-galmuri mr-4">
+            ✨링크 복사✨
+          </Button>
+          <Button onClick={handleClickExit} className="font-galmuri">
+            나가기
+          </Button>
+        </div>
       </div>
       <ExitDialog open={showExitDialog} onOpenChange={setShowExitDialog} />
     </div>
