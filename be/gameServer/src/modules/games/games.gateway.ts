@@ -26,6 +26,7 @@ import {
 } from './games-utils';
 
 const VOICE_SERVERS = 'voice-servers';
+const PRONOUNCE_SCORE_THRESOLHD = 53;
 
 @WebSocketGateway({
   namespace: '/rooms',
@@ -258,7 +259,7 @@ export class GamesGateway implements OnGatewayDisconnect, OnModuleDestroy {
         this.logger.log(
           `Processing pronounceScore for player ${playerNickname}: ${pronounceScore}`,
         );
-        if (pronounceScore >= 97) {
+        if (pronounceScore >= PRONOUNCE_SCORE_THRESOLHD) {
           this.server.to(roomId).emit('voiceProcessingResult', {
             playerNickname,
             result: 'PASS',
