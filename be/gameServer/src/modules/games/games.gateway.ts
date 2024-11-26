@@ -23,9 +23,12 @@ import {
   removePlayerFromGame,
   noteToNumber,
   updatePreviousPlayers,
+  numberToNote,
+  transformScore,
 } from './games-utils';
 
 const VOICE_SERVERS = 'voice-servers';
+const PRONOUNCE_SCORE_THRESOLHD = 53;
 
 @WebSocketGateway({
   namespace: '/rooms',
@@ -240,8 +243,14 @@ export class GamesGateway implements OnGatewayDisconnect, OnModuleDestroy {
             `Success: Player ${playerNickname} has a higher note (${note}) than required pitch.`,
           );
           this.server.to(roomId).emit('voiceProcessingResult', {
-            playerNickname,
             result: 'PASS',
+            playerNickname,
+            playerNote: averageNote,
+            previousPlayerNickname:
+              gameData.previousPlayers.length === 0
+                ? null
+                : gameData.previousPlayers[gameData.previousPlayers.length - 1],
+            previousPlayerNote: numberToNote(gameData.previousPitch),
           });
           gameData.previousPitch = note;
         } else {
@@ -249,8 +258,14 @@ export class GamesGateway implements OnGatewayDisconnect, OnModuleDestroy {
             `Failure: Player ${playerNickname} failed to meet the required pitch.`,
           );
           this.server.to(roomId).emit('voiceProcessingResult', {
-            playerNickname,
             result: 'FAIL',
+            playerNickname,
+            playerNote: averageNote,
+            previousPlayerNickname:
+              gameData.previousPlayers.length === 0
+                ? null
+                : gameData.previousPlayers[gameData.previousPlayers.length - 1],
+            previousPlayerNote: numberToNote(gameData.previousPitch),
           });
           removePlayerFromGame(gameData, playerNickname);
         }
@@ -258,15 +273,17 @@ export class GamesGateway implements OnGatewayDisconnect, OnModuleDestroy {
         this.logger.log(
           `Processing pronounceScore for player ${playerNickname}: ${pronounceScore}`,
         );
-        if (pronounceScore >= 97) {
+        if (pronounceScore >= PRONOUNCE_SCORE_THRESOLHD) {
           this.server.to(roomId).emit('voiceProcessingResult', {
-            playerNickname,
             result: 'PASS',
+            playerNickname,
+            pronounceScore: transformScore(pronounceScore),
           });
         } else {
           this.server.to(roomId).emit('voiceProcessingResult', {
-            playerNickname,
             result: 'FAIL',
+            playerNickname,
+            pronounceScore: transformScore(pronounceScore),
           });
           removePlayerFromGame(gameData, playerNickname);
         }
