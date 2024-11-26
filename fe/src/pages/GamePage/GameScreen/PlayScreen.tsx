@@ -10,6 +10,7 @@ import { Loader2 } from 'lucide-react';
 import { gameSocket } from '@/services/gameSocket';
 import EndScreen from './EndScreen';
 import ReadyScreen from './ReadyScreen';
+import PitchVisualizer from '@/components/game/PitchVisualizer';
 
 type GamePhase = 'intro' | 'gameplay' | 'grading' | 'result';
 
@@ -89,7 +90,7 @@ const PlayScreen = () => {
     }, RESULT_TIME);
 
     return () => clearTimeout(resultTimer);
-  }, [gamePhase]);
+  }, [gamePhase, resultData]);
 
   // 디버깅용 phase 변경 로그
   useEffect(() => {
@@ -155,6 +156,10 @@ const PlayScreen = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {turnData && (
+        <PitchVisualizer isGameplayPhase={gamePhase === 'gameplay'} />
+      )}
 
       {!turnData && rank.length > 0 && <ReadyScreen />}
 

@@ -10,6 +10,10 @@ import { ENV } from '@/config/env';
 import usePeerStore from '@/stores/zustand/usePeerStore';
 import { useAudioManager } from '@/hooks/useAudioManager';
 
+interface PeerStreamMap {
+  [nickname: string]: MediaStream;
+}
+
 class SignalingSocket extends SocketService {
   // WebRTC 연결을 관리하는 객체 - key: peerId, value: RTCPeerConnection
   private peerConnections: Map<string, RTCPeerConnection> = new Map();
@@ -20,9 +24,20 @@ class SignalingSocket extends SocketService {
   private deviceId: string | null = null;
   // 오디오 관련
   private audioManager: ReturnType<typeof useAudioManager> | null = null;
+  private peerStreams: PeerStreamMap = {};
 
   constructor() {
     super();
+  }
+
+  // 피어 스트림 저장
+  public setPeerStream(nickname: string, stream: MediaStream) {
+    this.peerStreams[nickname] = stream;
+  }
+
+  // 피어 스트림 가져오기
+  public getPeerStream(nickname: string): MediaStream | null {
+    return this.peerStreams[nickname] || null;
   }
 
   // 시그널링 서버 연결 설정
@@ -381,8 +396,22 @@ class SignalingSocket extends SocketService {
 
     const audioManager = this.audioManager;
 
-    if (audioManager) {
-      audioManager.setAudioStream(peerId, stream);
+    // 스트림 저장
+    const userMappings = usePeerStore.getState().userMappings;
+    const nickname = Object.entries(userMappings).find(
+      ([nick, id]) => id === peerId
+    )?.[0];
+
+    if (nickname) {
+      this.setPeerStream(nickname, stream); // 피어 스트림 저장
+    }
+
+    if (nickname && audioManager) {
+      const playerInfo = {
+        currentPlayer: nickname,
+        isCurrent: false, // remote stream은 항상 false
+      };
+      audioManager.setAudioStream(peerId, stream, playerInfo);
     } else {
       console.error('audioManager가 설정되지 않음');
     }
@@ -429,6 +458,7 @@ class SignalingSocket extends SocketService {
     // 상태 초기화
     this.roomId = null;
     this.deviceId = null;
+    this.peerStreams = {};
   }
 
   override disconnect() {
