@@ -37,7 +37,8 @@ export function createTurnData(
     GameMode.CLEOPATRA,
     GameMode.CLEOPATRA,
   ];
-  const gameMode = gameModes[Math.floor(Math.random() * gameModes.length)];
+  // const gameMode = gameModes[Math.floor(Math.random() * gameModes.length)];
+  const gameMode = gameModes[0];
 
   if (gameMode === GameMode.CLEOPATRA) {
     return {
