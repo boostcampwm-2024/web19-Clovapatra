@@ -258,7 +258,7 @@ export class GamesGateway implements OnGatewayDisconnect, OnModuleDestroy {
         this.logger.log(
           `Processing pronounceScore for player ${playerNickname}: ${pronounceScore}`,
         );
-        if (pronounceScore >= 99) {
+        if (pronounceScore >= 97) {
           this.server.to(roomId).emit('voiceProcessingResult', {
             playerNickname,
             result: 'PASS',
