@@ -23,14 +23,20 @@ export class RedisService implements OnModuleDestroy {
       this.logger.log(`Deleted Redis key: ${roomKey}`);
     }
 
+    const roomNames = await this.redisClient.zrange('roomNames', 0, -1);
+    for (const roomName of roomNames) {
+      await this.redisClient.del(`roomName:${roomName}`);
+      this.logger.log(`roomName:${roomName} deleted from Redis`);
+    }
+
+    await this.redisClient.del('roomNames');
+    this.logger.log('roomNames sorted set deleted from Redis');
+
     const gameKeys = await this.redisClient.keys('game:*');
     for (const gameId of gameKeys) {
       await this.redisClient.del(gameId);
       this.logger.log(`Deleted Redis key: ${gameId}`);
     }
-
-    await this.pubClient.quit();
-    await this.subClient.quit();
 
     this.logger.log('Room data cleaned and Redis clients disconnected');
   }

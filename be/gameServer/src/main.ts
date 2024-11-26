@@ -60,5 +60,10 @@ async function bootstrap() {
     console.log('SIGINT received 앱 종료시작');
     await app.close();
   });
+
+  process.on('SIGUSR2', async () => {
+    console.log('SIGUSR2 received 앱 종료시작 (nodemon에서 재시작)');
+    await app.close();
+  }); //
 }
 bootstrap();

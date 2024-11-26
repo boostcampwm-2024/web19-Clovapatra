@@ -72,6 +72,14 @@ export class GamesGateway implements OnGatewayDisconnect {
         return;
       }
 
+      if (roomData.players.length <= 1) {
+        this.logger.warn(
+          `Not enough players to start the game in room ${roomId}`,
+        );
+        client.emit('error', 'Game cannot start');
+        return;
+      }
+
       const allReady = checkPlayersReady(roomData);
       if (!allReady) {
         this.logger.warn(`Not all players are ready in room: ${roomId}`);
