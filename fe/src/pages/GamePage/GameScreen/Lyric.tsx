@@ -21,7 +21,7 @@ const Lyric = ({ text, timing, isActive, playerIndex = 0 }: LyricProps) => {
             transition={{
               duration: timing,
               ease: 'linear',
-              delay: 0,
+              delay: -0.5,
               immediate: true,
             }}
           >
