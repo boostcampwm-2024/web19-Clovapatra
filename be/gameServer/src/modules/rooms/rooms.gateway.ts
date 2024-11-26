@@ -255,7 +255,13 @@ export class RoomsGateway implements OnGatewayDisconnect, OnModuleDestroy {
       if (player) {
         player.isMuted = !player.isMuted;
         await this.redisService.set(`room:${roomId}`, JSON.stringify(roomData));
-        this.server.to(roomId).emit('updateUsers', roomData.players);
+        // this.server.to(roomId).emit('updateUsers', roomData.players);
+        const muteStatus = roomData.players.reduce((acc, player) => {
+          acc[player.playerNickname] = player.isMuted;
+          return acc;
+        }, {});
+
+        this.server.to(roomId).emit('muteStatusChanged', muteStatus);
       } else {
         client.emit('error', 'Player not found in room');
       }
