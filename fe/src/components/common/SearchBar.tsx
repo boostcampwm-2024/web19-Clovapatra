@@ -4,24 +4,19 @@ import { useState, useEffect } from 'react';
 import { useDebounce } from '@/hooks/useDebounce';
 import useRoomStore from '@/stores/zustand/useRoomStore';
 import { searchRoomsQuery } from '@/stores/queries/searchRoomsQuery';
-import { useQueryClient } from '@tanstack/react-query';
-import { Room } from '@/types/roomTypes';
+import { getRoomsQuery } from '@/stores/queries/getRoomsQuery';
 
 const SearchBar = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearch = useDebounce(searchTerm, 200); // 200ms 디바운스
   const { setRooms } = useRoomStore();
   const { data: searchResults } = searchRoomsQuery(debouncedSearch);
-  const queryClient = useQueryClient();
+  const { data: allRooms, refetch: refetchAllRooms } = getRoomsQuery();
 
   // 검색 결과 또는 전체 방 목록으로 업데이트
   useEffect(() => {
     if (!debouncedSearch.trim()) {
-      // 검색어가 비어있을 때는 캐시된 전체 방 목록 사용
-      const cachedRooms = queryClient.getQueryData<Room[]>(['rooms']);
-      if (cachedRooms) {
-        setRooms(cachedRooms);
-      }
+      refetchAllRooms();
       return;
     }
 
@@ -29,7 +24,14 @@ const SearchBar = () => {
     if (searchResults) {
       setRooms(searchResults);
     }
-  }, [debouncedSearch, searchResults, setRooms, queryClient]);
+  }, [debouncedSearch, searchResults, setRooms, refetchAllRooms]);
+
+  // allRooms가 업데이트되면 방 목록 갱신
+  useEffect(() => {
+    if (!debouncedSearch.trim() && allRooms) {
+      setRooms(allRooms);
+    }
+  }, [allRooms, debouncedSearch, setRooms]);
 
   return (
     <div className="relative w-full mt-6">
