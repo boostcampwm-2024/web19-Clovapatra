@@ -31,11 +31,11 @@ const PlayScreen = () => {
     if (rank.length > 0) return;
 
     setGamePhase('intro');
-    setTimeLeft(turnData.timeLimit);
     setGameResult(null);
 
     const introTimer = setTimeout(() => {
       setGamePhase('gameplay');
+      setTimeLeft(turnData.timeLimit); // gameplay 페이즈로 전환될 때 시간 설정
 
       // 현재 플레이어 차례이고 게임 참여 가능한 경우에만 녹음 시작
       if (currentPlayer === turnData.playerNickname && currentRoom) {
