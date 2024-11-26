@@ -48,7 +48,7 @@ const GamePage = () => {
     if (kickedPlayer) {
       toast.error(`${kickedPlayer}님이 강퇴되었습니다.`, {
         position: 'top-right',
-        autoClose: 2000,
+        autoClose: 1000,
         style: {
           fontFamily: 'Galmuri11, monospace',
         },
@@ -72,7 +72,7 @@ const GamePage = () => {
       .then(() => {
         toast.success('링크가 클립보드에 복사되었습니다!', {
           position: 'top-right',
-          autoClose: 2000,
+          autoClose: 1000,
           style: {
             width: '25rem',
             fontFamily: 'Galmuri11, monospace',
@@ -83,7 +83,7 @@ const GamePage = () => {
         console.error('링크 복사 실패:', err);
         toast.error('링크 복사에 실패했습니다.', {
           position: 'top-right',
-          autoClose: 2000,
+          autoClose: 1000,
           style: {
             fontFamily: 'Galmuri11, monospace',
           },
