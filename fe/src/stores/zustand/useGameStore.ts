@@ -1,10 +1,11 @@
-import { GameResultProps, TurnData } from '@/types/socketTypes';
+import { GameResultProps, MuteStatus, TurnData } from '@/types/socketTypes';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
 interface GameStore {
   turnData: TurnData | null;
   resultData: GameResultProps;
+  muteStatus: MuteStatus;
   rank: string[];
   isGameStarted: boolean;
 }
@@ -12,6 +13,7 @@ interface GameStore {
 interface GameActions {
   setTurnData: (turnData: TurnData) => void;
   setGameResult: (resultData: GameResultProps) => void;
+  setMuteStatus: (muteStatus: MuteStatus) => void;
   setRank: (rank: string[]) => void;
   setIsGameStarted: (isGameStarted: boolean) => void;
   resetGame: () => void;
@@ -20,6 +22,7 @@ interface GameActions {
 const initialState: GameStore = {
   turnData: null,
   resultData: null,
+  muteStatus: null,
   isGameStarted: false,
   rank: [],
 };
@@ -52,6 +55,8 @@ const useGameStore = create<GameStore & GameActions>()(
         resultData: null,
         rank: [],
       }),
+
+    setMuteStatus: (muteStatus) => set(() => ({ muteStatus })),
   }))
 );
 
