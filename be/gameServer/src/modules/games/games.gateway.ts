@@ -89,6 +89,11 @@ export class GamesGateway implements OnGatewayDisconnect, OnModuleDestroy {
 
       roomData.status = 'progress';
 
+      roomData.players.forEach((player) => {
+        player.isReady = false;
+      });
+      this.server.to(roomId).emit('updateUsers', roomData.players);
+
       await this.redisService.set(
         `room:${roomId}`,
         JSON.stringify(roomData),
@@ -181,10 +186,6 @@ export class GamesGateway implements OnGatewayDisconnect, OnModuleDestroy {
           return;
         }
         const roomData: RoomDataDto = JSON.parse(roomDataString);
-        roomData.players.forEach((player) => {
-          player.isReady = false;
-        });
-        this.server.to(roomId).emit('updateUsers', roomData.players);
         roomData.status = 'waiting';
         await this.redisService.set(
           `room:${roomId}`,
@@ -257,7 +258,7 @@ export class GamesGateway implements OnGatewayDisconnect, OnModuleDestroy {
         this.logger.log(
           `Processing pronounceScore for player ${playerNickname}: ${pronounceScore}`,
         );
-        if (pronounceScore >= 99) {
+        if (pronounceScore >= 97) {
           this.server.to(roomId).emit('voiceProcessingResult', {
             playerNickname,
             result: 'PASS',

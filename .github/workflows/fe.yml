@@ -28,10 +28,15 @@ jobs:
           node-version: 21.7.3
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          cd ./fe
+          echo "${{ secrets.FE_ENV }}" > .env
+          npm ci
 
       - name: Build
-        run: npm run build
+        run: |
+          cd ./fe
+          npm run build
 
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.0
@@ -56,4 +61,4 @@ jobs:
             sudo chown -R ${{ secrets.SSH_USER }}:${{ secrets.SSH_USER }} /var/www/clovapatra.com/html
 
       - name: Transfer built files via rsync
-        run: rsync -avz -e 'ssh -p ${{ secrets.SERVER_PORT }}' ./dist/ ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/var/www/clovapatra.com/html
+        run: rsync -avz -e 'ssh -p ${{ secrets.SERVER_PORT }}' ./fe/dist/ ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/var/www/clovapatra.com/html

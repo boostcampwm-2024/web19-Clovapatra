@@ -4,25 +4,25 @@ import { GameDataDto } from './dto/game-data.dto';
 
 const SAMPLE_DATA = [
   {
-    timeLimit: 5,
+    timeLimit: 8,
     lyrics: '간장공장 공장장은 강 공장장이고 된장공장 공장장은 공 공장장이다.',
   },
   {
-    timeLimit: 6,
+    timeLimit: 8,
     lyrics:
       '내가 그린 기린 그림은 긴 기린 그림이고 네가 그린 기린 그림은 안 긴 기린 그림이다.',
   },
   {
-    timeLimit: 6,
+    timeLimit: 10,
     lyrics:
       '저기 계신 콩국수 국수 장수는 새 콩국수 국수 장수이고, 여기 계신 콩국수 국수 장수는 헌 콩국수 국수 장수다.',
   },
   {
-    timeLimit: 3,
+    timeLimit: 5,
     lyrics: '서울특별시 특허허가과 허가과장 허과장.',
   },
   {
-    timeLimit: 4,
+    timeLimit: 7,
     lyrics: '중앙청 창살은 쌍창살이고 시청의 창살은 외창살이다.',
   },
 ];
