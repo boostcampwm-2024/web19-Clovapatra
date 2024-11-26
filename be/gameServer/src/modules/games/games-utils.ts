@@ -34,11 +34,10 @@ export function createTurnData(
   const gameModes = [
     GameMode.PRONUNCIATION,
     GameMode.CLEOPATRA,
-    GameMode.CLEOPATRA,
-    GameMode.CLEOPATRA,
+    // GameMode.CLEOPATRA,
+    // GameMode.CLEOPATRA,
   ];
-  // const gameMode = gameModes[Math.floor(Math.random() * gameModes.length)];
-  const gameMode = gameModes[0];
+  const gameMode = gameModes[Math.floor(Math.random() * gameModes.length)];
 
   if (gameMode === GameMode.CLEOPATRA) {
     return {
