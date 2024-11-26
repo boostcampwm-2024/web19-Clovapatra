@@ -5,19 +5,31 @@ import { PlayerProps } from '@/types/roomTypes';
 import { isHost } from '@/utils/playerUtils';
 import useRoomStore from '@/stores/zustand/useRoomStore';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { signalingSocket } from '@/services/signalingSocket';
 import KickDialog from '../GameDialog/KickDialog';
 import { gameSocket } from '@/services/gameSocket';
 import MikeButton from '@/components/common/MikeButton';
+import useGameStore from '@/stores/zustand/useGameStore';
 
-const Player = ({ playerNickname, isReady, isMuted }: PlayerProps) => {
+const Player = ({ playerNickname, isReady }: PlayerProps) => {
   const { currentRoom, currentPlayer } = useRoomStore();
+  // 본인이 방장인지
   const isCurrentPlayerHost = currentPlayer === currentRoom?.hostNickname;
+  // 방장인지 참가자인지
   const isPlayerHost = isHost(playerNickname);
+  // playerNickname이 본인인지
   const isCurrentPlayer = currentPlayer === playerNickname;
+  // 본인의 음소거 상태 (마이크 버튼 토글)
   const [isCurrentPlayerMuted, setIsCurrentPlayerMuted] = useState(false);
+  // 음소거한 사용자 다른 사용자에게 표시하기 위한 상태
+  const [isMuted, setIsMuted] = useState(false);
   const [showKickDialog, setShowKickDialog] = useState(false);
+  const muteStatus = useGameStore((state) => state.muteStatus);
+
+  useEffect(() => {
+    setIsMuted(muteStatus[playerNickname]);
+  }, [muteStatus]);
 
   const handleKick = () => {
     setShowKickDialog(true);

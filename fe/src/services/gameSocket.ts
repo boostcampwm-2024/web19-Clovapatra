@@ -2,6 +2,7 @@ import { io, Socket } from 'socket.io-client';
 import {
   ClientToServerEvents,
   GameResultProps,
+  MuteStatus,
   ServerToClientEvents,
   TurnData,
 } from '@/types/socketTypes';
@@ -83,6 +84,11 @@ class GameSocket extends SocketService {
       setKickedPlayer(playerNickname);
     });
 
+    this.socket.on('muteStatusChanged', (muteStatus: MuteStatus) => {
+      const { setMuteStatus } = useGameStore.getState();
+      setMuteStatus(muteStatus);
+    });
+
     this.socket.on('turnChanged', (turnData: TurnData) => {
       const { setTurnData } = useGameStore.getState();
       setTurnData(turnData);
@@ -124,7 +130,6 @@ class GameSocket extends SocketService {
   }
 
   next() {
-    console.log('next called');
     this.socket?.emit('next');
   }
 }

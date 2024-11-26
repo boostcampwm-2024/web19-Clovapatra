@@ -1,7 +1,6 @@
 export interface PlayerProps {
   playerNickname: string;
   isReady: boolean;
-  isMuted: boolean;
 }
 
 export interface Room {

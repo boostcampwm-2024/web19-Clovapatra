@@ -76,3 +76,13 @@ npm install react@latest react-dom@latest
   - Enter로 Submit(확인 버튼 클릭과 동일한 동작)
 - shadcn/ui Dialog 컴포넌트는 ESC 키를 눌렀을 때 Dialog Close를 해줘서 이건 따로 처리가 필요 없었다.
 - SearchBar(방 검색)에도 적용할 생각!
+
+### 게임 진행 테스트 도중 버그 발견
+
+- 본인 마이크 버튼을 음소거하면 setMute 이벤트를 보내고 updateUsers를 수신해 players 상태를 변경한다.
+- 게임 진행 중에 이 마이크 버튼을 음소거하면 각 player의 isMuted 상태가 바뀌고, 이는 currentRoom의 상태를 바꿔 리렌더링 되면서 voice recording이 되지 않는다. (게임방을 나갔을 경우에도 동일, 이 부분은 나중에 해결하기로)
+  - PlayScreen의 useEffect 의존성 배열에 currentRoom이 있어서 그런 것 같다.
+- 그래서 일단 각 player에서 isMuted를 없애고, setMute 시 updateUsers가 아닌 muteStatusChanged 이벤트를 수신해 muteStatus: {닉네임: false/true, ...} 데이터를 받아온다.
+- Player 컴포넌트 내부에 isMuted 초기 상태를 정해주고, muteStatus 데이터 상태가 변경되었을 때 isMuted를 변경해 주는 방식으로 바꿨다.
+- 이렇게 해서 Player 컴포넌트와 GameScreen 컴포넌트를 독립적으로 리렌더링 해줄 수 있게 됐다.
+- 문제: muteStatus의 initial state를 null로 설정하니까 처음에 가져올 때 에러 발생해서 빈 객체로 초기화
