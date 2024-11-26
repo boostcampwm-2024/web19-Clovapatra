@@ -89,6 +89,11 @@ export class GamesGateway implements OnGatewayDisconnect, OnModuleDestroy {
 
       roomData.status = 'progress';
 
+      roomData.players.forEach((player) => {
+        player.isReady = false;
+      });
+      this.server.to(roomId).emit('updateUsers', roomData.players);
+
       await this.redisService.set(
         `room:${roomId}`,
         JSON.stringify(roomData),
@@ -181,10 +186,6 @@ export class GamesGateway implements OnGatewayDisconnect, OnModuleDestroy {
           return;
         }
         const roomData: RoomDataDto = JSON.parse(roomDataString);
-        roomData.players.forEach((player) => {
-          player.isReady = false;
-        });
-        this.server.to(roomId).emit('updateUsers', roomData.players);
         roomData.status = 'waiting';
         await this.redisService.set(
           `room:${roomId}`,
