@@ -52,17 +52,15 @@ export class GamesGateway implements OnGatewayDisconnect {
     this.logger.log(`Game start requested for room: ${roomId}`);
 
     try {
-      const roomDataString = await this.redisService.get<string>(
+      const roomData = await this.redisService.hgetAll<RoomDataDto>(
         `room:${roomId}`,
       );
 
-      if (!roomDataString) {
+      if (!roomData) {
         this.logger.warn(`Room not found: ${roomId}`);
         client.emit('error', 'Room not found');
         return;
       }
-
-      const roomData: RoomDataDto = JSON.parse(roomDataString);
 
       if (roomData.hostNickname !== playerNickname) {
         this.logger.warn(
@@ -94,9 +92,9 @@ export class GamesGateway implements OnGatewayDisconnect {
       });
       this.server.to(roomId).emit('updateUsers', roomData.players);
 
-      await this.redisService.set(
+      await this.redisService.hmset(
         `room:${roomId}`,
-        JSON.stringify(roomData),
+        { players: JSON.stringify(roomData.players), status: roomData.status },
         'roomUpdate',
       );
 
@@ -177,19 +175,19 @@ export class GamesGateway implements OnGatewayDisconnect {
           .to(roomId)
           .emit('endGame', [...gameData.alivePlayers, ...gameData.rank]);
 
-        const roomDataString = await this.redisService.get<string>(
+        const roomData = await this.redisService.hgetAll<RoomDataDto>(
           `room:${roomId}`,
         );
-        if (!roomDataString) {
+        if (!roomData) {
           this.logger.warn(`Room not found: ${roomId}`);
           client.emit('error', 'Room not found');
           return;
         }
-        const roomData: RoomDataDto = JSON.parse(roomDataString);
+
         roomData.status = 'waiting';
-        await this.redisService.set(
+        await this.redisService.hmset(
           `room:${roomId}`,
-          JSON.stringify(roomData),
+          { status: roomData.status },
           'roomUpdate',
         );
 

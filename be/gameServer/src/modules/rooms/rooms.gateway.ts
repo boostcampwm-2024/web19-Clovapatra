@@ -20,8 +20,14 @@ import {
   isNicknameTaken,
   removePlayerFromRoom,
   changeRoomHost,
+  convertRoomDataToHash,
 } from './room-utils';
 import { v4 as uuidv4 } from 'uuid';
+
+const ROOMS_LIST_KEY = 'roomsList';
+const ROOMS_UPDATE_CHANNEL = 'roomUpdate';
+const ROOM_NAME_TO_ID_HASH = 'roomNamesToIds';
+const ROOM_NAMES_SORTED_KEY = 'roomNames';
 
 @WebSocketGateway({
   namespace: '/rooms',
@@ -61,15 +67,18 @@ export class RoomsGateway implements OnGatewayDisconnect {
         ],
         status: 'waiting',
       };
-      await this.redisService.set(
-        `room:${roomId}`,
-        JSON.stringify(roomData),
-        'roomUpdate',
-      );
 
-      // roomName으로 id 검색을 위한 키 (방 이름 중복 허용)
-      await this.redisService.rpush(`roomName:${roomName}`, roomId);
-      await this.redisService.zadd('roomNames', 0, roomName);
+      await this.redisService.rpush(ROOMS_LIST_KEY, roomId);
+      await this.redisService.hmset<string>(
+        `room:${roomId}`,
+        convertRoomDataToHash(roomData),
+        ROOMS_UPDATE_CHANNEL,
+      );
+      await this.redisService.rpush(
+        `${ROOM_NAME_TO_ID_HASH}:${roomName}`,
+        roomId,
+      );
+      await this.redisService.zadd(ROOM_NAMES_SORTED_KEY, 0, roomName);
 
       client.join(roomId);
       client.data = { roomId, playerNickname: hostNickname };
@@ -95,11 +104,15 @@ export class RoomsGateway implements OnGatewayDisconnect {
     this.logger.log(`Join room requested: ${roomId} by ${playerNickname}`);
 
     try {
-      const roomDataString = await this.redisService.get<string>(
+      const roomData = await this.redisService.hgetAll<RoomDataDto>(
         `room:${roomId}`,
       );
 
-      const roomData: RoomDataDto = JSON.parse(roomDataString);
+      if (!roomData || Object.keys(roomData).length === 0) {
+        this.logger.warn(`Room ${roomId} does not exist`);
+        client.emit('error', 'Room does not exist');
+        return;
+      }
 
       if (isRoomFull(roomData)) {
         this.logger.log(`Room ${roomId} is full`);
@@ -114,10 +127,12 @@ export class RoomsGateway implements OnGatewayDisconnect {
       }
 
       roomData.players.push({ playerNickname, isReady: false, isMuted: false });
-      await this.redisService.set(
+      await this.redisService.hmset(
         `room:${roomId}`,
-        JSON.stringify(roomData),
-        'roomUpdate',
+        {
+          players: JSON.stringify(roomData.players),
+        },
+        ROOMS_UPDATE_CHANNEL,
       );
 
       client.join(roomId);
@@ -140,16 +155,15 @@ export class RoomsGateway implements OnGatewayDisconnect {
   async handleDisconnect(@ConnectedSocket() client: Socket) {
     try {
       const { roomId, playerNickname } = client.data;
-      const roomDataString = await this.redisService.get<string>(
+      const roomData = await this.redisService.hgetAll<RoomDataDto>(
         `room:${roomId}`,
       );
 
-      if (!roomDataString) {
-        this.logger.log(`Room not found: ${roomId}`);
+      if (!roomData || Object.keys(roomData).length === 0) {
+        this.logger.warn(`Room ${roomId} does not exist`);
+        client.emit('error', 'Room does not exist');
         return;
       }
-
-      const roomData: RoomDataDto = JSON.parse(roomDataString);
 
       removePlayerFromRoom(roomData, playerNickname);
 
@@ -159,10 +173,13 @@ export class RoomsGateway implements OnGatewayDisconnect {
       if (roomData.hostNickname === playerNickname) {
         if (roomData.players.length > 0) {
           changeRoomHost(roomData);
-          await this.redisService.set(
+          await this.redisService.hmset(
             `room:${roomId}`,
-            JSON.stringify(roomData),
-            'roomUpdate',
+            {
+              players: JSON.stringify(roomData.players),
+              hostNickname: roomData.hostNickname,
+            },
+            ROOMS_UPDATE_CHANNEL,
           );
 
           this.logger.log(`host ${playerNickname} leave room`);
@@ -172,8 +189,14 @@ export class RoomsGateway implements OnGatewayDisconnect {
           this.server.to(roomId).emit('updateUsers', roomData.players);
         } else {
           this.logger.log(`${roomId} deleting room`);
-          await this.redisService.delete(`room:${roomId}`, 'roomUpdate');
-          await this.redisService.lrem(`roomName:${roomData.roomName}`, roomId);
+          await this.redisService.delete(
+            `room:${roomId}`,
+            ROOMS_UPDATE_CHANNEL,
+          );
+          await this.redisService.lrem(
+            `${ROOM_NAME_TO_ID_HASH}:${roomData.roomName}`,
+            roomId,
+          );
           const roomList = await this.redisService.lrange(
             `roomName:${roomData.roomName}`,
             0,
@@ -184,10 +207,12 @@ export class RoomsGateway implements OnGatewayDisconnect {
           }
         }
       } else {
-        await this.redisService.set(
+        await this.redisService.hmset(
           `room:${roomId}`,
-          JSON.stringify(roomData),
-          'roomUpdate',
+          {
+            players: JSON.stringify(roomData.players),
+          },
+          ROOMS_UPDATE_CHANNEL,
         );
         this.logger.log(`host ${playerNickname} leave room`);
         this.server.to(roomId).emit('updateUsers', roomData.players);
@@ -206,10 +231,15 @@ export class RoomsGateway implements OnGatewayDisconnect {
   async handleSetReady(@ConnectedSocket() client: Socket) {
     try {
       const { roomId, playerNickname } = client.data;
-      const roomDataString = await this.redisService.get<string>(
+      const roomData = await this.redisService.hgetAll<RoomDataDto>(
         `room:${roomId}`,
       );
-      const roomData: RoomDataDto = JSON.parse(roomDataString);
+
+      if (!roomData || Object.keys(roomData).length === 0) {
+        this.logger.warn(`Room ${roomId} does not exist`);
+        client.emit('error', 'Room does not exist');
+        return;
+      }
 
       const player = roomData.players.find(
         (p) => p.playerNickname === playerNickname,
@@ -217,7 +247,9 @@ export class RoomsGateway implements OnGatewayDisconnect {
 
       if (player) {
         player.isReady = !player.isReady;
-        await this.redisService.set(`room:${roomId}`, JSON.stringify(roomData));
+        await this.redisService.hmset(`room:${roomId}`, {
+          players: JSON.stringify(roomData.players),
+        });
         this.server.to(roomId).emit('updateUsers', roomData.players);
       } else {
         client.emit('error', 'Player not found in room');
@@ -232,10 +264,15 @@ export class RoomsGateway implements OnGatewayDisconnect {
   async handleSetMute(@ConnectedSocket() client: Socket) {
     try {
       const { roomId, playerNickname } = client.data;
-      const roomDataString = await this.redisService.get<string>(
+      const roomData = await this.redisService.hgetAll<RoomDataDto>(
         `room:${roomId}`,
       );
-      const roomData: RoomDataDto = JSON.parse(roomDataString);
+
+      if (!roomData || Object.keys(roomData).length === 0) {
+        this.logger.warn(`Room ${roomId} does not exist`);
+        client.emit('error', 'Room does not exist');
+        return;
+      }
 
       const player = roomData.players.find(
         (p) => p.playerNickname === playerNickname,
@@ -243,7 +280,9 @@ export class RoomsGateway implements OnGatewayDisconnect {
 
       if (player) {
         player.isMuted = !player.isMuted;
-        await this.redisService.set(`room:${roomId}`, JSON.stringify(roomData));
+        await this.redisService.hmset(`room:${roomId}`, {
+          players: JSON.stringify(roomData.players),
+        });
         // this.server.to(roomId).emit('updateUsers', roomData.players);
         const muteStatus = roomData.players.reduce((acc, player) => {
           acc[player.playerNickname] = player.isMuted;
@@ -267,10 +306,15 @@ export class RoomsGateway implements OnGatewayDisconnect {
   ) {
     try {
       const { roomId } = client.data;
-      const roomDataString = await this.redisService.get<string>(
+      const roomData = await this.redisService.hgetAll<RoomDataDto>(
         `room:${roomId}`,
       );
-      const roomData: RoomDataDto = JSON.parse(roomDataString);
+
+      if (!roomData || Object.keys(roomData).length === 0) {
+        this.logger.warn(`Room ${roomId} does not exist`);
+        client.emit('error', 'Room does not exist');
+        return;
+      }
 
       if (roomData.hostNickname !== client.data.playerNickname) {
         client.emit('error', 'Only host can kick players');
@@ -293,10 +337,12 @@ export class RoomsGateway implements OnGatewayDisconnect {
 
       if (targetSocket) {
         roomData.players.splice(playerIndex, 1);
-        await this.redisService.set(
+        await this.redisService.hmset(
           `room:${roomId}`,
-          JSON.stringify(roomData),
-          'roomUpdate',
+          {
+            players: JSON.stringify(roomData.players),
+          },
+          ROOMS_UPDATE_CHANNEL,
         );
 
         this.server.to(roomId).emit('kicked', playerNickname);

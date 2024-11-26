@@ -25,11 +25,13 @@ export class RoomController {
     this.redisService.subscribeToChannel('roomUpdate', async (message) => {
       this.logger.log(`게임방 업데이트 감지: ${message}`);
 
-      const roomKeys = await this.redisService.keys('room:*');
+      const roomKeys = await this.redisService.lrange('roomsList', 0, -1);
       const rooms = await Promise.all(
         roomKeys.map(async (key) => {
-          const roomData = await this.redisService.get<string>(key);
-          return JSON.parse(roomData) as RoomDataDto;
+          const roomData = await this.redisService.hgetAll<RoomDataDto>(
+            `room:${key}`,
+          );
+          return roomData;
         }),
       );
       this.roomUpdateSubject.next({ data: rooms });
@@ -79,7 +81,7 @@ export class RoomController {
     const roomIds = (
       await Promise.all(
         roomNames.map(async (roomName) => {
-          return this.redisService.lrange(`roomName:${roomName}`, 0, -1);
+          return this.redisService.lrange(`roomNamesToIds:${roomName}`, 0, -1);
         }),
       )
     ).flat();
@@ -89,8 +91,10 @@ export class RoomController {
     this.logger.log(`roomData ${limitedRoomIds.length}개 반환`);
     return await Promise.all(
       limitedRoomIds.map(async (roomId) => {
-        const roomData = await this.redisService.get<string>(`room:${roomId}`);
-        return JSON.parse(roomData) as RoomDataDto;
+        const roomData = await this.redisService.hgetAll<RoomDataDto>(
+          `room:${roomId}`,
+        );
+        return roomData;
       }),
     );
   }
@@ -123,7 +127,9 @@ export class RoomController {
   })
   async getRoomById(@Param('roomId') roomId: string): Promise<RoomDataDto> {
     this.logger.log(`요청 시작 - Room 조회: roomId=${roomId}`);
-    const roomData = await this.redisService.get<string>(`room:${roomId}`);
+    const roomData = await this.redisService.hgetAll<RoomDataDto>(
+      `room:${roomId}`,
+    );
 
     if (!roomData) {
       this.logger.warn(`Room 조회 실패 - ID: ${roomId} (존재하지 않는 ID)`);
@@ -131,13 +137,14 @@ export class RoomController {
     }
 
     this.logger.log(`요청 완료 - Room 조회 성공: roomId=${roomId}`);
-    return JSON.parse(roomData) as RoomDataDto;
+    return roomData;
   }
 
   @Get()
   @ApiOperation({
     summary: '게임 방 목록 조회',
-    description: 'Redis에서 저장된 모든 게임 방 목록을 조회합니다.',
+    description:
+      'Redis에서 저장된 모든 게임 방 목록을 페이지네이션으로 조회합니다.',
   })
   @ApiResponse({
     status: 200,
@@ -145,19 +152,27 @@ export class RoomController {
     type: [RoomDataDto],
   })
   async getRooms(@Query('page') page: number = 1): Promise<RoomDataDto[]> {
-    const roomKeys = await this.redisService.keys('room:*');
-    this.logger.log('게임 방 목록 조회 시작');
-
     const start = (page - 1) * ROOM_LIMIT;
     const end = start + ROOM_LIMIT - 1;
-    const paginatedKeys = roomKeys.slice(start, end + 1);
+    this.logger.log(
+      `게임 방 목록 조회 시작 (페이지: ${page}, 범위: ${start}-${end})`,
+    );
+
+    const paginatedKeys = await this.redisService.lrange(
+      'roomsList',
+      start,
+      end,
+    );
 
     const rooms = await Promise.all(
       paginatedKeys.map(async (key) => {
-        const roomData = await this.redisService.get<string>(key);
-        return JSON.parse(roomData) as RoomDataDto;
+        const roomData = await this.redisService.hgetAll<RoomDataDto>(
+          `room:${key}`,
+        );
+        return roomData;
       }),
     );
+
     this.logger.log(`게임 방 목록 조회 완료, ${rooms.length}개 방 반환`);
     return rooms;
   }

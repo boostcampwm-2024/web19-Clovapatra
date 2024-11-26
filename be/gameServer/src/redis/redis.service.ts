@@ -25,8 +25,8 @@ export class RedisService implements OnModuleDestroy {
 
     const roomNames = await this.redisClient.zrange('roomNames', 0, -1);
     for (const roomName of roomNames) {
-      await this.redisClient.del(`roomName:${roomName}`);
-      this.logger.log(`roomName:${roomName} deleted from Redis`);
+      await this.redisClient.del(`roomNamesToIds:${roomName}`);
+      this.logger.log(`roomNamesToIds:${roomName} deleted from Redis`);
     }
 
     await this.redisClient.del('roomNames');
@@ -62,6 +62,48 @@ export class RedisService implements OnModuleDestroy {
     }
   }
 
+  async hmset<T extends string | number | Buffer>(
+    key: string,
+    fields: Record<string, T>,
+    channel?: string,
+    ttlInSeconds?: number,
+  ): Promise<void> {
+    const fieldsArray = Object.entries(fields).flat();
+    await this.redisClient.hmset(key, ...fieldsArray);
+
+    if (ttlInSeconds) {
+      await this.redisClient.expire(key, ttlInSeconds);
+    }
+
+    if (channel) {
+      await this.publishToChannel(channel, key);
+    }
+  }
+
+  async hget<T>(key: string, field: string): Promise<T | null> {
+    const value = await this.redisClient.hget(key, field);
+    return value ? JSON.parse(value) : null;
+  }
+
+  async hgetAll<T>(key: string): Promise<T | null> {
+    const values = await this.redisClient.hgetall(key);
+
+    if (Object.keys(values).length === 0) {
+      return null;
+    }
+
+    const parsedValues: T = {} as T;
+    for (const [field, value] of Object.entries(values)) {
+      if (field === 'players') {
+        parsedValues[field] = JSON.parse(value);
+      } else {
+        parsedValues[field] = value;
+      }
+    }
+
+    return parsedValues;
+  }
+
   async get<T>(key: string): Promise<T | null> {
     const value = await this.redisClient.get(key);
     return value ? JSON.parse(value) : null;
@@ -70,7 +112,7 @@ export class RedisService implements OnModuleDestroy {
   async delete(key: string, channel?: string): Promise<void> {
     await this.redisClient.del(key);
     if (channel) {
-      await this.publishToChannel(channel, `Deleted: ${key}`);
+      await this.publishToChannel(channel, key);
     }
   }
 
