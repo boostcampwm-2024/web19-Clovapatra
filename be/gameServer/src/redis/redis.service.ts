@@ -1,5 +1,6 @@
 import { Injectable, Inject, OnModuleDestroy } from '@nestjs/common';
 import { Redis } from 'ioredis';
+import { Logger } from '@nestjs/common';
 
 @Injectable()
 export class RedisService implements OnModuleDestroy {
@@ -10,10 +11,28 @@ export class RedisService implements OnModuleDestroy {
     this.pubClient = new Redis(redisClient.options);
     this.subClient = new Redis(redisClient.options);
   }
+  private readonly logger = new Logger(RedisService.name);
 
-  onModuleDestroy() {
-    this.pubClient.quit();
-    this.subClient.quit();
+  async onModuleDestroy() {
+    this.logger.log('Module is being destroyed, cleaning up room data...');
+
+    const roomKeys = await this.redisClient.keys('room:*');
+
+    for (const roomKey of roomKeys) {
+      await this.redisClient.del(roomKey);
+      this.logger.log(`Deleted Redis key: ${roomKey}`);
+    }
+
+    const gameKeys = await this.redisClient.keys('game:*');
+    for (const gameId of gameKeys) {
+      await this.redisClient.del(gameId);
+      this.logger.log(`Deleted Redis key: ${gameId}`);
+    }
+
+    await this.pubClient.quit();
+    await this.subClient.quit();
+
+    this.logger.log('Room data cleaned and Redis clients disconnected');
   }
 
   async set<T>(

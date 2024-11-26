@@ -50,5 +50,15 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
 
   await app.listen(configService.get<number>('app.port'));
+
+  process.on('SIGTERM', async () => {
+    console.log('SIGTERM received 앱 종료시작');
+    await app.close();
+  });
+
+  process.on('SIGINT', async () => {
+    console.log('SIGINT received 앱 종료시작');
+    await app.close();
+  });
 }
 bootstrap();
