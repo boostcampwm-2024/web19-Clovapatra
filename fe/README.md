@@ -85,3 +85,4 @@ npm install react@latest react-dom@latest
 - 그래서 일단 각 player에서 isMuted를 없애고, setMute 시 updateUsers가 아닌 muteStatusChanged 이벤트를 수신해 muteStatus: {닉네임: false/true, ...} 데이터를 받아온다.
 - Player 컴포넌트 내부에 isMuted 초기 상태를 정해주고, muteStatus 데이터 상태가 변경되었을 때 isMuted를 변경해 주는 방식으로 바꿨다.
 - 이렇게 해서 Player 컴포넌트와 GameScreen 컴포넌트를 독립적으로 리렌더링 해줄 수 있게 됐다.
+- 문제: muteStatus의 initial state를 null로 설정하니까 처음에 가져올 때 에러 발생해서 빈 객체로 초기화
