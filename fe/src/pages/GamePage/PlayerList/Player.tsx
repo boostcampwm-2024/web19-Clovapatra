@@ -25,7 +25,7 @@ const Player = ({ playerNickname, isReady }: PlayerProps) => {
   // 음소거한 사용자 다른 사용자에게 표시하기 위한 상태
   const [isMuted, setIsMuted] = useState(false);
   const [showKickDialog, setShowKickDialog] = useState(false);
-  const { muteStatus } = useGameStore();
+  const muteStatus = useGameStore((state) => state.muteStatus);
 
   useEffect(() => {
     setIsMuted(muteStatus[playerNickname]);

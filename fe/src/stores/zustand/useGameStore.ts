@@ -22,7 +22,7 @@ interface GameActions {
 const initialState: GameStore = {
   turnData: null,
   resultData: null,
-  muteStatus: null,
+  muteStatus: {},
   isGameStarted: false,
   rank: [],
 };
