@@ -1,23 +1,33 @@
 import { useCallback } from 'react';
 
 export const useAudioManager = () => {
-  const setAudioStream = useCallback((peerId: string, stream: MediaStream) => {
-    const existingAudio = document.getElementById(
-      `audio-${peerId}`
-    ) as HTMLAudioElement;
+  const setAudioStream = useCallback(
+    (
+      peerId: string,
+      stream: MediaStream,
+      playerInfo: {
+        currentPlayer: string;
+        isCurrent: boolean;
+      }
+    ) => {
+      const existingAudio = document.getElementById(
+        `audio-${peerId}`
+      ) as HTMLAudioElement;
 
-    if (existingAudio) {
-      existingAudio.remove();
-    }
+      if (existingAudio) {
+        existingAudio.remove();
+      }
 
-    const audioElement = new Audio();
-    audioElement.id = `audio-${peerId}`;
-    audioElement.srcObject = stream;
-    audioElement.autoplay = true;
-    audioElement.volume = 0.5; // 초기 볼륨
+      const audioElement = new Audio();
+      audioElement.id = `audio-${peerId}`;
+      audioElement.srcObject = stream;
+      audioElement.autoplay = true;
+      audioElement.volume = 0.5; // 초기 볼륨
 
-    document.body.appendChild(audioElement);
-  }, []);
+      document.body.appendChild(audioElement);
+    },
+    []
+  );
 
   const setVolume = useCallback((peerId: string, volume: number) => {
     const audioElement = document.getElementById(
