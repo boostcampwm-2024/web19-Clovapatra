@@ -10,7 +10,7 @@ class SpeechRecognitionService {
     const params = new URLSearchParams({
       lang: "Kor",
       assessment: "true",
-      utterance: utterance,
+      utterance: utterance.replace(/[ ,.]/g, ""),
       graph: "false",
     }).toString();
 
@@ -26,7 +26,7 @@ class SpeechRecognitionService {
         maxBodyLength: Infinity,
       });
 
-      return response.data.text.replaceAll(" ") === utterance.replaceAll(" ") ? response.data.assessment_score : 0;
+      return response.data.assessment_score;
     } catch (error) {
       this.handleApiError(error);
     }
