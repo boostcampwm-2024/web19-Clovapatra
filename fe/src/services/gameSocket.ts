@@ -75,6 +75,8 @@ class GameSocket extends SocketService {
       if (!currentRoom) return;
 
       if (currentPlayer === playerNickname) {
+        sessionStorage.setItem('kickedRoomName', currentRoom.roomName);
+
         setCurrentRoom(null);
         setCurrentPlayer(null);
         window.location.href = '/';
