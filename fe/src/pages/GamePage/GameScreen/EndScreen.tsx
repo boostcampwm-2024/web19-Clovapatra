@@ -109,7 +109,12 @@ const EndScreen = () => {
             size="default"
             className="font-galmuri"
           >
-            로비로 돌아가기
+            <span className="hidden md:inline">로비로 돌아가기</span>
+            <span className="md:hidden">
+              로비로
+              <br />
+              돌아가기
+            </span>
           </Button>
         </motion.div>
       </div>

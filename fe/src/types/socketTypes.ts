@@ -8,6 +8,7 @@ export interface ServerToClientEvents {
   kicked: (playerNickname: string) => void;
   turnChanged: (turnData: TurnData) => void;
   voiceProcessingResult: (result: GameResultProps) => void;
+  muteStatusChanged: (MuteStatus: MuteStatus) => void;
   endGame: (rank: string[]) => void;
 }
 
@@ -16,9 +17,12 @@ export interface ClientToServerEvents {
   joinRoom: (data: { roomId: string; playerNickname: string }) => void;
   kickPlayer: (playerNickname: string) => void;
   setReady: () => void;
+  setMute: () => void;
   startGame: () => void;
+  next: () => void;
 }
 
+// 서버에서 받아오는 데이터 타입
 export interface TurnData {
   roomId: string;
   playerNickname: string;
@@ -31,6 +35,10 @@ export interface GameResultProps {
   playerNickname: string;
   result: string;
 }
+
+export type MuteStatus = {
+  [playerNickname: string]: boolean;
+};
 
 // 음성 처리 서버 이벤트 타입
 export interface VoiceSocketEvents {

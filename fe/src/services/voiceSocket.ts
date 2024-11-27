@@ -1,12 +1,13 @@
 import { Socket, io } from 'socket.io-client';
 import { VoiceSocketEvents } from '@/types/socketTypes';
 import { SocketService } from './SocketService';
+import { ENV } from '@/config/env';
 
 class VoiceSocket extends SocketService {
   private mediaRecorder: MediaRecorder | null;
   private onErrorCallback: ((error: string) => void) | null;
   private onRecordingStateChange: ((isRecording: boolean) => void) | null;
-  private readonly VOICE_SERVER_URL = 'wss://voice-processing.clovapatra.com';
+  private readonly VOICE_SERVER_URL = ENV.VOICE_SERVER_URL;
 
   constructor() {
     super();
@@ -83,7 +84,7 @@ class VoiceSocket extends SocketService {
           try {
             const buffer = await event.data.arrayBuffer();
             if (this.socket?.connected) {
-              console.log('Sending audio chunk:', buffer.byteLength, 'bytes');
+              // console.log('Sending audio chunk:', buffer.byteLength, 'bytes');
               this.socket.emit('audio_data', buffer);
             }
           } catch (error) {
