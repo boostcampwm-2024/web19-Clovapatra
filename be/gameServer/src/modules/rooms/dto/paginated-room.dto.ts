@@ -1,7 +1,7 @@
 import { RoomDataDto } from './room-data.dto';
 
 export class PaginatedRoomDto {
-  data: RoomDataDto[];
+  rooms: RoomDataDto[];
   pagination: {
     currentPage: number;
     totalPages: number;

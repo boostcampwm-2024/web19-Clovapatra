@@ -7,6 +7,7 @@ import {
   Param,
   NotFoundException,
   Query,
+  Delete,
 } from '@nestjs/common';
 import { RedisService } from '../../redis/redis.service';
 import { RoomDataDto } from './dto/room-data.dto';
@@ -275,7 +276,7 @@ export class RoomController {
     description: '게임 방 목록이 성공적으로 반환됩니다.',
     schema: {
       example: {
-        data: [
+        rooms: [
           {
             roomId: '6f42377f-42ea-42cc-ac1a-b5d2b99d4ced',
             roomName: '게임방123',
@@ -330,7 +331,7 @@ export class RoomController {
     this.logger.log(`게임 방 목록 조회 완료, ${rooms.length}개 방 반환`);
 
     return {
-      data: rooms,
+      rooms: rooms,
       pagination: {
         currentPage: Number(page),
         totalPages,
@@ -339,5 +340,29 @@ export class RoomController {
         hasPreviousPage: page > 1,
       },
     };
+  }
+
+  @Delete('Error Messages')
+  @ApiOperation({
+    summary: '에러 메시지 목록',
+    description: 'API에서 발생할 수 있는 에러 메시지 목록',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '에러 메시지 목록',
+    example: [
+      'RoomNotFound: 방을 찾을 수 없음',
+      'GameNotFound: 게임을 찾을 수 없음',
+      'RoomFull: 방이 가득 참',
+      'NicknameTaken: 닉네임이 이미 사용 중',
+      'PlayerNotFound: 플레이어를 찾을 수 없음',
+      'HostOnlyStart: 호스트만 게임을 시작할 수 있음',
+      'InternalError: 내부 서버 오류',
+      'AllPlayersMustBeReady: 모든 플레이어가 준비 상태여야 함',
+      'NotEnoughPlayers: 플레이어가 충분하지 않음',
+    ],
+  })
+  getErrorMessages() {
+    return;
   }
 }
