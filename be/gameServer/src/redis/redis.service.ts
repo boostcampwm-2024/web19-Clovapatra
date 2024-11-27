@@ -150,6 +150,10 @@ export class RedisService implements OnModuleDestroy {
     await this.redisClient.lrem(key, count, value);
   }
 
+  async llen(key: string): Promise<number> {
+    return await this.redisClient.llen(key);
+  }
+
   async zadd(keyPrefix: string, score: number, value: string): Promise<void> {
     const key = `${keyPrefix}`;
     await this.redisClient.zadd(key, score, value);

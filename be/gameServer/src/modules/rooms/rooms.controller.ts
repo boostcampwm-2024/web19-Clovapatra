@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { RedisService } from '../../redis/redis.service';
 import { RoomDataDto } from './dto/room-data.dto';
+import { PaginatedRoomDto } from './dto/paginated-room.dto';
 import {
   ApiTags,
   ApiOperation,
@@ -272,14 +273,37 @@ export class RoomController {
   @ApiResponse({
     status: 200,
     description: '게임 방 목록이 성공적으로 반환됩니다.',
-    type: [RoomDataDto],
+    schema: {
+      example: {
+        data: [
+          {
+            roomId: '6f42377f-42ea-42cc-ac1a-b5d2b99d4ced',
+            roomName: '게임방123',
+            hostNickname: 'hostNickname123',
+            players: [
+              { playerNickname: 'hostNic123', isReady: true, isMuted: false },
+              { playerNickname: 'player1', isReady: false, isMuted: true },
+            ],
+            status: 'waiting',
+          },
+        ],
+        pagination: {
+          currentPage: 1,
+          totalPages: 5,
+          totalItems: 50,
+          hasNextPage: true,
+          hasPreviousPage: false,
+        },
+      },
+    },
   })
-  async getRooms(@Query('page') page: number = 1): Promise<RoomDataDto[]> {
+  async getRooms(@Query('page') page = 1): Promise<PaginatedRoomDto> {
+    this.logger.log(`게임 방 목록 조회 시작 (페이지: ${page})`);
+
+    const totalRooms = await this.redisService.llen('roomsList');
+    const totalPages = Math.ceil(totalRooms / ROOM_LIMIT);
     const start = (page - 1) * ROOM_LIMIT;
     const end = start + ROOM_LIMIT - 1;
-    this.logger.log(
-      `게임 방 목록 조회 시작 (페이지: ${page}, 범위: ${start}-${end})`,
-    );
 
     const paginatedKeys = await this.redisService.lrange(
       'roomsList',
@@ -292,11 +316,28 @@ export class RoomController {
         const roomData = await this.redisService.hgetAll<RoomDataDto>(
           `room:${key}`,
         );
-        return roomData;
+
+        return {
+          roomId: key,
+          roomName: roomData.roomName,
+          hostNickname: roomData.hostNickname,
+          players: roomData.players,
+          status: roomData.status,
+        } as RoomDataDto;
       }),
     );
 
     this.logger.log(`게임 방 목록 조회 완료, ${rooms.length}개 방 반환`);
-    return rooms;
+
+    return {
+      data: rooms,
+      pagination: {
+        currentPage: Number(page),
+        totalPages,
+        totalItems: totalRooms,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    };
   }
 }
