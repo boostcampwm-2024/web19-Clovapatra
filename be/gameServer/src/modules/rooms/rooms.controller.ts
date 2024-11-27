@@ -204,11 +204,9 @@ export class RoomController {
       )
     ).flat();
 
-    const limitedRoomIds = roomIds.slice(0, ROOM_LIMIT);
-
-    this.logger.log(`roomData ${limitedRoomIds.length}개 반환`);
+    this.logger.log(`roomData ${roomIds.length}개 반환`);
     return await Promise.all(
-      limitedRoomIds.map(async (roomId) => {
+      roomIds.map(async (roomId) => {
         const roomData = await this.redisService.hgetAll<RoomDataDto>(
           `room:${roomId}`,
         );
