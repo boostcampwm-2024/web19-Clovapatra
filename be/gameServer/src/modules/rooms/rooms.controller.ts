@@ -46,15 +46,15 @@ export class RoomController {
     name: 'page',
     required: false,
     type: Number,
-    description: '구독할 페이지 번호 (기본값: 1)',
-    example: 1,
+    description: '구독할 페이지 번호 (기본값: 0)',
+    example: 0,
   })
   @ApiResponse({
     description: '현재 페이지의 게임 방 목록이 성공적으로 반환됩니다.',
     type: [RoomDataDto],
   })
-  getRoomUpdates(@Query('page') page: number = 1): Observable<MessageEvent> {
-    const start = (page - 1) * ROOM_LIMIT;
+  getRoomUpdates(@Query('page') page: number = 0): Observable<MessageEvent> {
+    const start = page * ROOM_LIMIT;
     const end = start + ROOM_LIMIT - 1;
 
     return this.roomUpdateSubject.pipe(
@@ -97,7 +97,7 @@ export class RoomController {
             );
             rooms = rooms.filter((room) => room !== null);
             const nextPage = page + 1;
-            const nextStart = (nextPage - 1) * ROOM_LIMIT;
+            const nextStart = nextPage * ROOM_LIMIT;
             const nextEnd = nextStart + ROOM_LIMIT - 1;
 
             const nextPageList = await this.redisService.lrange(
@@ -145,7 +145,7 @@ export class RoomController {
           );
 
           const nNextPage = page + 1;
-          const nextStart = (nextPage - 1) * ROOM_LIMIT;
+          const nextStart = nextPage * ROOM_LIMIT;
           const nextEnd = nextStart + ROOM_LIMIT - 1;
 
           const nextPageList = await this.redisService.lrange(
@@ -266,7 +266,7 @@ export class RoomController {
     name: 'page',
     required: false,
     type: Number,
-    description: '조회할 페이지 번호 (기본값: 1)',
+    description: '조회할 페이지 번호 (기본값: 0)',
     example: 1,
   })
   @ApiResponse({
@@ -296,12 +296,13 @@ export class RoomController {
       },
     },
   })
-  async getRooms(@Query('page') page = 1): Promise<PaginatedRoomDto> {
+  async getRooms(@Query('page') page = 0): Promise<PaginatedRoomDto> {
+    page = Number(page);
     this.logger.log(`게임 방 목록 조회 시작 (페이지: ${page})`);
 
     const totalRooms = await this.redisService.llen('roomsList');
     const totalPages = Math.ceil(totalRooms / ROOM_LIMIT);
-    const start = (page - 1) * ROOM_LIMIT;
+    const start = page * ROOM_LIMIT;
     const end = start + ROOM_LIMIT - 1;
 
     const paginatedKeys = await this.redisService.lrange(
@@ -334,8 +335,8 @@ export class RoomController {
         currentPage: Number(page),
         totalPages,
         totalItems: totalRooms,
-        hasNextPage: page < totalPages,
-        hasPreviousPage: page > 1,
+        hasNextPage: page < totalPages - 1,
+        hasPreviousPage: page > 0,
       },
     };
   }
