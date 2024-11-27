@@ -25,13 +25,32 @@ const VolumeBar = ({ playerNickname }: VolumeBarProps) => {
     }
   };
 
+  const toggleMute = () => {
+    if (volumeLevel > 0) {
+      setVolumeLevel(0);
+      if (peerId) {
+        setVolume(peerId, 0);
+      }
+    } else {
+      setVolumeLevel(50);
+      if (peerId) {
+        setVolume(peerId, volumeLevel / 100);
+      }
+    }
+  };
+
   return (
     <div className="flex items-center gap-2">
-      {volumeLevel > 0 ? (
-        <HiSpeakerWave className="h-4 w-4" />
-      ) : (
-        <HiSpeakerXMark className="h-4 w-4 text-muted-foreground" />
-      )}
+      <button
+        onClick={toggleMute}
+        className="hover:opacity-80 transition-opacity"
+      >
+        {volumeLevel > 0 ? (
+          <HiSpeakerWave className="h-4 w-4" />
+        ) : (
+          <HiSpeakerXMark className="h-4 w-4 text-muted-foreground" />
+        )}
+      </button>
       <Slider
         value={[volumeLevel]}
         max={100}

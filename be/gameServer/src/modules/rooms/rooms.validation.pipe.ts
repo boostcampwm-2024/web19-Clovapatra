@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ValidationPipe } from '@nestjs/common';
 import { WsException } from '@nestjs/websockets';
+import { ErrorMessages } from '../../common/constant';
 
 @Injectable()
 export class RoomsValidationPipe extends ValidationPipe {
@@ -12,10 +13,7 @@ export class RoomsValidationPipe extends ValidationPipe {
         if (errors.length > 0) {
           this.logger.warn(`Validation failed: ${errors}`);
 
-          throw new WsException({
-            message: 'Validation failed.',
-            details: errors,
-          });
+          throw new WsException(ErrorMessages.VALIDATION_FAILED);
         }
       },
       transform: true, // 요청 데이터를 DTO로 변환

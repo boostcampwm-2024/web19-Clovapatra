@@ -24,12 +24,14 @@ export class RoomDataDto {
     type: [PlayerDataDto],
     example: [
       {
-        nickname: 'hostNickname123',
-        ready: true,
+        playerNickname: 'hostNic123',
+        isReady: true,
+        isMuted: false,
       },
       {
-        nickname: 'player1',
-        ready: false,
+        playerNickname: 'player1',
+        isReady: false,
+        isMuted: true,
       },
     ],
     description: '현재 방에 참여한 플레이어 목록과 준비 상태',

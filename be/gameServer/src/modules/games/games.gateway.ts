@@ -14,7 +14,6 @@ import { RoomDataDto } from '../rooms/dto/room-data.dto';
 import { GameDataDto } from './dto/game-data.dto';
 import { TurnDataDto } from './dto/turn-data.dto';
 import { VoiceResultFromServerDto } from './dto/voice-result-from-server.dto';
-import { ErrorResponse } from '../rooms/dto/error-response.dto';
 import {
   createTurnData,
   selectCurrentPlayer,
@@ -22,9 +21,13 @@ import {
   removePlayerFromGame,
   noteToNumber,
   updatePreviousPlayers,
+  numberToNote,
+  transformScore,
 } from './games-utils';
+import { ErrorMessages } from '../../common/constant';
 
 const VOICE_SERVERS = 'voice-servers';
+const PRONOUNCE_SCORE_THRESOLHD = 50;
 
 @WebSocketGateway({
   namespace: '/rooms',
@@ -49,38 +52,49 @@ export class GamesGateway implements OnGatewayDisconnect {
     this.logger.log(`Game start requested for room: ${roomId}`);
 
     try {
-      const roomDataString = await this.redisService.get<string>(
+      const roomData = await this.redisService.hgetAll<RoomDataDto>(
         `room:${roomId}`,
       );
 
-      if (!roomDataString) {
+      if (!roomData) {
         this.logger.warn(`Room not found: ${roomId}`);
-        client.emit('error', 'Room not found');
+        client.emit('error', ErrorMessages.ROOM_NOT_FOUND);
         return;
       }
-
-      const roomData: RoomDataDto = JSON.parse(roomDataString);
 
       if (roomData.hostNickname !== playerNickname) {
         this.logger.warn(
           `User ${client.data.playerNickname} is not the host of room ${roomId}`,
         );
-        client.emit('error', 'Only the host can start the game');
+        client.emit('error', ErrorMessages.ONLY_HOST_CAN_START);
+        return;
+      }
+
+      if (roomData.players.length <= 1) {
+        this.logger.warn(
+          `Not enough players to start the game in room ${roomId}`,
+        );
+        client.emit('error', ErrorMessages.NOT_ENOUGH_PLAYERS);
         return;
       }
 
       const allReady = checkPlayersReady(roomData);
       if (!allReady) {
         this.logger.warn(`Not all players are ready in room: ${roomId}`);
-        client.emit('error', 'All players must be ready to start the game');
+        client.emit('error', ErrorMessages.ALL_PLAYERS_MUST_BE_READY);
         return;
       }
 
       roomData.status = 'progress';
 
-      await this.redisService.set(
+      roomData.players.forEach((player) => {
+        player.isReady = false;
+      });
+      this.server.to(roomId).emit('updateUsers', roomData.players);
+
+      await this.redisService.hmset(
         `room:${roomId}`,
-        JSON.stringify(roomData),
+        { players: JSON.stringify(roomData.players), status: roomData.status },
         'roomUpdate',
       );
 
@@ -91,6 +105,7 @@ export class GamesGateway implements OnGatewayDisconnect {
       const gameData: GameDataDto = {
         gameId: roomId,
         alivePlayers,
+        rank: [],
         currentTurn: 1,
         currentPlayer: selectCurrentPlayer(alivePlayers, []),
         previousPitch: 0,
@@ -114,10 +129,77 @@ export class GamesGateway implements OnGatewayDisconnect {
       this.logger.error(
         `Error starting game in room ${roomId}: ${error.message}`,
       );
-      const errorResponse: ErrorResponse = {
-        message: 'Failed to start the game',
-      };
-      client.emit('error', errorResponse);
+      client.emit('error', ErrorMessages.INTERNAL_ERROR);
+    }
+  }
+
+  @SubscribeMessage('next')
+  async handleNext(@ConnectedSocket() client: Socket) {
+    try {
+      const { roomId } = client.data;
+
+      const isProcessing = await this.redisService.get<string>(
+        `next:${roomId}`,
+      );
+      if (isProcessing) {
+        return;
+      }
+      await this.redisService.set(`next:${roomId}`, 'processing', undefined, 5);
+
+      const gameDataString = await this.redisService.get<string>(
+        `game:${roomId}`,
+      );
+      if (!gameDataString) {
+        return client.emit('error', ErrorMessages.ROOM_NOT_FOUND);
+      }
+
+      const gameData: GameDataDto = JSON.parse(gameDataString);
+
+      if (gameData.alivePlayers.length > 1) {
+        const turnData: TurnDataDto = createTurnData(roomId, gameData);
+
+        await new Promise<void>((resolve) => {
+          this.server.to(VOICE_SERVERS).emit('turnChanged', turnData, () => {
+            resolve();
+          });
+        });
+        this.logger.log('Turn data sent to voice servers:', turnData);
+
+        this.server.to(roomId).emit('turnChanged', turnData);
+        this.logger.log('Turn data sent to clients in room:', roomId);
+      } else {
+        this.server
+          .to(roomId)
+          .emit('endGame', [...gameData.alivePlayers, ...gameData.rank]);
+
+        const roomData = await this.redisService.hgetAll<RoomDataDto>(
+          `room:${roomId}`,
+        );
+        if (!roomData) {
+          this.logger.warn(`Room not found: ${roomId}`);
+          client.emit('error', ErrorMessages.ROOM_NOT_FOUND);
+          return;
+        }
+
+        roomData.status = 'waiting';
+        await this.redisService.hmset(
+          `room:${roomId}`,
+          { status: roomData.status },
+          'roomUpdate',
+        );
+
+        this.logger.log('Game ended for room:', roomId);
+        this.logger.log('Final rank:', [
+          ...gameData.alivePlayers,
+          ...gameData.rank,
+        ]);
+
+        await this.redisService.delete(`game:${roomId}`);
+        this.logger.log(`${roomId} deleting game`);
+      }
+    } catch (error) {
+      this.logger.error('Error handling next:', error);
+      client.emit('error', ErrorMessages.INTERNAL_ERROR);
     }
   }
 
@@ -131,19 +213,19 @@ export class GamesGateway implements OnGatewayDisconnect {
         voiceResultFromServerDto;
 
       this.logger.log(
-        `Received voice result for roomId: ${roomId}, player: ${playerNickname}`,
+        `Received voice result for roomId: ${roomId}, player: ${playerNickname}, averageNote: ${averageNote}, pronounceScore: ${pronounceScore}`,
       );
 
       const gameDataString = await this.redisService.get<string>(
         `game:${roomId}`,
       );
       if (!gameDataString) {
-        return client.emit('error', { message: `game ${roomId} not found` });
+        return client.emit('error', ErrorMessages.GAME_NOT_FOUND);
       }
 
       const gameData: GameDataDto = JSON.parse(gameDataString);
 
-      if (averageNote) {
+      if (averageNote !== undefined) {
         const note = noteToNumber(averageNote);
         this.logger.log(
           `Processing averageNote for player ${playerNickname}: ${note}`,
@@ -153,8 +235,15 @@ export class GamesGateway implements OnGatewayDisconnect {
             `Success: Player ${playerNickname} has a higher note (${note}) than required pitch.`,
           );
           this.server.to(roomId).emit('voiceProcessingResult', {
+            result: 'PASS',
             playerNickname,
-            result: 'SUCCESS',
+            note: averageNote,
+            preNote: numberToNote(gameData.previousPitch),
+            prelayerNickname:
+              gameData.previousPlayers.length === 0
+                ? null
+                : gameData.previousPlayers[gameData.previousPlayers.length - 1],
+            previousPlayerNote: numberToNote(gameData.previousPitch),
           });
           gameData.previousPitch = note;
         } else {
@@ -162,27 +251,37 @@ export class GamesGateway implements OnGatewayDisconnect {
             `Failure: Player ${playerNickname} failed to meet the required pitch.`,
           );
           this.server.to(roomId).emit('voiceProcessingResult', {
+            result: 'FAIL',
             playerNickname,
-            result: 'FAILURE',
+            playerNote: averageNote,
+            previousPlayerNickname:
+              gameData.previousPlayers.length === 0
+                ? null
+                : gameData.previousPlayers[gameData.previousPlayers.length - 1],
+            previousPlayerNote: numberToNote(gameData.previousPitch),
           });
           removePlayerFromGame(gameData, playerNickname);
         }
-      } else if (pronounceScore) {
+      } else if (pronounceScore !== undefined) {
         this.logger.log(
           `Processing pronounceScore for player ${playerNickname}: ${pronounceScore}`,
         );
-        if (pronounceScore >= 98) {
+        if (pronounceScore >= PRONOUNCE_SCORE_THRESOLHD) {
           this.server.to(roomId).emit('voiceProcessingResult', {
+            result: 'PASS',
             playerNickname,
-            result: 'SUCCESS',
+            pronounceScore: transformScore(pronounceScore),
           });
         } else {
           this.server.to(roomId).emit('voiceProcessingResult', {
+            result: 'FAIL',
             playerNickname,
-            result: 'FAILURE',
+            pronounceScore: transformScore(pronounceScore),
           });
           removePlayerFromGame(gameData, playerNickname);
         }
+      } else {
+        this.logger.log('pronounceScore nor averageNote');
       }
       updatePreviousPlayers(gameData, playerNickname);
       gameData.currentTurn++;
@@ -192,31 +291,15 @@ export class GamesGateway implements OnGatewayDisconnect {
         gameData.previousPlayers,
       );
 
-      if (gameData.currentPlayer === null) {
-        // 게임종료
-      }
-
       this.logger.log(
         `Saving updated game data to Redis for roomId: ${roomId}`,
       );
       await this.redisService.set(`game:${roomId}`, JSON.stringify(gameData));
-
-      const turnData: TurnDataDto = createTurnData(roomId, gameData);
-
-      await new Promise<void>((resolve) => {
-        this.server.to(VOICE_SERVERS).emit('turnChanged', turnData, () => {
-          resolve();
-        });
-      });
-      this.logger.log('Turn data sent to voice servers:', turnData);
-
-      this.server.to(roomId).emit('turnChanged', turnData);
-      this.logger.log('Turn data sent to clients in room:', roomId);
     } catch (error) {
       this.logger.error('Error handling voiceResult:', error);
-      client.emit('error', { message: 'Internal server error' });
+      client.emit('error', ErrorMessages.INTERNAL_ERROR);
 
-      // 오류 일때는 일단 성공
+      // 오류 일때
     }
   }
 

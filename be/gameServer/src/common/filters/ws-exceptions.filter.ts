@@ -10,8 +10,6 @@ export class WsExceptionsFilter {
     const client = host.switchToWs().getClient();
     const errorResponse = exception.getError();
 
-    client.emit('error', {
-      errorResponse,
-    });
+    client.emit('error', errorResponse);
   }
 }

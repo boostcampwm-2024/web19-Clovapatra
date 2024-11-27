@@ -5,4 +5,5 @@ export class GameDataDto {
   currentPlayer: string;
   previousPitch: number;
   previousPlayers: string[];
+  rank: string[];
 }

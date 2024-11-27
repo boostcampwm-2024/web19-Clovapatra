@@ -1,10 +1,23 @@
 import { RoomDataDto } from './dto/room-data.dto';
 import { PlayerDataDto } from '../players/dto/player-data.dto';
+import { RoomsConstant } from 'src/common/constant';
 
-export const MAX_PLAYERS = 4;
+export const convertRoomDataToHash = (
+  roomData: RoomDataDto,
+): Record<string, string> => {
+  const { roomId, roomName, hostNickname, players, status } = roomData;
+
+  return {
+    roomId,
+    roomName,
+    hostNickname,
+    players: JSON.stringify(players),
+    status,
+  };
+};
 
 export const isRoomFull = (roomData: RoomDataDto): boolean => {
-  return roomData.players.length >= MAX_PLAYERS;
+  return roomData.players.length >= RoomsConstant.ROOMS_MAX_PLAYERS;
 };
 
 export const isNicknameTaken = (

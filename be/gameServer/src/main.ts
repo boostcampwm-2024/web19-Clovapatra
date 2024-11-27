@@ -6,7 +6,7 @@ import { IoAdapter } from '@nestjs/platform-socket.io';
 
 // Custom IoAdapter with CORS options
 class CustomIoAdapter extends IoAdapter {
-  createIOServer(port: number, options?: any): any {
+  createIOServer(port: number, options?) {
     const server = super.createIOServer(port, {
       ...options,
       cors: {
@@ -50,5 +50,20 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
 
   await app.listen(configService.get<number>('app.port'));
+
+  process.on('SIGTERM', async () => {
+    console.log('SIGTERM received 앱 종료시작');
+    await app.close();
+  });
+
+  process.on('SIGINT', async () => {
+    console.log('SIGINT received 앱 종료시작');
+    await app.close();
+  });
+
+  process.on('SIGUSR2', async () => {
+    console.log('SIGUSR2 received 앱 종료시작 (nodemon에서 재시작)');
+    await app.close();
+  }); //
 }
 bootstrap();

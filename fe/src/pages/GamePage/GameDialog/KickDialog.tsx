@@ -1,4 +1,3 @@
-// pages/GamePage/PlayerList/KickDialog.tsx
 import {
   AlertDialog,
   AlertDialogAction,

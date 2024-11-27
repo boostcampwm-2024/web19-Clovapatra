@@ -32,4 +32,18 @@ export class GamesWebSocketEmitController {
   voiceProcessingResult() {
     return;
   }
+
+  @Post('endGame')
+  @ApiOperation({
+    summary: '게임 종료',
+    description: '게임 종료를 알리고, 최종 순위 rank 배열을 전달합니다.',
+  })
+  @ApiResponse({
+    description: 'rank',
+    type: [String],
+    example: ['player1', 'player3', 'player4', 'player2'],
+  })
+  endGame() {
+    return;
+  }
 }

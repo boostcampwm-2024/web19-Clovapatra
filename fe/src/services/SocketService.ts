@@ -10,6 +10,7 @@ export class SocketService {
   get socket(): Socket | undefined {
     return this.#socket;
   }
+
   setSocket(socket: Socket | undefined | null) {
     this.#socket = socket ? socket : undefined;
   }

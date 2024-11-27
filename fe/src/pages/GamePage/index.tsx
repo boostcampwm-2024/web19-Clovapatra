@@ -10,11 +10,26 @@ import GameScreen from './GameScreen/GameScreen';
 import { useAudioManager } from '@/hooks/useAudioManager';
 import { signalingSocket } from '@/services/signalingSocket';
 import { toast } from 'react-toastify';
+import { useParams } from 'react-router-dom';
+import { getCurrentRoomQuery } from '@/stores/queries/getCurrentRoomQuery';
+import JoinDialog from '../RoomListPage/RoomDialog/JoinDialog';
 
 const GamePage = () => {
+  const [showJoinDialog, setShowJoinDialog] = useState(false);
   const [showExitDialog, setShowExitDialog] = useState(false);
   const { currentRoom, kickedPlayer, setKickedPlayer } = useRoomStore();
   const audioManager = useAudioManager();
+  const { roomId } = useParams();
+  const { data: room } = getCurrentRoomQuery(roomId);
+  const nickname = sessionStorage.getItem('user_nickname');
+
+  useEffect(() => {
+    if (room && !currentRoom) {
+      if (!nickname) {
+        setShowJoinDialog(true);
+      }
+    }
+  }, [room, currentRoom, nickname]);
 
   useReconnect({ currentRoom });
   useBackExit({ setShowExitDialog });
@@ -32,8 +47,8 @@ const GamePage = () => {
   useEffect(() => {
     if (kickedPlayer) {
       toast.error(`${kickedPlayer}님이 강퇴되었습니다.`, {
-        position: 'bottom-right',
-        autoClose: 2000,
+        position: 'top-right',
+        autoClose: 1000,
         style: {
           fontFamily: 'Galmuri11, monospace',
         },
@@ -47,8 +62,47 @@ const GamePage = () => {
     setShowExitDialog(true);
   };
 
+  const handleCopyLink = () => {
+    // 현재 URL을 구성
+    const currentURL = `${window.location.origin}/game/${roomId}`;
+
+    // 클립보드에 복사
+    navigator.clipboard
+      .writeText(currentURL)
+      .then(() => {
+        toast.success('링크가 클립보드에 복사되었습니다!', {
+          position: 'top-right',
+          autoClose: 1000,
+          style: {
+            width: '25rem',
+            fontFamily: 'Galmuri11, monospace',
+          },
+        });
+      })
+      .catch((err) => {
+        console.error('링크 복사 실패:', err);
+        toast.error('링크 복사에 실패했습니다.', {
+          position: 'top-right',
+          autoClose: 1000,
+          style: {
+            fontFamily: 'Galmuri11, monospace',
+          },
+        });
+      });
+  };
+
   if (!currentRoom) {
     return <NotFound />;
+  }
+
+  if (showJoinDialog) {
+    return (
+      <JoinDialog
+        open={true}
+        onOpenChange={setShowJoinDialog}
+        roomId={roomId}
+      />
+    );
   }
 
   return (
@@ -59,13 +113,19 @@ const GamePage = () => {
           players={currentRoom.players.map((player) => ({
             playerNickname: player.playerNickname,
             isReady: player.isReady,
+            isMuted: player.isMuted,
           }))}
         />
       </div>
       <div className="flex mt-6">
-        <Button onClick={handleClickExit} className="font-galmuri ml-auto">
-          나가기
-        </Button>
+        <div className="ml-auto">
+          <Button onClick={handleCopyLink} className="font-galmuri mr-4">
+            ✨링크 복사✨
+          </Button>
+          <Button onClick={handleClickExit} className="font-galmuri">
+            나가기
+          </Button>
+        </div>
       </div>
       <ExitDialog open={showExitDialog} onOpenChange={setShowExitDialog} />
     </div>

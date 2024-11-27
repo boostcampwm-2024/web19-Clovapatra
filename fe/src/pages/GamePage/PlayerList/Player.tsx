@@ -8,33 +8,36 @@ import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { signalingSocket } from '@/services/signalingSocket';
 import KickDialog from '../GameDialog/KickDialog';
+import { gameSocket } from '@/services/gameSocket';
+import MikeButton from '@/components/common/MikeButton';
 
-const Player = ({ playerNickname, isReady }: PlayerProps) => {
+const Player = ({ playerNickname, isReady, isMuted }: PlayerProps) => {
   const { currentRoom, currentPlayer } = useRoomStore();
   const isCurrentPlayerHost = currentPlayer === currentRoom?.hostNickname;
   const isPlayerHost = isHost(playerNickname);
   const isCurrentPlayer = currentPlayer === playerNickname;
-  const [isMuted, setIsMuted] = useState(false);
+  const [isCurrentPlayerMuted, setIsCurrentPlayerMuted] = useState(false);
   const [showKickDialog, setShowKickDialog] = useState(false);
 
   const handleKick = () => {
     setShowKickDialog(true);
   };
 
-  const handleMuteToggle = () => {
-    setIsMuted((prevMuted) => {
-      const newMutedState = !prevMuted;
-      const stream = signalingSocket.getLocalStream();
+  const toggleMute = () => {
+    if (!isCurrentPlayer) return;
 
-      if (stream) {
-        const audioTrack = stream.getAudioTracks()[0];
-        if (audioTrack) {
-          audioTrack.enabled = !newMutedState;
-        }
+    const newMutedState = !isCurrentPlayerMuted;
+    const stream = signalingSocket.getLocalStream();
+
+    if (stream) {
+      const audioTrack = stream.getAudioTracks()[0];
+      if (audioTrack) {
+        audioTrack.enabled = !newMutedState;
       }
+    }
 
-      return newMutedState;
-    });
+    setIsCurrentPlayerMuted(newMutedState);
+    gameSocket.setMute();
   };
 
   return (
@@ -46,22 +49,9 @@ const Player = ({ playerNickname, isReady }: PlayerProps) => {
         </div>
         <div className="flex items-center gap-4">
           {isCurrentPlayer ? (
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleMuteToggle}
-              className={`rounded-full border ${
-                isMuted
-                  ? 'border-destructive text-destructive'
-                  : 'border-cyan-500 text-cyan-500'
-              } hover:bg-transparent`}
-            >
-              {isMuted ? (
-                <FaMicrophoneSlash className="h-5 w-5 text-destructive" />
-              ) : (
-                <FaMicrophone className="h-5 w-5 text-cyan-500" />
-              )}
-            </Button>
+            <MikeButton isMuted={isCurrentPlayerMuted} onToggle={toggleMute} />
+          ) : isMuted ? (
+            <FaMicrophoneSlash className="h-5 w-5" />
           ) : (
             <VolumeBar playerNickname={playerNickname} />
           )}

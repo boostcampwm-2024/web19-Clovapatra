@@ -4,33 +4,21 @@ import { SocketService } from './SocketService';
 
 class VoiceSocket extends SocketService {
   private mediaRecorder: MediaRecorder | null;
-  private recordingStartTime: number | null;
-  private onSpeechRecognitionResultCallback: ((result: string) => void) | null;
-  private onPitchResultCallback: ((pitch: number) => void) | null;
   private onErrorCallback: ((error: string) => void) | null;
   private onRecordingStateChange: ((isRecording: boolean) => void) | null;
-  private audioChunks: BlobPart[];
   private readonly VOICE_SERVER_URL = 'wss://voice-processing.clovapatra.com';
 
   constructor() {
     super();
     this.mediaRecorder = null;
-    this.recordingStartTime = null;
-    this.onSpeechRecognitionResultCallback = null;
-    this.onPitchResultCallback = null;
     this.onErrorCallback = null;
     this.onRecordingStateChange = null;
-    this.audioChunks = [];
   }
 
   initialize(
-    onSpeechRecognitionResult: (result: string) => void,
-    onPitchResult: (pitch: number) => void,
     onError: (error: string) => void,
     onStateChange: (isRecording: boolean) => void
   ) {
-    this.onSpeechRecognitionResultCallback = onSpeechRecognitionResult;
-    this.onPitchResultCallback = onPitchResult;
     this.onErrorCallback = onError;
     this.onRecordingStateChange = onStateChange;
   }
@@ -106,7 +94,6 @@ class VoiceSocket extends SocketService {
       };
 
       this.mediaRecorder.start(100);
-      this.recordingStartTime = Date.now();
       console.log('Recording started');
 
       if (this.onRecordingStateChange) {
@@ -143,9 +130,6 @@ class VoiceSocket extends SocketService {
       this.setSocket(null);
     }
 
-    this.recordingStartTime = null;
-    this.audioChunks = [];
-
     if (this.onRecordingStateChange) {
       this.onRecordingStateChange(false);
     }
@@ -157,6 +141,7 @@ class VoiceSocket extends SocketService {
 
   override disconnect() {
     this.cleanupRecording();
+    super.disconnect();
   }
 }
 

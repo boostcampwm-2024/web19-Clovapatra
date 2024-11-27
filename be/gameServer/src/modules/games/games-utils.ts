@@ -4,26 +4,30 @@ import { GameDataDto } from './dto/game-data.dto';
 
 const SAMPLE_DATA = [
   {
-    timeLimit: 5,
+    timeLimit: 7,
     lyrics: '간장공장 공장장은 강 공장장이고 된장공장 공장장은 공 공장장이다.',
   },
   {
-    timeLimit: 6,
+    timeLimit: 7,
     lyrics:
       '내가 그린 기린 그림은 긴 기린 그림이고 네가 그린 기린 그림은 안 긴 기린 그림이다.',
   },
   {
-    timeLimit: 6,
+    timeLimit: 9,
     lyrics:
       '저기 계신 콩국수 국수 장수는 새 콩국수 국수 장수이고, 여기 계신 콩국수 국수 장수는 헌 콩국수 국수 장수다.',
   },
   {
-    timeLimit: 3,
+    timeLimit: 5,
     lyrics: '서울특별시 특허허가과 허가과장 허과장.',
   },
   {
-    timeLimit: 4,
+    timeLimit: 6,
     lyrics: '중앙청 창살은 쌍창살이고 시청의 창살은 외창살이다.',
+  },
+  {
+    timeLimit: 4,
+    lyrics: '페페페페페페페페페페',
   },
 ];
 
@@ -31,7 +35,12 @@ export function createTurnData(
   roomId: string,
   gameData: GameDataDto,
 ): TurnDataDto {
-  const gameModes = [GameMode.PRONUNCIATION, GameMode.CLEOPATRA];
+  const gameModes = [
+    GameMode.PRONUNCIATION,
+    GameMode.CLEOPATRA,
+    // GameMode.CLEOPATRA,
+    // GameMode.CLEOPATRA,
+  ];
   const gameMode = gameModes[Math.floor(Math.random() * gameModes.length)];
 
   if (gameMode === GameMode.CLEOPATRA) {
@@ -88,6 +97,8 @@ export function removePlayerFromGame(
   gameData.alivePlayers = gameData.alivePlayers.filter(
     (player: string) => player !== playerNickname,
   );
+
+  gameData.rank.unshift(playerNickname);
 }
 
 export function noteToNumber(note: string): number {
@@ -138,7 +149,27 @@ export function updatePreviousPlayers(
   playerNickname: string,
 ): void {
   if (gameData.previousPlayers.length >= 2) {
-    gameData.previousPlayers.shift(); // 맨 앞의 플레이어 제거
+    gameData.previousPlayers.shift();
   }
   gameData.previousPlayers.push(playerNickname);
+}
+
+const PRONOUNCE_SCORE_ORIGINAL_THRESOLHD = 50;
+const PRONOUNCE_SCORE_THRESOLHD = 90;
+const INCREMENT = 2 / 7;
+const DECREMENT = 3;
+
+export function transformScore(originalScore) {
+  let transformed;
+  if (originalScore >= PRONOUNCE_SCORE_ORIGINAL_THRESOLHD) {
+    transformed =
+      PRONOUNCE_SCORE_THRESOLHD +
+      (originalScore - PRONOUNCE_SCORE_ORIGINAL_THRESOLHD) * INCREMENT;
+  } else {
+    transformed =
+      PRONOUNCE_SCORE_THRESOLHD -
+      (PRONOUNCE_SCORE_ORIGINAL_THRESOLHD - originalScore) * DECREMENT;
+  }
+
+  return Math.max(Math.min(Math.round(transformed), 100), 0);
 }

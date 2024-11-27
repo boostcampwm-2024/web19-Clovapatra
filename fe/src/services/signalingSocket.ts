@@ -445,6 +445,10 @@ class SignalingSocket extends SocketService {
     console.log('[WebRTCClient] 연결 종료 완료');
   }
 
+  hasAudioManager() {
+    return this.audioManager !== null;
+  }
+
   getLocalStream() {
     return this.localStream;
   }
