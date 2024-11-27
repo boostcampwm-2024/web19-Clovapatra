@@ -22,12 +22,7 @@ import {
   convertRoomDataToHash,
 } from './room-utils';
 import { v4 as uuidv4 } from 'uuid';
-import { ErrorMessages } from '../../common/constant';
-
-const ROOMS_LIST_KEY = 'roomsList';
-const ROOMS_UPDATE_CHANNEL = 'roomUpdate';
-const ROOM_NAME_TO_ID_HASH = 'roomNamesToIds';
-const ROOM_NAMES_SORTED_KEY = 'roomNames';
+import { ErrorMessages, RedisKeys } from '../../common/constant';
 
 @WebSocketGateway({
   namespace: '/rooms',
@@ -68,17 +63,21 @@ export class RoomsGateway implements OnGatewayDisconnect {
         status: 'waiting',
       };
 
-      await this.redisService.rpush(ROOMS_LIST_KEY, roomId);
+      await this.redisService.rpush(RedisKeys.ROOMS_LIST, roomId);
       await this.redisService.hmset<string>(
         `room:${roomId}`,
         convertRoomDataToHash(roomData),
-        ROOMS_UPDATE_CHANNEL,
+        RedisKeys.ROOMS_UPDATE_CHANNEL,
       );
       await this.redisService.rpush(
-        `${ROOM_NAME_TO_ID_HASH}:${roomName}`,
+        `${RedisKeys.ROOM_NAME_TO_ID_HASH}:${roomName}`,
         roomId,
       );
-      await this.redisService.zadd(ROOM_NAMES_SORTED_KEY, 0, roomName);
+      await this.redisService.zadd(
+        RedisKeys.ROOM_NAMES_SORTED_KEY,
+        0,
+        roomName,
+      );
 
       client.join(roomId);
       client.data = { roomId, playerNickname: hostNickname };
@@ -129,7 +128,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
         {
           players: JSON.stringify(roomData.players),
         },
-        ROOMS_UPDATE_CHANNEL,
+        RedisKeys.ROOMS_UPDATE_CHANNEL,
       );
 
       client.join(roomId);
@@ -171,7 +170,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
               players: JSON.stringify(roomData.players),
               hostNickname: roomData.hostNickname,
             },
-            ROOMS_UPDATE_CHANNEL,
+            RedisKeys.ROOMS_UPDATE_CHANNEL,
           );
 
           this.logger.log(`host ${playerNickname} leave room`);
@@ -182,11 +181,11 @@ export class RoomsGateway implements OnGatewayDisconnect {
         } else {
           this.logger.log(`${roomId} deleting room`);
           await this.redisService.lrem(
-            `${ROOM_NAME_TO_ID_HASH}:${roomData.roomName}`,
+            `${RedisKeys.ROOM_NAME_TO_ID_HASH}:${roomData.roomName}`,
             roomId,
           );
           const roomNameList = await this.redisService.lrange(
-            `${ROOM_NAME_TO_ID_HASH}:${roomData.roomName}`,
+            `${RedisKeys.ROOM_NAME_TO_ID_HASH}:${roomData.roomName}`,
             0,
             -1,
           );
@@ -195,7 +194,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
           }
           await this.redisService.delete(
             `room:${roomId}`,
-            ROOMS_UPDATE_CHANNEL,
+            RedisKeys.ROOMS_UPDATE_CHANNEL,
           );
         }
       } else {
@@ -204,7 +203,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
           {
             players: JSON.stringify(roomData.players),
           },
-          ROOMS_UPDATE_CHANNEL,
+          RedisKeys.ROOMS_UPDATE_CHANNEL,
         );
         this.logger.log(`host ${playerNickname} leave room`);
         this.server.to(roomId).emit('updateUsers', roomData.players);
@@ -330,7 +329,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
           {
             players: JSON.stringify(roomData.players),
           },
-          ROOMS_UPDATE_CHANNEL,
+          RedisKeys.ROOMS_UPDATE_CHANNEL,
         );
 
         this.server.to(roomId).emit('kicked', playerNickname);
