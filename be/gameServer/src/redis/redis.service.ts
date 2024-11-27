@@ -32,6 +32,9 @@ export class RedisService implements OnModuleDestroy {
     await this.redisClient.del('roomNames');
     this.logger.log('roomNames sorted set deleted from Redis');
 
+    await this.redisClient.del('roomsList');
+    this.logger.log('roomsList deleted from Redis');
+
     const gameKeys = await this.redisClient.keys('game:*');
     for (const gameId of gameKeys) {
       await this.redisClient.del(gameId);
@@ -76,7 +79,10 @@ export class RedisService implements OnModuleDestroy {
     }
 
     if (channel) {
-      await this.publishToChannel(channel, key);
+      await this.publishToChannel(
+        channel,
+        JSON.stringify({ type: 'CREATE', key }),
+      );
     }
   }
 
@@ -112,16 +118,19 @@ export class RedisService implements OnModuleDestroy {
   async delete(key: string, channel?: string): Promise<void> {
     await this.redisClient.del(key);
     if (channel) {
-      await this.publishToChannel(channel, key);
+      await this.publishToChannel(
+        channel,
+        JSON.stringify({ type: 'DELETE', key }),
+      );
     }
-  }
-
-  async keys(pattern: string): Promise<string[]> {
-    return this.redisClient.keys(pattern);
   }
 
   async publishToChannel(channel: string, message: string): Promise<void> {
     await this.pubClient.publish(channel, message);
+  }
+
+  async keys(pattern: string): Promise<string[]> {
+    return this.redisClient.keys(pattern);
   }
 
   async flushAll(): Promise<void> {

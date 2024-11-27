@@ -189,22 +189,22 @@ export class RoomsGateway implements OnGatewayDisconnect {
           this.server.to(roomId).emit('updateUsers', roomData.players);
         } else {
           this.logger.log(`${roomId} deleting room`);
-          await this.redisService.delete(
-            `room:${roomId}`,
-            ROOMS_UPDATE_CHANNEL,
-          );
           await this.redisService.lrem(
             `${ROOM_NAME_TO_ID_HASH}:${roomData.roomName}`,
             roomId,
           );
-          const roomList = await this.redisService.lrange(
-            `roomName:${roomData.roomName}`,
+          const roomNameList = await this.redisService.lrange(
+            `${ROOM_NAME_TO_ID_HASH}:${roomData.roomName}`,
             0,
             -1,
           );
-          if (roomList.length === 0) {
+          if (roomNameList.length === 0) {
             await this.redisService.zrem('roomNames', roomData.roomName);
           }
+          await this.redisService.delete(
+            `room:${roomId}`,
+            ROOMS_UPDATE_CHANNEL,
+          );
         }
       } else {
         await this.redisService.hmset(

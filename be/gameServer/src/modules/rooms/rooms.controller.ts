@@ -10,8 +10,15 @@ import {
 } from '@nestjs/common';
 import { RedisService } from '../../redis/redis.service';
 import { RoomDataDto } from './dto/room-data.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { Observable, Subject } from 'rxjs';
+import { filter, concatMap } from 'rxjs';
 
 const ROOM_LIMIT = 9;
 
@@ -23,18 +30,7 @@ export class RoomController {
 
   constructor(private readonly redisService: RedisService) {
     this.redisService.subscribeToChannel('roomUpdate', async (message) => {
-      this.logger.log(`게임방 업데이트 감지: ${message}`);
-
-      const roomKeys = await this.redisService.lrange('roomsList', 0, -1);
-      const rooms = await Promise.all(
-        roomKeys.map(async (key) => {
-          const roomData = await this.redisService.hgetAll<RoomDataDto>(
-            `room:${key}`,
-          );
-          return roomData;
-        }),
-      );
-      this.roomUpdateSubject.next({ data: rooms });
+      this.roomUpdateSubject.next({ data: message });
     });
   }
 
@@ -43,12 +39,131 @@ export class RoomController {
     summary: '게임 방 목록 조회하는 SSE',
     description: 'roomData가 변경되었을 시 변경된 room 배열을 전송합니다.',
   })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: '구독할 페이지 번호 (기본값: 1)',
+    example: 1,
+  })
   @ApiResponse({
-    description: '게임 방 목록이 성공적으로 반환됩니다.',
+    description: '현재 페이지의 게임 방 목록이 성공적으로 반환됩니다.',
     type: [RoomDataDto],
   })
-  getRoomUpdates(): Observable<MessageEvent> {
-    return this.roomUpdateSubject.asObservable();
+  getRoomUpdates(@Query('page') page: number = 1): Observable<MessageEvent> {
+    const start = (page - 1) * ROOM_LIMIT;
+    const end = start + ROOM_LIMIT - 1;
+
+    return this.roomUpdateSubject.pipe(
+      concatMap(async (event: MessageEvent) => {
+        const messageString = event.data as string;
+        const message = JSON.parse(messageString);
+        const { type, key, nextPage } = message;
+        const updatedRoomKey = key ? key.slice(5) : null;
+        const roomList = await this.redisService.lrange(
+          'roomsList',
+          start,
+          end,
+        );
+        if (type === 'CREATE') {
+          if (roomList.includes(updatedRoomKey)) {
+            let rooms = await Promise.all(
+              roomList.map(async (roomKey) => {
+                const roomData = await this.redisService.hgetAll<RoomDataDto>(
+                  `room:${roomKey}`,
+                );
+                return roomData;
+              }),
+            );
+            rooms = rooms.filter((room) => room !== null);
+            return {
+              data: rooms,
+            } as MessageEvent;
+          } else {
+            return null;
+          }
+        } else if (type === 'DELETE') {
+          if (roomList.includes(updatedRoomKey)) {
+            let rooms = await Promise.all(
+              roomList.map(async (roomKey) => {
+                const roomData = await this.redisService.hgetAll<RoomDataDto>(
+                  `room:${roomKey}`,
+                );
+                return roomData;
+              }),
+            );
+            rooms = rooms.filter((room) => room !== null);
+            const nextPage = page + 1;
+            const nextStart = (nextPage - 1) * ROOM_LIMIT;
+            const nextEnd = nextStart + ROOM_LIMIT - 1;
+
+            const nextPageList = await this.redisService.lrange(
+              'roomsList',
+              nextStart,
+              nextEnd,
+            );
+
+            if (nextPageList.length > 0) {
+              const nextDataKey = nextPageList.shift();
+              rooms.push(
+                await this.redisService.hgetAll<RoomDataDto>(
+                  `room:${nextDataKey}`,
+                ),
+              );
+
+              await this.redisService.lrem('roomsList', updatedRoomKey);
+
+              const nextPageEvent = {
+                data: JSON.stringify({
+                  type: 'UPDATE',
+                  nextPage,
+                }),
+              };
+
+              this.roomUpdateSubject.next(nextPageEvent);
+            }
+            return {
+              data: rooms,
+            } as MessageEvent;
+          } else {
+            return null;
+          }
+        } else if (type === 'UPDATE') {
+          if (page != nextPage) {
+            return null;
+          }
+          const rooms = await Promise.all(
+            roomList.map(async (roomKey) => {
+              const roomData = await this.redisService.hgetAll<RoomDataDto>(
+                `room:${roomKey}`,
+              );
+              return roomData;
+            }),
+          );
+
+          const nNextPage = page + 1;
+          const nextStart = (nextPage - 1) * ROOM_LIMIT;
+          const nextEnd = nextStart + ROOM_LIMIT - 1;
+
+          const nextPageList = await this.redisService.lrange(
+            'roomsList',
+            nextStart,
+            nextEnd,
+          );
+
+          if (nextPageList.length === ROOM_LIMIT) {
+            const nextPageEvent = {
+              data: JSON.stringify({ type: 'UPDATE', nextPage: nNextPage }),
+            };
+            this.roomUpdateSubject.next(nextPageEvent);
+          }
+          return {
+            data: rooms,
+          } as MessageEvent;
+        }
+      }),
+      filter((event: MessageEvent) => event !== null),
+    );
   }
 
   @Get('/search')
@@ -144,7 +259,14 @@ export class RoomController {
   @ApiOperation({
     summary: '게임 방 목록 조회',
     description:
-      'Redis에서 저장된 모든 게임 방 목록을 페이지네이션으로 조회합니다.',
+      '저장된 모든 게임 방 목록을 페이지네이션으로 조회합니다. 페이지는 1부터 시작하며, 한 페이지에 최대 ROOM_LIMIT개의 방 정보를 반환합니다.',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: '조회할 페이지 번호 (기본값: 1)',
+    example: 1,
   })
   @ApiResponse({
     status: 200,
