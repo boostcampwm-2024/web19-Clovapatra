@@ -27,7 +27,7 @@ import {
 } from './games-utils';
 
 const VOICE_SERVERS = 'voice-servers';
-const PRONOUNCE_SCORE_THRESOLHD = 53;
+const PRONOUNCE_SCORE_THRESOLHD = 50;
 
 @WebSocketGateway({
   namespace: '/rooms',
@@ -240,8 +240,9 @@ export class GamesGateway implements OnGatewayDisconnect {
           this.server.to(roomId).emit('voiceProcessingResult', {
             result: 'PASS',
             playerNickname,
-            playerNote: averageNote,
-            previousPlayerNickname:
+            note: averageNote,
+            preNote: numberToNote(gameData.previousPitch),
+            prelayerNickname:
               gameData.previousPlayers.length === 0
                 ? null
                 : gameData.previousPlayers[gameData.previousPlayers.length - 1],

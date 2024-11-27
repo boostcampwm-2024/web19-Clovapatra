@@ -13,7 +13,7 @@ const SAMPLE_DATA = [
       '내가 그린 기린 그림은 긴 기린 그림이고 네가 그린 기린 그림은 안 긴 기린 그림이다.',
   },
   {
-    timeLimit: 8,
+    timeLimit: 9,
     lyrics:
       '저기 계신 콩국수 국수 장수는 새 콩국수 국수 장수이고, 여기 계신 콩국수 국수 장수는 헌 콩국수 국수 장수다.',
   },
@@ -24,6 +24,10 @@ const SAMPLE_DATA = [
   {
     timeLimit: 6,
     lyrics: '중앙청 창살은 쌍창살이고 시청의 창살은 외창살이다.',
+  },
+  {
+    timeLimit: 4,
+    lyrics: '페페페페페페페페페페',
   },
 ];
 
@@ -150,7 +154,7 @@ export function updatePreviousPlayers(
   gameData.previousPlayers.push(playerNickname);
 }
 
-const PRONOUNCE_SCORE_ORIGINAL_THRESOLHD = 53;
+const PRONOUNCE_SCORE_ORIGINAL_THRESOLHD = 50;
 const PRONOUNCE_SCORE_THRESOLHD = 90;
 const INCREMENT = 2 / 7;
 const DECREMENT = 3;
