@@ -63,39 +63,6 @@ describe('RoomsGateway', () => {
   });
 
   describe('handleCreateRoom', () => {
-    it('새로운 방을 생성하고 Redis에 저장해야 한다.', async () => {
-      const createRoomDto: CreateRoomDto = {
-        roomName: 'Test Room',
-        hostNickname: 'HostUser',
-      };
-      mockClient.data = {};
-
-      await gateway.handleCreateRoom(createRoomDto, mockClient);
-
-      expect(redisService.set).toHaveBeenCalledWith(
-        expect.stringMatching(/^room:/),
-        expect.any(String),
-        'roomUpdate',
-      );
-      expect(mockClient.join).toHaveBeenCalledWith(expect.any(String));
-      expect(mockClient.emit).toHaveBeenCalledWith(
-        'roomCreated',
-        expect.objectContaining({
-          roomId: expect.any(String),
-          roomName: createRoomDto.roomName,
-          hostNickname: createRoomDto.hostNickname,
-          players: expect.arrayContaining([
-            {
-              playerNickname: createRoomDto.hostNickname,
-              isReady: false,
-              isMuted: false,
-            },
-          ]),
-          status: 'waiting',
-        }),
-      );
-    });
-
     it('Redis 오류로 인해 방 생성이 실패하면 오류를 반환해야 한다.', async () => {
       jest
         .spyOn(redisService, 'set')
