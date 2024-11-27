@@ -9,15 +9,15 @@ import { getRoomsQuery } from '@/stores/queries/getRoomsQuery';
 const SearchBar = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearch = useDebounce(searchTerm, 200); // 200ms 디바운스
-  const { setRooms } = useRoomStore();
+  const { setRooms, userPage } = useRoomStore();
   const { data: searchResults } = searchRoomsQuery(debouncedSearch);
-  const { data: allRooms, refetch: refetchAllRooms } = getRoomsQuery();
+  const { data: roomsData, refetch: refetchAllRooms } = getRoomsQuery(userPage);
 
   // 검색 결과 또는 전체 방 목록으로 업데이트
   useEffect(() => {
-    if (!debouncedSearch.trim() && allRooms) {
+    if (!debouncedSearch.trim() && roomsData?.rooms) {
       refetchAllRooms();
-      setRooms(allRooms);
+      setRooms(roomsData.rooms);
       return;
     }
 
@@ -25,7 +25,7 @@ const SearchBar = () => {
     if (searchResults) {
       setRooms(searchResults);
     }
-  }, [debouncedSearch, searchResults, allRooms, setRooms, refetchAllRooms]);
+  }, [debouncedSearch, searchResults, roomsData, setRooms, refetchAllRooms]);
 
   return (
     <div className="relative w-full mt-6">
