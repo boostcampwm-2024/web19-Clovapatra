@@ -20,5 +20,5 @@ export enum RedisKeys {
 
 export enum RoomsConstant {
   ROOMS_MAX_PLAYERS = 4,
-  ROOMS_LIMIT = 2,
+  ROOMS_LIMIT = 9,
 }
