@@ -358,6 +358,7 @@ export class RoomController {
       'InternalError: 내부 서버 오류',
       'AllPlayersMustBeReady: 모든 플레이어가 준비 상태여야 함',
       'NotEnoughPlayers: 플레이어가 충분하지 않음',
+      'ValidationFailed: 유효하지 않은 입력값',
     ],
   })
   getErrorMessages() {
