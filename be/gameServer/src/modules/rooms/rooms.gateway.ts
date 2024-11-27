@@ -12,7 +12,6 @@ import { Logger, UseFilters } from '@nestjs/common';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { RoomDataDto } from './dto/room-data.dto';
 import { JoinRoomDto } from './dto/join-data.dto';
-import { ErrorResponse } from './dto/error-response.dto';
 import { RoomsValidationPipe } from './rooms.validation.pipe';
 import { WsExceptionsFilter } from '../../common/filters/ws-exceptions.filter';
 import {
@@ -23,6 +22,7 @@ import {
   convertRoomDataToHash,
 } from './room-utils';
 import { v4 as uuidv4 } from 'uuid';
+import { ErrorMessages } from '../../common/constant';
 
 const ROOMS_LIST_KEY = 'roomsList';
 const ROOMS_UPDATE_CHANNEL = 'roomUpdate';
@@ -87,11 +87,8 @@ export class RoomsGateway implements OnGatewayDisconnect {
       client.emit('roomCreated', roomData);
     } catch (error) {
       this.logger.error('Error creating room:', error.message);
-      const errorResponse: ErrorResponse = {
-        message: 'Failed to create the room',
-      };
 
-      client.emit('error', errorResponse);
+      client.emit('error', ErrorMessages.INTERNAL_ERROR);
     }
   }
 
@@ -110,19 +107,19 @@ export class RoomsGateway implements OnGatewayDisconnect {
 
       if (!roomData || Object.keys(roomData).length === 0) {
         this.logger.warn(`Room ${roomId} does not exist`);
-        client.emit('error', 'Room does not exist');
+        client.emit('error', ErrorMessages.ROOM_NOT_FOUND);
         return;
       }
 
       if (isRoomFull(roomData)) {
         this.logger.log(`Room ${roomId} is full`);
-        client.emit('error', 'Room is full');
+        client.emit('error', ErrorMessages.ROOM_FULL);
         return;
       }
 
       if (isNicknameTaken(roomData, playerNickname)) {
         this.logger.warn(`Nickname already taken: ${playerNickname}`);
-        client.emit('error', 'Nickname already taken in this room');
+        client.emit('error', ErrorMessages.NICKNAME_TAKEN);
         return;
       }
 
@@ -142,12 +139,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
       this.logger.log(`User ${playerNickname} joined room ${roomId}`);
     } catch (error) {
       this.logger.error(`Error joining room: ${error.message}`, error.stack);
-
-      const errorResponse: ErrorResponse = {
-        message: 'Failed to join the room',
-      };
-
-      client.emit('error', errorResponse);
+      client.emit('error', ErrorMessages.INTERNAL_ERROR);
     }
   }
 
@@ -161,7 +153,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
 
       if (!roomData || Object.keys(roomData).length === 0) {
         this.logger.warn(`Room ${roomId} does not exist`);
-        client.emit('error', 'Room does not exist');
+        client.emit('error', ErrorMessages.ROOM_NOT_FOUND);
         return;
       }
 
@@ -219,11 +211,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
       }
     } catch (error) {
       this.logger.error('Error handling disconnect: ', error.message);
-      const errorResponse: ErrorResponse = {
-        message: 'Failed to handle disconnect',
-      };
-
-      client.emit('error', errorResponse);
+      client.emit('error', ErrorMessages.INTERNAL_ERROR);
     }
   }
 
@@ -237,7 +225,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
 
       if (!roomData || Object.keys(roomData).length === 0) {
         this.logger.warn(`Room ${roomId} does not exist`);
-        client.emit('error', 'Room does not exist');
+        client.emit('error', ErrorMessages.ROOM_NOT_FOUND);
         return;
       }
 
@@ -252,11 +240,11 @@ export class RoomsGateway implements OnGatewayDisconnect {
         });
         this.server.to(roomId).emit('updateUsers', roomData.players);
       } else {
-        client.emit('error', 'Player not found in room');
+        client.emit('error', ErrorMessages.PLAYER_NOT_FOUND);
       }
     } catch (error) {
       this.logger.error(`Error setting ready status: ${error.message}`);
-      client.emit('error', 'Failed to set ready status');
+      client.emit('error', ErrorMessages.INTERNAL_ERROR);
     }
   }
 
@@ -270,7 +258,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
 
       if (!roomData || Object.keys(roomData).length === 0) {
         this.logger.warn(`Room ${roomId} does not exist`);
-        client.emit('error', 'Room does not exist');
+        client.emit('error', ErrorMessages.ROOM_NOT_FOUND);
         return;
       }
 
@@ -291,11 +279,11 @@ export class RoomsGateway implements OnGatewayDisconnect {
 
         this.server.to(roomId).emit('muteStatusChanged', muteStatus);
       } else {
-        client.emit('error', 'Player not found in room');
+        client.emit('error', ErrorMessages.PLAYER_NOT_FOUND);
       }
     } catch (error) {
-      this.logger.error(`Error setting ready status: ${error.message}`);
-      client.emit('error', 'Failed to set ready status');
+      this.logger.error(`Error setting mute status: ${error.message}`);
+      client.emit('error', ErrorMessages.INTERNAL_ERROR);
     }
   }
 
@@ -312,12 +300,12 @@ export class RoomsGateway implements OnGatewayDisconnect {
 
       if (!roomData || Object.keys(roomData).length === 0) {
         this.logger.warn(`Room ${roomId} does not exist`);
-        client.emit('error', 'Room does not exist');
+        client.emit('error', ErrorMessages.ROOM_NOT_FOUND);
         return;
       }
 
       if (roomData.hostNickname !== client.data.playerNickname) {
-        client.emit('error', 'Only host can kick players');
+        client.emit('error', ErrorMessages.ONLY_HOST_CAN_START);
         return;
       }
 
@@ -326,7 +314,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
       );
 
       if (playerIndex === -1) {
-        client.emit('error', 'Player not found in room');
+        client.emit('error', ErrorMessages.PLAYER_NOT_FOUND);
         return;
       }
 
@@ -356,7 +344,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
       }
     } catch (error) {
       this.logger.error(`Error kicking player: ${error.message}`);
-      client.emit('error', 'Failed to kick player');
+      client.emit('error', ErrorMessages.INTERNAL_ERROR);
     }
   }
 }
