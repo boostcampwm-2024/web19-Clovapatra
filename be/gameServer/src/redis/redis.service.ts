@@ -115,12 +115,20 @@ export class RedisService implements OnModuleDestroy {
     return value ? JSON.parse(value) : null;
   }
 
-  async delete(key: string, channel?: string): Promise<void> {
+  async delete(
+    key: string,
+    channel?: string,
+    deletedPage?: number,
+  ): Promise<void> {
     await this.redisClient.del(key);
     if (channel) {
       await this.publishToChannel(
         channel,
-        JSON.stringify({ type: 'DELETE', key }),
+        JSON.stringify({
+          type: 'DELETE',
+          key,
+          ...(deletedPage !== undefined ? { deletedPage } : {}),
+        }),
       );
     }
   }

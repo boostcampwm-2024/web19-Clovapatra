@@ -22,7 +22,7 @@ import {
   convertRoomDataToHash,
 } from './room-utils';
 import { v4 as uuidv4 } from 'uuid';
-import { ErrorMessages, RedisKeys } from '../../common/constant';
+import { ErrorMessages, RedisKeys, RoomsConstant } from '../../common/constant';
 
 @WebSocketGateway({
   namespace: '/rooms',
@@ -192,9 +192,19 @@ export class RoomsGateway implements OnGatewayDisconnect {
           if (roomNameList.length === 0) {
             await this.redisService.zrem('roomNames', roomData.roomName);
           }
+          const totalRoomIdList = await this.redisService.lrange(
+            `${RedisKeys.ROOMS_LIST}`,
+            0,
+            -1,
+          );
+          const index = totalRoomIdList.indexOf(roomId);
+          await this.redisService.lrem(RedisKeys.ROOMS_LIST, roomId);
           await this.redisService.delete(
             `room:${roomId}`,
             RedisKeys.ROOMS_UPDATE_CHANNEL,
+            ...(index === -1
+              ? []
+              : [Math.floor(index / RoomsConstant.ROOMS_LIMIT)]),
           );
         }
       } else {
