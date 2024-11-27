@@ -7,9 +7,11 @@ import {
   Param,
   NotFoundException,
   Query,
+  Delete,
 } from '@nestjs/common';
 import { RedisService } from '../../redis/redis.service';
 import { RoomDataDto } from './dto/room-data.dto';
+import { PaginatedRoomDto } from './dto/paginated-room.dto';
 import {
   ApiTags,
   ApiOperation,
@@ -272,14 +274,37 @@ export class RoomController {
   @ApiResponse({
     status: 200,
     description: '게임 방 목록이 성공적으로 반환됩니다.',
-    type: [RoomDataDto],
+    schema: {
+      example: {
+        rooms: [
+          {
+            roomId: '6f42377f-42ea-42cc-ac1a-b5d2b99d4ced',
+            roomName: '게임방123',
+            hostNickname: 'hostNickname123',
+            players: [
+              { playerNickname: 'hostNic123', isReady: true, isMuted: false },
+              { playerNickname: 'player1', isReady: false, isMuted: true },
+            ],
+            status: 'waiting',
+          },
+        ],
+        pagination: {
+          currentPage: 1,
+          totalPages: 5,
+          totalItems: 50,
+          hasNextPage: true,
+          hasPreviousPage: false,
+        },
+      },
+    },
   })
-  async getRooms(@Query('page') page: number = 1): Promise<RoomDataDto[]> {
+  async getRooms(@Query('page') page = 1): Promise<PaginatedRoomDto> {
+    this.logger.log(`게임 방 목록 조회 시작 (페이지: ${page})`);
+
+    const totalRooms = await this.redisService.llen('roomsList');
+    const totalPages = Math.ceil(totalRooms / ROOM_LIMIT);
     const start = (page - 1) * ROOM_LIMIT;
     const end = start + ROOM_LIMIT - 1;
-    this.logger.log(
-      `게임 방 목록 조회 시작 (페이지: ${page}, 범위: ${start}-${end})`,
-    );
 
     const paginatedKeys = await this.redisService.lrange(
       'roomsList',
@@ -292,11 +317,52 @@ export class RoomController {
         const roomData = await this.redisService.hgetAll<RoomDataDto>(
           `room:${key}`,
         );
-        return roomData;
+
+        return {
+          roomId: key,
+          roomName: roomData.roomName,
+          hostNickname: roomData.hostNickname,
+          players: roomData.players,
+          status: roomData.status,
+        } as RoomDataDto;
       }),
     );
 
     this.logger.log(`게임 방 목록 조회 완료, ${rooms.length}개 방 반환`);
-    return rooms;
+
+    return {
+      rooms: rooms,
+      pagination: {
+        currentPage: Number(page),
+        totalPages,
+        totalItems: totalRooms,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    };
+  }
+
+  @Delete('Error Messages')
+  @ApiOperation({
+    summary: '에러 메시지 목록',
+    description: 'API에서 발생할 수 있는 에러 메시지 목록',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '에러 메시지 목록',
+    example: [
+      'RoomNotFound: 방을 찾을 수 없음',
+      'GameNotFound: 게임을 찾을 수 없음',
+      'RoomFull: 방이 가득 참',
+      'NicknameTaken: 닉네임이 이미 사용 중',
+      'PlayerNotFound: 플레이어를 찾을 수 없음',
+      'HostOnlyStart: 호스트만 게임을 시작할 수 있음',
+      'InternalError: 내부 서버 오류',
+      'AllPlayersMustBeReady: 모든 플레이어가 준비 상태여야 함',
+      'NotEnoughPlayers: 플레이어가 충분하지 않음',
+    ],
+  })
+  getErrorMessages() {
+    return;
   }
 }

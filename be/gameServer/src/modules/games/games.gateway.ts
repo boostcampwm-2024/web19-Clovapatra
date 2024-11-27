@@ -14,7 +14,6 @@ import { RoomDataDto } from '../rooms/dto/room-data.dto';
 import { GameDataDto } from './dto/game-data.dto';
 import { TurnDataDto } from './dto/turn-data.dto';
 import { VoiceResultFromServerDto } from './dto/voice-result-from-server.dto';
-import { ErrorResponse } from '../rooms/dto/error-response.dto';
 import {
   createTurnData,
   selectCurrentPlayer,
@@ -25,6 +24,7 @@ import {
   numberToNote,
   transformScore,
 } from './games-utils';
+import { ErrorMessages } from '../../common/constant';
 
 const VOICE_SERVERS = 'voice-servers';
 const PRONOUNCE_SCORE_THRESOLHD = 50;
@@ -58,7 +58,7 @@ export class GamesGateway implements OnGatewayDisconnect {
 
       if (!roomData) {
         this.logger.warn(`Room not found: ${roomId}`);
-        client.emit('error', 'Room not found');
+        client.emit('error', ErrorMessages.ROOM_NOT_FOUND);
         return;
       }
 
@@ -66,7 +66,7 @@ export class GamesGateway implements OnGatewayDisconnect {
         this.logger.warn(
           `User ${client.data.playerNickname} is not the host of room ${roomId}`,
         );
-        client.emit('error', 'Only the host can start the game');
+        client.emit('error', ErrorMessages.ONLY_HOST_CAN_START);
         return;
       }
 
@@ -74,14 +74,14 @@ export class GamesGateway implements OnGatewayDisconnect {
         this.logger.warn(
           `Not enough players to start the game in room ${roomId}`,
         );
-        client.emit('error', 'Game cannot start');
+        client.emit('error', ErrorMessages.NOT_ENOUGH_PLAYERS);
         return;
       }
 
       const allReady = checkPlayersReady(roomData);
       if (!allReady) {
         this.logger.warn(`Not all players are ready in room: ${roomId}`);
-        client.emit('error', 'All players must be ready to start the game');
+        client.emit('error', ErrorMessages.ALL_PLAYERS_MUST_BE_READY);
         return;
       }
 
@@ -129,10 +129,7 @@ export class GamesGateway implements OnGatewayDisconnect {
       this.logger.error(
         `Error starting game in room ${roomId}: ${error.message}`,
       );
-      const errorResponse: ErrorResponse = {
-        message: 'Failed to start the game',
-      };
-      client.emit('error', errorResponse);
+      client.emit('error', ErrorMessages.INTERNAL_ERROR);
     }
   }
 
@@ -153,7 +150,7 @@ export class GamesGateway implements OnGatewayDisconnect {
         `game:${roomId}`,
       );
       if (!gameDataString) {
-        return client.emit('error', { message: `game ${roomId} not found` });
+        return client.emit('error', ErrorMessages.ROOM_NOT_FOUND);
       }
 
       const gameData: GameDataDto = JSON.parse(gameDataString);
@@ -180,7 +177,7 @@ export class GamesGateway implements OnGatewayDisconnect {
         );
         if (!roomData) {
           this.logger.warn(`Room not found: ${roomId}`);
-          client.emit('error', 'Room not found');
+          client.emit('error', ErrorMessages.ROOM_NOT_FOUND);
           return;
         }
 
@@ -202,7 +199,7 @@ export class GamesGateway implements OnGatewayDisconnect {
       }
     } catch (error) {
       this.logger.error('Error handling next:', error);
-      client.emit('error', { message: 'Internal server error' });
+      client.emit('error', ErrorMessages.INTERNAL_ERROR);
     }
   }
 
@@ -223,7 +220,7 @@ export class GamesGateway implements OnGatewayDisconnect {
         `game:${roomId}`,
       );
       if (!gameDataString) {
-        return client.emit('error', { message: `game ${roomId} not found` });
+        return client.emit('error', ErrorMessages.GAME_NOT_FOUND);
       }
 
       const gameData: GameDataDto = JSON.parse(gameDataString);
@@ -300,7 +297,7 @@ export class GamesGateway implements OnGatewayDisconnect {
       await this.redisService.set(`game:${roomId}`, JSON.stringify(gameData));
     } catch (error) {
       this.logger.error('Error handling voiceResult:', error);
-      client.emit('error', { message: 'Internal server error' });
+      client.emit('error', ErrorMessages.INTERNAL_ERROR);
 
       // 오류 일때
     }

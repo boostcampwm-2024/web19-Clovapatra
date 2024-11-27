@@ -1,7 +1,6 @@
 import { Controller, Post } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { RoomDataDto } from './dto/room-data.dto';
-import { ErrorResponse } from './dto/error-response.dto';
 import { PlayerDataDto } from '../players/dto/player-data.dto';
 
 @ApiTags('Rooms (WebSocket: 서버에서 발행하는 이벤트)')
@@ -48,14 +47,4 @@ export class RoomsWebSocketEmitController {
     // This method does not execute any logic. It's for Swagger documentation only.
     return;
   }
-
-  @Post('error')
-  @ApiOperation({
-    summary: '요청 실패 시 에러를 전송합니다.',
-  })
-  @ApiResponse({
-    description: '요청 실패 예시',
-    type: ErrorResponse,
-  })
-  error(): void {}
 }
