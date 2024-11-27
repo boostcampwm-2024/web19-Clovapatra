@@ -8,4 +8,16 @@ export enum ErrorMessages {
   INTERNAL_ERROR = 'InternalError',
   ALL_PLAYERS_MUST_BE_READY = 'AllPlayersMustBeReady',
   NOT_ENOUGH_PLAYERS = 'NotEnoughPlayers',
+  VALIDATION_FAILED = 'ValidationFailed',
+}
+
+export enum RedisKeys {
+  ROOMS_LIST = 'roomsList',
+  ROOMS_UPDATE_CHANNEL = 'roomUpdate',
+  ROOM_NAME_TO_ID_HASH = 'roomNamesToIds',
+  ROOM_NAMES_SORTED_KEY = 'roomNames',
+}
+
+export enum RoomsConstant {
+  ROOMS_MAX_PLAYERS = 4,
 }
