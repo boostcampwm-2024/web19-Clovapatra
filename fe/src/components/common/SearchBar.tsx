@@ -15,8 +15,9 @@ const SearchBar = () => {
 
   // 검색 결과 또는 전체 방 목록으로 업데이트
   useEffect(() => {
-    if (!debouncedSearch.trim()) {
+    if (!debouncedSearch.trim() && allRooms) {
       refetchAllRooms();
+      setRooms(allRooms);
       return;
     }
 
@@ -24,14 +25,7 @@ const SearchBar = () => {
     if (searchResults) {
       setRooms(searchResults);
     }
-  }, [debouncedSearch, searchResults, setRooms, refetchAllRooms]);
-
-  // allRooms가 업데이트되면 방 목록 갱신
-  useEffect(() => {
-    if (!debouncedSearch.trim() && allRooms) {
-      setRooms(allRooms);
-    }
-  }, [allRooms, debouncedSearch, setRooms]);
+  }, [debouncedSearch, searchResults, allRooms, setRooms, refetchAllRooms]);
 
   return (
     <div className="relative w-full mt-6">
