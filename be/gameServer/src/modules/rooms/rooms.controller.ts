@@ -30,6 +30,7 @@ export class RoomController {
 
   constructor(private readonly redisService: RedisService) {
     this.redisService.subscribeToChannel('roomUpdate', async (message) => {
+      this.logger.log(`게임방 업데이트 ${message}`);
       this.roomUpdateSubject.next({ data: message });
     });
   }
@@ -103,6 +104,8 @@ export class RoomController {
               nextEnd,
             );
 
+            await this.redisService.lrem('roomsList', updatedRoomKey);
+
             if (nextPageList.length > 0) {
               const nextDataKey = nextPageList.shift();
               rooms.push(
@@ -110,8 +113,6 @@ export class RoomController {
                   `room:${nextDataKey}`,
                 ),
               );
-
-              await this.redisService.lrem('roomsList', updatedRoomKey);
 
               const nextPageEvent = {
                 data: JSON.stringify({
