@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAudioPermission } from '@/hooks/useAudioPermission';
 import { useDialogForm } from '@/hooks/useDialogForm';
+import { useFormValidation } from '@/hooks/useFormValidation';
 import { gameSocket } from '@/services/gameSocket';
 import { signalingSocket } from '@/services/signalingSocket';
 import useRoomStore from '@/stores/zustand/useRoomStore';
@@ -24,7 +25,13 @@ const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
   const [hostNickname, setHostNickname] = useState('');
   const navigate = useNavigate();
   const setCurrentPlayer = useRoomStore((state) => state.setCurrentPlayer);
+  const { errors, validateForm, updateInput } = useFormValidation();
   const { requestPermission } = useAudioPermission();
+  const isFormValid =
+    !errors.nickname &&
+    !errors.roomName &&
+    roomName.trim() &&
+    hostNickname.trim();
 
   const resetAndClose = () => {
     setRoomName('');
@@ -33,8 +40,21 @@ const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
     onOpenChange(false);
   };
 
+  // 입력값 변경 핸들러
+  const handleRoomNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setRoomName(value);
+    updateInput('roomName', value);
+  };
+
+  const handleNicknameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setHostNickname(value);
+    updateInput('nickname', value);
+  };
+
   const handleSubmit = async () => {
-    if (!roomName.trim() || !hostNickname.trim()) return;
+    if (!validateForm(hostNickname, roomName)) return;
 
     try {
       setIsLoading(true);
@@ -62,7 +82,11 @@ const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
           navigate(`/game/${room.roomId}`);
         } catch (error) {
           console.error('시그널링 서버 접속 실패:', error);
-          alert('음성 채팅 연결에 실패했습니다.');
+          alert('[ERROR] 음성 채팅 연결에 실패했습니다.');
+
+          if (error === 'ValidationFailed') {
+            console.error('[ERROR] 사용자 입력값 ERROR', error);
+          }
         }
       });
 
@@ -106,15 +130,16 @@ const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
             <Input
               id="roomName"
               value={roomName}
-              onChange={(e) => {
-                setRoomName(e.target.value);
-              }}
+              onChange={handleRoomNameChange}
               placeholder="방 제목을 입력하세요"
               className="col-span-3"
               disabled={isLoading}
               ref={(el) => (inputRefs.current[0] = el)}
               onKeyDown={(e) => handleKeyDown(e, 0)}
             />
+            {errors.roomName && (
+              <p className="text-sm text-red-500">{errors.roomName}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="nickname" className="text-right">
@@ -123,15 +148,16 @@ const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
             <Input
               id="nickname"
               value={hostNickname}
-              onChange={(e) => {
-                setHostNickname(e.target.value);
-              }}
+              onChange={handleNicknameChange}
               placeholder="닉네임을 입력하세요"
               className="col-span-3"
               disabled={isLoading}
               ref={(el) => (inputRefs.current[1] = el)}
               onKeyDown={(e) => handleKeyDown(e, 1)}
             />
+            {errors.nickname && (
+              <p className="text-sm text-red-500">{errors.nickname}</p>
+            )}
           </div>
         </div>
         <DialogFooter className="gap-2 mt-2">
@@ -146,7 +172,7 @@ const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
           <Button
             type="button"
             onClick={handleSubmit}
-            disabled={!roomName.trim() || !hostNickname.trim() || isLoading}
+            disabled={!isFormValid || isLoading}
           >
             확인
           </Button>
