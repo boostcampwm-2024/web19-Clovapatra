@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ERROR_CODES, ERROR_MESSAGES } from '@/constants/errors';
 import { useAudioPermission } from '@/hooks/useAudioPermission';
 import { useDialogForm } from '@/hooks/useDialogForm';
 import { useFormValidation } from '@/hooks/useFormValidation';
@@ -18,7 +19,7 @@ import { signalingSocket } from '@/services/signalingSocket';
 import { getCurrentRoomQuery } from '@/stores/queries/getCurrentRoomQuery';
 import useRoomStore from '@/stores/zustand/useRoomStore';
 import { RoomDialogProps } from '@/types/roomTypes';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface JoinDialogProps extends RoomDialogProps {
@@ -36,10 +37,15 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
   const { errors, validateForm, updateInput, setErrors } = useFormValidation();
   const isFormValid = !errors.nickname && playerNickname.trim();
 
+  useEffect(() => {
+    if (!open) {
+      setPlayerNickname('');
+      setIsLoading(false);
+      setErrors({ nickname: '', roomName: '' });
+    }
+  }, [open, setErrors]);
+
   const resetAndClose = () => {
-    setPlayerNickname('');
-    setIsLoading(false);
-    setErrors({ nickname: '', roomName: '' });
     onOpenChange(false);
   };
 
@@ -81,10 +87,10 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
         onOpenChange(false);
         navigate(`/game/${roomId}`);
       } catch (error) {
-        if (error === 'NicknameTaken') {
+        if (error === ERROR_CODES.duplicatedNickname) {
           setErrors((prev) => ({
             ...prev,
-            nickname: '이미 사용 중인 닉네임입니다.',
+            nickname: ERROR_MESSAGES.duplicatedNickname,
           }));
         }
 
@@ -94,7 +100,7 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
       }
     } catch (error) {
       console.error('방 입장 실패:', error);
-      if (error === 'ValidationFailed') {
+      if (error === ERROR_CODES.validation) {
         console.error('[ERROR] 사용자 입력값 ERROR', error);
       }
     } finally {
@@ -113,6 +119,7 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
     ],
     onSubmit: handleJoin,
     isSubmitDisabled: !playerNickname.trim() || isLoading,
+    open,
   });
 
   return (

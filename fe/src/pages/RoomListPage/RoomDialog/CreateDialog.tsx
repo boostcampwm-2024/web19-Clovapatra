@@ -16,7 +16,7 @@ import { gameSocket } from '@/services/gameSocket';
 import { signalingSocket } from '@/services/signalingSocket';
 import useRoomStore from '@/stores/zustand/useRoomStore';
 import { RoomDialogProps } from '@/types/roomTypes';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
@@ -25,7 +25,7 @@ const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
   const [hostNickname, setHostNickname] = useState('');
   const navigate = useNavigate();
   const setCurrentPlayer = useRoomStore((state) => state.setCurrentPlayer);
-  const { errors, validateForm, updateInput } = useFormValidation();
+  const { errors, validateForm, updateInput, setErrors } = useFormValidation();
   const { requestPermission } = useAudioPermission();
   const isFormValid =
     !errors.nickname &&
@@ -33,10 +33,16 @@ const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
     roomName.trim() &&
     hostNickname.trim();
 
+  useEffect(() => {
+    if (!open) {
+      setRoomName('');
+      setHostNickname('');
+      setIsLoading(false);
+      setErrors({ nickname: '', roomName: '' });
+    }
+  }, [open, setErrors]);
+
   const resetAndClose = () => {
-    setRoomName('');
-    setHostNickname('');
-    setIsLoading(false);
     onOpenChange(false);
   };
 
@@ -108,6 +114,7 @@ const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
     ],
     onSubmit: handleSubmit,
     isSubmitDisabled: !roomName.trim() || !hostNickname.trim() || isLoading,
+    open,
   });
 
   return (

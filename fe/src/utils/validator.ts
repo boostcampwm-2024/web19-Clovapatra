@@ -1,17 +1,37 @@
-export const validateNickname = (nickname: string) => {
-  const regex = /^[a-zA-Z0-9가-힣 ]+$/;
-  if (!nickname.trim()) return '닉네임을 입력해주세요.';
-  if (!regex.test(nickname))
-    return '닉네임은 한글, 영문, 숫자, 공백만 사용 가능합니다.';
-  if (nickname.length < 2 || nickname.length > 8)
-    return '닉네임은 2~8자로 입력해주세요.';
+import { ERROR_MESSAGES } from '@/constants/errors';
 
-  return '';
+export const validateNickname = (nickname: string): string => {
+  const trimmed = nickname.trim();
+  const regex = /^[a-zA-Z0-9가-힣 ]+$/;
+  let error = '';
+
+  switch (true) {
+    case !trimmed:
+      error = ERROR_MESSAGES.emptyNickname;
+      break;
+    case !regex.test(trimmed):
+      error = ERROR_MESSAGES.invalidNickname;
+      break;
+    case trimmed.length < 2 || trimmed.length > 8:
+      error = ERROR_MESSAGES.nicknameLength;
+      break;
+  }
+
+  return error;
 };
 
-export const validateRoomName = (roomName: string) => {
-  if (!roomName.trim()) return '방 제목을 입력해주세요.';
-  if (roomName.length < 2 || roomName.length > 12)
-    return '방 제목은 2~12자로 입력해주세요.';
-  return '';
+export const validateRoomName = (roomName: string): string => {
+  const trimmed = roomName.trim();
+  let error = '';
+
+  switch (true) {
+    case !trimmed:
+      error = ERROR_MESSAGES.emptyRoomName;
+      break;
+    case trimmed.length < 2 || trimmed.length > 12:
+      error = ERROR_MESSAGES.roomNameLength;
+      break;
+  }
+
+  return error;
 };
