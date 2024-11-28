@@ -1,214 +1,174 @@
-<div align="center">
-  <h1>안녕! 클로바파트라</h1>
+# 안녕! 클로바파트라 🗣️
 
-![cool_doge](https://github.com/user-attachments/assets/6fdeaaf2-b1a2-48a7-b182-0fb90c997326)
+![image](https://github.com/user-attachments/assets/8001fa14-a691-4693-bd02-9aebd811f548)
+
+[![Hits Badge](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fboostcampwm-2024%2Fweb19-boostproject&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false)](https://hits.seeyoufarm.com)
 
 <a href="https://clovapatra.com">서비스 바로가기(https://clovapatra.com)</a>
 
-</div>
+**안녕! 클로바파트라**는 음성 기반 실시간 웹 게임 프로젝트입니다. 이 서비스는 참가자들이 다양한 음성 도전을 통해 실시간으로 소통하며 재미를 느낄 수 있도록 설계되었습니다.
 
-<br/>
-
-<p align=center>
-    <a href="https://github.com/orgs/boostcampwm-2024/projects/115/views/1">백로그 </a>
-    &nbsp; | &nbsp;
-    <a href="https://github.com/boostcampwm-2024/web19-Clovapatra/wiki/Convention">컨벤션</a>
-    &nbsp; | &nbsp;
-    <a href="https://github.com/boostcampwm-2024/web19-Clovapatra/wiki/Git-Branch-%EC%A0%84%EB%9E%B5">Git Branch 전략</a>
-    &nbsp; | &nbsp;
-    <a href="#">Figma(준비중)</a> 
-    &nbsp; | &nbsp;
-    <a href="https://github.com/boostcampwm-2024/web19-boostproject/wiki/%EA%B7%B8%EB%9D%BC%EC%9A%B4%EB%93%9C-%EB%A3%B0">그라운드 룰</a>
-</p>
-
-<br>
-
-<div align=center>
-    <a href="https://hits.seeyoufarm.com"><img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fboostcampwm-2024%2Fweb19-boostproject&count_bg=%2379C83D&title_bg=%23555555&icon=&icon_color=%23E7E7E7&title=hits&edge_flat=false" width="150px"/></a>
-</div>
+---
 
 ## 📄 목차
 
-- [📄 목차](#-목차)
-- [✍🏻 프로젝트 개요](#-프로젝트-개요)
-- [🚀 핵심 기능](#-핵심-기능)
+- [📜 프로젝트 개요](#-프로젝트-개요)
+- [🚀 주요 기능](#-주요-기능)
 - [⚙️ 기술 스택](#️-기술-스택)
 - [🏛️ 시스템 아키텍처](#️-시스템-아키텍처)
-- [🔎 FE 기술적 도전](#-fe-기술적-도전)
-- [🔎 BE 기술적 도전](#-be-기술적-도전)
-- [🧡 팀원 소개](#-팀원-소개)
+- [🛠️ 설치 및 실행 방법](#️-설치-및-실행-방법)
+- [📂 프로젝트 구조](#-프로젝트-구조)
+- [🔗 관련 문서](#-관련-문서)
 
-<br />
+---
 
-## ✍🏻 프로젝트 개요
+## 📜 프로젝트 개요
 
-**안녕! 클로바파트라**는 음성 기반 발음 게임 프로젝트로 사용자들이 발음과 관련된 다양한 도전을 통해 즐거움을 느끼고, 실시간으로 소통할 수 있도록 도와주는 서비스입니다.
+**안녕! 클로바파트라**는 참가자들이 음성을 기반으로 도전을 수행하며, 게임을 즐기는 실시간 소셜 플랫폼입니다.
 
-사용자들은 음성 인식과 텍스트 변환 기술을 체험하고, 게임을 통해 발음을 개선하며 소통 능력을 향상시키는 경험을 할 수 있습니다.
+- 사용자들은 자신의 목소리로 게임을 플레이하며, 발음, 음정 등의 도전을 통해 경쟁합니다.
+- WebRTC와 음성 분석 기술을 활용하여 음성 데이터를 실시간으로 처리하며, Clova Speech Recognition API를 통해 발음의 정확도를 측정합니다.
 
-<br />
+---
 
-## **🔎 핵심 기능**
+## 🚀 주요 기능
 
-### **🎮 멀티 플레이어 게임**
+### 1. 멀티플레이 지원
 
-**게임 방 만들기**
+- **방 개설 및 관리**: 사용자는 게임 방을 생성하고 친구를 초대하여 실시간으로 소통할 수 있습니다.
+- **실시간 음성 통화**: WebRTC 기반의 실시간 통화 기능을 제공합니다.
+- **참가자 관리**: 방 참여, 준비 상태 토글, 강퇴 등의 기능을 지원합니다.
 
-> 친구랑 게임하고 싶으세요? 걱정하지 마세요. 방을 하나 만들고 링크만 공유하면 상대방이 쉽게 접속할 수 있고, 처음보는 사람과도 같이 게임을 즐길 수 있도록 개설된 방에 들어갈 수도 있습니다. 사용자들은 직접 방을 개설하고, 다른 사람들을 초대해 실시간으로 소통할 수 있습니다. 닉네임을 지정하여 방에 참여하고, 참가자 목록을 통해 현재 방에 있는 모든 사람을 확인할 수 있습니다.
+### 2. 게임 모드
 
-- 방 개설 및 링크 공유
-- 참가자 닉네임 지정 및 실시간 참가자 목록 조회
-- 음성 기반의 실시간 통화 지원
+- **클레오파트라 모드**: 이전 참가자보다 높은 음정을 내는 것을 목표로 하는 도전 게임.
+- **발음 도전 모드**: 주어진 지문을 정확히 발음하여 Clova Speech Recognition API로 점수를 측정.
 
-### **🎮 안녕! 클로바파트라**
+### 3. 음성 분석
 
-**음성 스트리밍**
+- **음정 분석**: 실시간으로 음성 데이터를 분석하여 음정의 높낮이를 비교.
+- **발음 점수화**: Clova Speech Recognition API를 활용해 발음 정확도를 측정.
+- **볼륨 분석**: 음량을 분석하여 시각적으로 표현.
 
-> 상대방의 플레이를 숨죽이고 조용히 듣거나, 에베베~ 방해하며 게임에 직접적으로 영향을 줄 수 있습니다. 상대를 최대한 킹받게하세요!
+---
 
-**발음 도전**
+## ⚙️ 기술 스택
 
-> 발음 도전 스테이지는 언제 누가 걸릴지 모릅니다. 목표 문장이 주어지면, 정확하게 발음해야 다음 단계로 진행할 수 있어요. 긴장하세요. 어떤 문장이 나올지 모릅니다.
+### 프론트엔드
 
-- **클로바파트라 게임**:
-  - 서버 소켓을 통해 사용자별 음성 데이터를 수집하고, 이를 텍스트와 음정으로 변환
-- **게임 로직**:
+- **React**: 사용자 인터페이스 개발
+- **WebRTC**: 실시간 통신 및 음성 데이터 전송
+- **Socket.IO**: 실시간 통신 구현
 
-  1. **방 개설 및 참여**
+### 백엔드
 
-     사용자는 방을 개설하거나 다른 사용자가 개설한 방에 참가할 수 있습니다. 방에 2명 이상의 참가자가 모이면 게임을 시작할 수 있습니다.
+- **NestJS**: 서버 및 게임 로직 관리
+- **Express**: 음성 처리 및 시그널링 서버
+- **Redis**: Pub/Sub 및 캐싱, 방 저장
+- **MySQL**: 유저 데이터 저장
 
-  2. **게임 시작 및 순서 설정**
+### 기타
 
-     게임이 시작되면 참가자 순서는 랜덤으로 지정됩니다. 지정된 순서에 따라 참가자들이 차례로 게임에 도전합니다.
+- **Naver Clova Speech Recognition API**: 음성 데이터 분석
+- **Docker**: 컨테이너화 및 배포
+- **NGINX**: 로드 밸런싱 및 요청 라우팅
 
-  3. **음성 도전 단계**
-
-     참가자는 이전 순서의 사용자보다 높은 음을 내야 성공하며, 실패 시 탈락합니다.
-
-  4. **발음 도전 스테이지**
-
-     게임 중간에 발음 도전 스테이지가 등장할 수 있으며, 이 단계에서는 정확하게 제시된 문장을 발음해야 성공입니다. 실패 시 탈락하게 됩니다.
-
-  5. **게임 종료**
-
-     도전 과정을 거쳐 최종적으로 한 명의 사용자만 남을 때까지 게임이 계속됩니다. 마지막까지 남은 참가자가 승리합니다.
-
-<br />
+---
 
 ## 🏛️ 시스템 아키텍처
 
-![시스템 아키텍처](https://github.com/user-attachments/assets/dc8c7236-9963-4d6a-b7e0-1346d24e8cb9)
+![System Architecture](https://github.com/user-attachments/assets/25683f10-1daa-41d8-a82f-5fe7f2b3f55f)
 
-```mermaid
-flowchart TB
-    %% ===========================================
-    %% 클라이언트 그룹 정의
-    %% ===========================================
-    subgraph ClientGroup["클라이언트 그룹(Mesh)"]
-        direction LR
-        Client1["클라이언트 1"]
-        Client2["클라이언트 2"]
-        Client3["클라이언트 3"]
-        Client4["클라이언트 4"]
+### 주요 컴포넌트
 
-        %% P2P 연결
-        Client1 <--> |P2P WebRTC| Client2
-        Client1 <--> |P2P WebRTC| Client3
-        Client1 <--> |P2P WebRTC| Client4
-        Client2 <--> |P2P WebRTC| Client3
-        Client2 <--> |P2P WebRTC| Client4
-        Client3 <--> |P2P WebRTC| Client4
-    end
+1. **클라이언트 그룹**:
+   - WebRTC 기반의 P2P MESH 연결로 음성 데이터 전송.
+   - React로 구성된 사용자 인터페이스.
+   - Zustand를 통한 전역 상태 관리.
+2. **게임 서버**:
+   - Socket.IO와 NestJS를 통해 실시간 게임 로직을 관리.
+3. **시그널링 서버**:
+   - WebRTC 연결 초기화를 위한 시그널링 처리.
+4. **음성 처리 서버**:
+   - Express 기반 음성 데이터 분석 처리.
+   - 병목 현상 방지를 위한 다중화
+5. **저장소**:
+   - Redis: Pub/Sub 및 게임 상태 캐싱.
+   - MySQL: 데이터 영구 저장.
 
-    %% ===========================================
-    %% 시스템 컴포넌트 정의
-    %% ===========================================
-    
-    %% 로드 밸런서
-    subgraph LoadBalancer["로드 밸런서"]
-        direction TB
-        NGINXMain["NGINX"]
-    end
+---
 
-    %% 게임 서버
-    subgraph GameServer["게임 서버 (NestJS)"]
-        direction TB
-        GameLogic["게임 로직"]
-        WebSocket["WebSocket 핸들러"]
-        GameState["게임 상태 관리"]
-    end
+## 🛠️ 설치 및 실행 방법
 
-    %% 시그널링 서버
-    subgraph SignalingServer["시그널링 서버 (Express)"]
-        direction TB
-        SignalingLogic["시그널링 로직"]
-        WebRTCHandler["WebRTC 핸들러"]
-    end
+### 1. **환경 변수 설정**
 
-    %% 음성 처리 서버 클러스터
-    subgraph VoiceProcessing["음성 처리 서버 (Express) 클러스터"]
-        direction TB
-        VoiceServer1["음성 처리 서버 1"]
-        VoiceServer2["음성 처리 서버 2"]
-        VoiceServer3["음성 처리 서버 3"]
-    end
+`dotenv` 파일을 생성하고 다음 환경 변수를 설정하세요:
 
-    %% 외부 API
-    ClovaAPI["Clova Speech Recognition API"]
-
-    %% 저장소
-    subgraph Storage["저장소"]
-        direction TB
-        Redis[(Redis)]
-        MySQL[(MySQL)]
-    end
-
-    %% ===========================================
-    %% 시스템 연결 정의
-    %% ===========================================
-
-    %% 1. 프론트엔드 연결
-    ClientGroup <--> |HTTPS| NGINXMain
-
-    %% 2. 로드 밸런서 연결
-    NGINXMain <--> |게임 트래픽| GameServer
-    NGINXMain <--> |시그널링 트래픽| SignalingServer
-    NGINXMain <--> |음성 트래픽| VoiceProcessing
-
-    %% 3. 데이터 저장소 연결
-    GameServer <--> Redis
-    GameServer <--> MySQL
-    SignalingServer <--> Redis
-
-    %% 4. 서비스 간 연결
-    VoiceProcessing --> |음성 데이터 처리 결과| GameServer
-    GameServer <--> |게임 데이터| ClientGroup
-
-    %% 5. 외부 API 연결
-    VoiceServer1 <--> |음성 인식 요청| ClovaAPI
-    VoiceServer2 <--> |음성 인식 요청| ClovaAPI
-    VoiceServer3 <--> |음성 인식 요청| ClovaAPI
+```env
+REDIS_HOST=localhost
+REDIS_PORT=6379
+MYSQL_HOST=localhost
+MYSQL_USER=root
+MYSQL_PASSWORD=yourpassword
+CLOVA_API_KEY=your_clova_api_key
 ```
 
-<br />
+### 2. **프로젝트 클론**
 
-## 🔎 FE 기술적 도전
+```bash
+git clone https://github.com/boostcampwm-2024/web19-boostproject.git
+cd web19-boostproject
+```
 
-### 추가 예정
+### 3. **의존성 설치**
 
-<br />
+```bash
+npm install
+```
 
-## 🔎 BE 기술적 도전
+### 4. **로컬 개발 서버 실행**
 
-### 추가 예정
+```bash
+npm run dev
+```
 
-<br />
+### 5. **Docker로 실행(진행중)**
 
-## 🧡 팀원 소개
+```bash
+docker-compose up --build
+```
 
-|                                       김태원                                        |                                        정진성                                        |                                       박나현                                       |
-| :---------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------: |
-| <img src="https://avatars.githubusercontent.com/u/85913822?s=64&v=4" width="120" /> | <img src="https://avatars.githubusercontent.com/u/102852555?s=64&v=4" width="120" /> | <img src="https://avatars.githubusercontent.com/u/116629752?s=64&v=4" width="120"> |
-|                                       **BE**                                        |                                        **BE**                                        |                                       **FE**                                       |
-|                [@dev-taewon-kim](https://github.com/dev-taewon-kim)                 |                     [@student079](https://github.com/student079)                     |                    [@studioOwol](https://github.com/studioOwol)                    |
+---
+
+## 📂 프로젝트 구조
+
+```plaintext
+web19-boostproject/
+├── fe/                           # Frontend(React 기반 클라이언트)
+│   ├── src/                      # 소스 코드 폴더
+│   │   ├── components/           # UI 컴포넌트
+│   │   ├── hooks/                # Custom Hooks (상태 및 로직 재사용)
+│   │   ├── pages/                # 페이지 컴포넌트 (라우트 매핑)
+│   │   └── utils/                # 공통 유틸리티 함수
+├── be/                           # Backend
+│   ├── gameServer/               # 게임 로직과 상태 관리를 담당하는 NestJS 서버
+│   ├── signalingServer/          # WebRTC 시그널링을 처리하는 Express 서버
+│   ├── voiceProcessingServer/    # 음성 데이터를 분석하는 Express 서버
+└── docker-compose.yml            # Docker 설정 파일 (준비 중)
+```
+
+---
+
+## 🔗 관련 문서
+
+- 🛠️ [AGT - Automatic Git & Github Tool](https://github.com/boostcampwm-2024/web19-Clovapatra/wiki/%F0%9F%9B%A0%EF%B8%8F-AGT-%E2%80%90-Automatic-Git-&-Github-Tool)
+- 📊 [WebRTC Mesh ‐ 트래픽 계산](https://github.com/boostcampwm-2024/web19-Clovapatra/wiki/%F0%9F%93%8A-WebRTC-Mesh-%E2%80%90-%ED%8A%B8%EB%9E%98%ED%94%BD-%EA%B3%84%EC%82%B0)
+- 🎢 [WebRTC Mesh - 험난한 여정](https://github.com/boostcampwm-2024/web19-Clovapatra/wiki/%F0%9F%8E%A2-WebRTC-Mesh-%E2%80%90-%ED%97%98%EB%82%9C%ED%95%9C-%EC%97%AC%EC%A0%95)
+- 📮 [SSE(Server Sent Events)](<https://github.com/boostcampwm-2024/web19-Clovapatra/wiki/%F0%9F%93%AE-SSE(Server-Sent-Events)>)
+- 💬 [WebRTC를 알아보자](https://github.com/boostcampwm-2024/web19-Clovapatra/wiki/%F0%9F%92%AC-WebRTC%EB%A5%BC-%EC%95%8C%EC%95%84%EB%B3%B4%EC%9E%90)
+- 📡 [Redis pub/sub를 활용한 SSE 적용기](https://github.com/boostcampwm-2024/web19-Clovapatra/wiki/%F0%9F%93%A1-Redis-pubsub%EB%A5%BC-%ED%99%9C%EC%9A%A9%ED%95%9C-SSE-%EC%A0%81%EC%9A%A9%EA%B8%B0)
+- 🏗️ [Naver Cloud Platform을 활용한 배포 전략](https://github.com/boostcampwm-2024/web19-Clovapatra/wiki/%E2%98%81%EF%B8%8FNaver-Cloud-Platform%EC%9D%84-%ED%99%9C%EC%9A%A9%ED%95%9C-%EB%B0%B0%ED%8F%AC-%EC%A0%84%EB%9E%B5)
+
+---
+
+**"안녕! 클로바파트라"와 함께 독창적인 음성 기반 게임의 세계로 빠져보세요!** 🎤
