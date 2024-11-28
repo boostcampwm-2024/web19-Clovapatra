@@ -1,0 +1,21 @@
+FROM node:21.7.3-alpine
+
+WORKDIR /app
+
+# Copy package.json and package-lock.json
+COPY be/gameServer/package*.json ./
+
+# Install dependencies
+RUN npm ci
+
+# Copy application code
+COPY be/gameServer/ ./
+
+# Build the application
+RUN npm run build
+
+# Expose port (specified via environment variable)
+EXPOSE ${APP_PORT}
+
+# Start the application
+CMD ["node", "dist/main.js"]
