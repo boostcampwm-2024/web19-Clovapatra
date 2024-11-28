@@ -69,19 +69,17 @@ export class RedisService implements OnModuleDestroy {
     key: string,
     fields: Record<string, T>,
     channel?: string,
-    ttlInSeconds?: number,
+    updatePage?: number,
   ): Promise<void> {
     const fieldsArray = Object.entries(fields).flat();
     await this.redisClient.hmset(key, ...fieldsArray);
 
-    if (ttlInSeconds) {
-      await this.redisClient.expire(key, ttlInSeconds);
-    }
-
     if (channel) {
       await this.publishToChannel(
         channel,
-        JSON.stringify({ type: 'CREATE', key }),
+        JSON.stringify({
+          ...(updatePage !== undefined ? { updatePage } : {}),
+        }),
       );
     }
   }
@@ -115,21 +113,10 @@ export class RedisService implements OnModuleDestroy {
     return value ? JSON.parse(value) : null;
   }
 
-  async delete(
-    key: string,
-    channel?: string,
-    deletedPage?: number,
-  ): Promise<void> {
+  async delete(key: string, channel?: string): Promise<void> {
     await this.redisClient.del(key);
     if (channel) {
-      await this.publishToChannel(
-        channel,
-        JSON.stringify({
-          type: 'DELETE',
-          key,
-          ...(deletedPage !== undefined ? { deletedPage } : {}),
-        }),
-      );
+      await this.publishToChannel(channel, JSON.stringify({}));
     }
   }
 

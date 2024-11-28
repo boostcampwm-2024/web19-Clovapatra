@@ -64,11 +64,13 @@ export class RoomsGateway implements OnGatewayDisconnect {
       };
 
       await this.redisService.rpush(RedisKeys.ROOMS_LIST, roomId);
+
       await this.redisService.hmset<string>(
         `room:${roomId}`,
         convertRoomDataToHash(roomData),
         RedisKeys.ROOMS_UPDATE_CHANNEL,
       );
+
       await this.redisService.rpush(
         `${RedisKeys.ROOM_NAME_TO_ID_HASH}:${roomName}`,
         roomId,
@@ -123,12 +125,22 @@ export class RoomsGateway implements OnGatewayDisconnect {
       }
 
       roomData.players.push({ playerNickname, isReady: false, isMuted: false });
+
+      const totalRoomIdList = await this.redisService.lrange(
+        `${RedisKeys.ROOMS_LIST}`,
+        0,
+        -1,
+      );
+      const index = totalRoomIdList.indexOf(roomId);
       await this.redisService.hmset(
         `room:${roomId}`,
         {
           players: JSON.stringify(roomData.players),
         },
         RedisKeys.ROOMS_UPDATE_CHANNEL,
+        ...(index === -1
+          ? []
+          : [Math.floor(index / RoomsConstant.ROOMS_LIMIT)]),
       );
 
       client.join(roomId);
@@ -162,6 +174,12 @@ export class RoomsGateway implements OnGatewayDisconnect {
       // 이 상태에서 다른 사용자가 방에 들어온다면?
 
       if (roomData.hostNickname === playerNickname) {
+        const totalRoomIdList = await this.redisService.lrange(
+          `${RedisKeys.ROOMS_LIST}`,
+          0,
+          -1,
+        );
+        const index = totalRoomIdList.indexOf(roomId);
         if (roomData.players.length > 0) {
           changeRoomHost(roomData);
           await this.redisService.hmset(
@@ -171,6 +189,9 @@ export class RoomsGateway implements OnGatewayDisconnect {
               hostNickname: roomData.hostNickname,
             },
             RedisKeys.ROOMS_UPDATE_CHANNEL,
+            ...(index === -1
+              ? []
+              : [Math.floor(index / RoomsConstant.ROOMS_LIMIT)]),
           );
 
           this.logger.log(`host ${playerNickname} leave room`);
@@ -192,28 +213,28 @@ export class RoomsGateway implements OnGatewayDisconnect {
           if (roomNameList.length === 0) {
             await this.redisService.zrem('roomNames', roomData.roomName);
           }
-          const totalRoomIdList = await this.redisService.lrange(
-            `${RedisKeys.ROOMS_LIST}`,
-            0,
-            -1,
-          );
-          const index = totalRoomIdList.indexOf(roomId);
           await this.redisService.lrem(RedisKeys.ROOMS_LIST, roomId);
           await this.redisService.delete(
             `room:${roomId}`,
             RedisKeys.ROOMS_UPDATE_CHANNEL,
-            ...(index === -1
-              ? []
-              : [Math.floor(index / RoomsConstant.ROOMS_LIMIT)]),
           );
         }
       } else {
+        const totalRoomIdList = await this.redisService.lrange(
+          `${RedisKeys.ROOMS_LIST}`,
+          0,
+          -1,
+        );
+        const index = totalRoomIdList.indexOf(roomId);
         await this.redisService.hmset(
           `room:${roomId}`,
           {
             players: JSON.stringify(roomData.players),
           },
           RedisKeys.ROOMS_UPDATE_CHANNEL,
+          ...(index === -1
+            ? []
+            : [Math.floor(index / RoomsConstant.ROOMS_LIMIT)]),
         );
         this.logger.log(`host ${playerNickname} leave room`);
         this.server.to(roomId).emit('updateUsers', roomData.players);
@@ -334,12 +355,21 @@ export class RoomsGateway implements OnGatewayDisconnect {
 
       if (targetSocket) {
         roomData.players.splice(playerIndex, 1);
+        const totalRoomIdList = await this.redisService.lrange(
+          `${RedisKeys.ROOMS_LIST}`,
+          0,
+          -1,
+        );
+        const index = totalRoomIdList.indexOf(roomId);
         await this.redisService.hmset(
           `room:${roomId}`,
           {
             players: JSON.stringify(roomData.players),
           },
           RedisKeys.ROOMS_UPDATE_CHANNEL,
+          ...(index === -1
+            ? []
+            : [Math.floor(index / RoomsConstant.ROOMS_LIMIT)]),
         );
 
         this.server.to(roomId).emit('kicked', playerNickname);
