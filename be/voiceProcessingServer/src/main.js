@@ -32,6 +32,7 @@ if (cluster.isMaster) {
   const REDIS_ROOM_KEY_EXPIRE_TIME = process.env.REDIS_ROOM_KEY_EXPIRE_TIME;
 
   const app = express();
+  app.get("/health-check", (req, res) => res.status(200).send("Healthy"));
   const server = http.createServer(app);
 
   // Redis pub/sub clients for Socket.IO adapter
