@@ -1,6 +1,7 @@
 export const ENV = {
   GAME_SERVER_URL: import.meta.env.VITE_GAME_SERVER_URL,
   SIGNALING_SERVER_URL: import.meta.env.VITE_SIGNALING_SERVER_URL,
+  VOICE_SERVER_URL: import.meta.env.VITE_VOICE_SERVER_URL,
   STUN_SERVERS: {
     iceServers: [
       {

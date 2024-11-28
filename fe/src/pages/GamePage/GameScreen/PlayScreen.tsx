@@ -10,6 +10,7 @@ import { Loader2 } from 'lucide-react';
 import { gameSocket } from '@/services/gameSocket';
 import EndScreen from './EndScreen';
 import ReadyScreen from './ReadyScreen';
+import PitchVisualizer from '@/components/game/PitchVisualizer';
 
 type GamePhase = 'intro' | 'gameplay' | 'grading' | 'result';
 
@@ -31,11 +32,11 @@ const PlayScreen = () => {
     if (rank.length > 0) return;
 
     setGamePhase('intro');
-    setTimeLeft(turnData.timeLimit);
     setGameResult(null);
 
     const introTimer = setTimeout(() => {
       setGamePhase('gameplay');
+      setTimeLeft(turnData.timeLimit); // gameplay 페이즈로 전환될 때 시간 설정
 
       // 현재 플레이어 차례이고 게임 참여 가능한 경우에만 녹음 시작
       if (currentPlayer === turnData.playerNickname && currentRoom) {
@@ -89,7 +90,7 @@ const PlayScreen = () => {
     }, RESULT_TIME);
 
     return () => clearTimeout(resultTimer);
-  }, [gamePhase]);
+  }, [gamePhase, resultData]);
 
   // 디버깅용 phase 변경 로그
   useEffect(() => {
@@ -155,6 +156,10 @@ const PlayScreen = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {turnData && (
+        <PitchVisualizer isGameplayPhase={gamePhase === 'gameplay'} />
+      )}
 
       {!turnData && rank.length > 0 && <ReadyScreen />}
 
