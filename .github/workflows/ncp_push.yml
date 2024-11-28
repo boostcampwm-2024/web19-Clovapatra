@@ -11,6 +11,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 전체 히스토리 가져오기
 
       - name: Set up Git Config
         run: |
