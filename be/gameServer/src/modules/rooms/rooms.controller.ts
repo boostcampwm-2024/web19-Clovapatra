@@ -60,11 +60,7 @@ export class RoomController {
   })
   async healthCheck() {
     this.logger.log('HealthCheck API 호출');
-    return {
-      status: 'UP',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime().toFixed(2) + ' seconds',
-    };
+    return 'Healthy';
   }
 
   @Sse('stream')
