@@ -37,6 +37,36 @@ export class RoomController {
     });
   }
 
+  @Get('healthcheck')
+  @ApiOperation({
+    summary: '서버 상태 확인',
+    description:
+      '서버의 상태를 확인하고, 정상적으로 작동 중인 경우 200 상태를 반환합니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '서버가 정상적으로 작동 중임을 나타냅니다.',
+    schema: {
+      example: {
+        status: 'UP',
+        timestamp: '2024-11-28T12:34:56.789Z',
+        uptime: '12345.678 seconds',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 500,
+    description: '서버가 비정상적으로 작동 중임을 나타냅니다.',
+  })
+  async healthCheck() {
+    this.logger.log('HealthCheck API 호출');
+    return {
+      status: 'UP',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime().toFixed(2) + ' seconds',
+    };
+  }
+
   @Sse('stream')
   @ApiOperation({
     summary: '게임 방 목록 조회하는 SSE',
