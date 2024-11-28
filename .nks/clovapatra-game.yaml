@@ -1,0 +1,80 @@
+# Deployment
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clovapatra-game
+  labels:
+    app: clovapatra-game
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: clovapatra-game
+  template:
+    metadata:
+      labels:
+        app: clovapatra-game
+    spec:
+      containers:
+        - name: clovapatra-game
+          image: clovapatra-container-registry.kr.ncr.ntruss.com/clovapatra-game:latest
+          ports:
+            - containerPort: 8000
+          env:
+            - name: APP_PORT
+              value: "8000"
+            - name: REDIS_HOST
+              value: "redisc-2vvlm0.vpc-cdb.ntruss.com"
+            - name: REDIS_PORT
+              value: "6379"
+            - name: REDIS_PASSWORD
+              value: ""
+      nodeSelector:
+        ncloud.com/nks-nodepool: game
+      imagePullSecrets:
+        - name: regcred
+
+---
+# Service
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: clovapatra-game-service
+  labels:
+    app: clovapatra-game
+spec:
+  type: ClusterIP
+  selector:
+    app: clovapatra-game
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+
+---
+# Ingress
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: clovapatra-game-ingress
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80},{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/ssl-certificate-no: "35205"
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    alb.ingress.kubernetes.io/healthcheck-path: "/api/rooms/health-check"
+spec:
+  rules:
+    - host: nks.game.clovapatra.com
+      http:
+        paths:
+          - path: /*
+            pathType: Prefix
+            backend:
+              service:
+                name: clovapatra-game-service
+                port:
+                  number: 8000

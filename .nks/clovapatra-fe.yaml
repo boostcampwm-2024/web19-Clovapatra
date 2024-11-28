@@ -1,0 +1,71 @@
+# Deployment
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clovapatra-fe
+  labels:
+    app: clovapatra-fe
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: clovapatra-fe
+  template:
+    metadata:
+      labels:
+        app: clovapatra-fe
+    spec:
+      containers:
+        - name: clovapatra-fe
+          image: clovapatra-container-registry.kr.ncr.ntruss.com/clovapatra-fe:latest
+          ports:
+            - containerPort: 80
+      nodeSelector:
+        ncloud.com/nks-nodepool: fe-nginx
+      imagePullSecrets:
+        - name: regcred
+
+---
+# Service
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: clovapatra-fe-service
+  labels:
+    app: clovapatra-fe
+spec:
+  type: ClusterIP
+  selector:
+    app: clovapatra-fe
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+
+---
+# Ingress
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: clovapatra-fe-ingress
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80},{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/ssl-certificate-no: "35205"
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    alb.ingress.kubernetes.io/healthcheck-path: "/"
+spec:
+  rules:
+    - host: nks.fe.clovapatra.com
+      http:
+        paths:
+          - path: /*
+            pathType: Prefix
+            backend:
+              service:
+                name: clovapatra-fe-service
+                port:
+                  number: 80
