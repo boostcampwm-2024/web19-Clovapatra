@@ -1,0 +1,89 @@
+# Deployment
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clovapatra-voice
+  labels:
+    app: clovapatra-voice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: clovapatra-voice
+  template:
+    metadata:
+      labels:
+        app: clovapatra-voice
+    spec:
+      containers:
+        - name: clovapatra-voice
+          image: clovapatra-container-registry.kr.ncr.ntruss.com/clovapatra-voice:latest
+          ports:
+            - containerPort: 8002
+          env:
+            - name: PORT
+              value: "8002"
+            - name: CLOVA_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: clova-api-secret
+                  key: CLOVA_API_KEY
+            - name: CLOVA_API_URL
+              value: "https://clovaspeech-gw.ncloud.com/recog/v1/stt"
+            - name: GAME_SERVER_URL
+              value: "wss://nks.game.clovapatra.com/rooms"
+            - name: REDIS_HOST
+              value: "redisc-2vvlm0.vpc-cdb.ntruss.com"
+            - name: REDIS_PORT
+              value: "6379"
+            - name: REDIS_PASSWORD
+              value: ""
+            - name: REDIS_ROOM_KEY_EXPIRE_TIME
+              value: "60000"
+      nodeSelector:
+        ncloud.com/nks-nodepool: voice
+      imagePullSecrets:
+        - name: regcred
+---
+# Service
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: clovapatra-voice-service
+  labels:
+    app: clovapatra-voice
+spec:
+  type: ClusterIP
+  selector:
+    app: clovapatra-voice
+  ports:
+    - protocol: TCP
+      port: 8002
+      targetPort: 8002
+---
+# Ingress
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: clovapatra-voice-ingress
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80},{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/ssl-certificate-no: "35205"
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    alb.ingress.kubernetes.io/healthcheck-path: "/health-check"
+spec:
+  rules:
+    - host: nks.voice-processing.clovapatra.com
+      http:
+        paths:
+          - path: /*
+            pathType: Prefix
+            backend:
+              service:
+                name: clovapatra-voice-service
+                port:
+                  number: 8002
