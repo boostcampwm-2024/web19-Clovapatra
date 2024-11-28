@@ -1,47 +1,53 @@
 import useRoomStore from '@/stores/zustand/useRoomStore';
 import { useEffect } from 'react';
-import { Room } from '@/types/roomTypes';
 import { ENV } from '@/config/env';
 import { getRoomsQuery } from '@/stores/queries/getRoomsQuery';
 
+let eventSource: EventSource | null = null;
+
 export const useRoomsSSE = () => {
-  const { data: initialRooms } = getRoomsQuery();
-  const { setRooms } = useRoomStore();
+  const { setRooms, setPagination, setUserPage } = useRoomStore();
+  const userPage = useRoomStore((state) => state.userPage);
+  const { data } = getRoomsQuery(userPage);
 
-  useEffect(() => {
-    // 초기 데이터 설정
-    if (initialRooms) {
-      setRooms(initialRooms);
-    }
+  const connectSSE = (userPage: number) => {
+    eventSource = new EventSource(`${ENV.SSE_URL}?page=${userPage}`);
 
-    // SSE 연결
-    const eventSource = new EventSource(ENV.SSE_URL);
-
-    // rooms 데이터 수신 처리
     eventSource.onmessage = (event) => {
       try {
-        const rooms = JSON.parse(event.data) as Room[];
-        setRooms(rooms);
+        const sseData = JSON.parse(event.data);
+        setRooms(sseData.rooms);
+        setPagination(sseData.pagination);
+
+        if (!sseData.rooms.length && userPage > 0) {
+          setUserPage(sseData.pagination.currentPage - 1);
+          return;
+        }
+
+        setUserPage(sseData.pagination.currentPage);
       } catch (error) {
         console.error('Failed to parse rooms data:', error);
       }
     };
 
-    // 연결 시작
-    eventSource.onopen = () => {
-      console.log('SSE Connection opened');
-    };
-
-    // 에러 처리
     eventSource.onerror = (error) => {
       console.error('SSE Error:', error);
       eventSource.close();
     };
+  };
 
-    // 컴포넌트 언마운트 시 연결 정리 (메모리 누수 예방)
+  useEffect(() => {
+    if (data) {
+      setRooms(data.rooms);
+      setPagination(data.pagination);
+      connectSSE(userPage);
+    }
+
     return () => {
-      console.log('Closing SSE connection');
-      eventSource.close();
+      if (eventSource) {
+        eventSource.close();
+        eventSource = null;
+      }
     };
-  }, [initialRooms, setRooms]);
+  }, [data?.pagination, data?.rooms, userPage]);
 };
