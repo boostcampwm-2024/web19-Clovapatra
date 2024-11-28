@@ -14,15 +14,16 @@ export const useDialogForm = ({
   inputs,
   onSubmit,
   isSubmitDisabled,
-}: UseDialogFormProps) => {
+  open,
+}: UseDialogFormProps & { open: boolean }) => {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
     // 첫 번째 입력 필드에 포커스
-    if (inputRefs.current[0]) {
+    if (open && inputRefs.current[0]) {
       inputRefs.current[0].focus();
     }
-  }, []);
+  }, [open]);
 
   const handleKeyDown = (
     event: KeyboardEvent<HTMLInputElement>,
