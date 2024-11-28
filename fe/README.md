@@ -111,3 +111,41 @@ npm install react@latest react-dom@latest
   - 메인 페이지에 입장해서 방 생성, 삭제를 하지 않은 사용자에게 실시간으로 페이지네이션 버튼이 뜨도록 하려면 SSE 응답에도 pagination 정보, 적어도 현재 페이지 정보를 같이 받아와서 상태를 변경시켜 줄 수 있어야 한다. 그렇지 않으면 초기에 설정된 0(1페이지)으로만 계속 SSE 요청을 보내게 된다.
   - REST API를 또 요청하면 되지 않나? 싶어서 refetch도 시켜줬지만 무의미한 일이었다. 버튼이 생겨야 현재 페이지 상태를 변경시켜 줄 수 있기 때문이다.
   - 현재 상황에서 새로고침을 하지 않는 한 실시간으로 페이지네이션 버튼을 띄울 수 없는 것 같다는 게 결론이다..! -> 서버에 데이터 구조 맞춰서 내려달라고 요청함
+- 현재 페이지에서 모든 방이 삭제 되었을 때 이전 페이지로 가지 않는 문제
+
+  - currentPage 데이터가 나는 실시간으로 변경되는 건 줄 알았는데 totalPages가 변경되는 거라고 해서 급한대로 조건문으로 처리했다.
+
+    ```typescript
+    if (!sseData.rooms.length && userPage > 0) {
+      setUserPage(sseData.pagination.currentPage - 1);
+      return;
+    }
+
+    setUserPage(sseData.pagination.currentPage);
+    ```
+
+  - 근데 이렇게 하면 rooms 배열을 돌아야 해서 totalPages로 처리하도록 바꿔야 한다. (나중에)
+
+### Socket Error 중복 닉네임 어떻게 체크하지?
+
+- 지금 소켓 이벤트는 전부 상태로 처리해 주고 있다.
+- REST로는 await을 걸고 처리해 주면 됐는데, 이건 어떻게 해야 하지..?
+- gaimSocket joinRoom을 Promise로 감싸고 이벤트 한번만 체크하는 리스너 등록해서 해결..! 이거 때문에 JoinDialog try-catch로 매우 지저분해지긴 했지만..
+
+  ```typescript
+  joinRoom(roomId: string, playerNickname: string) {
+    return new Promise((resolve, reject) => {
+      // error 한번만 체크하는 이벤트 리스너
+      this.socket?.once('error', (error) => {
+        reject(error);
+      });
+
+      // updateUsers가 오면 성공으로 처리
+      this.socket?.once('updateUsers', () => {
+        resolve(true);
+      });
+
+      this.socket?.emit('joinRoom', { roomId, playerNickname });
+    });
+  }
+  ```
