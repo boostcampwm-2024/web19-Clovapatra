@@ -8,6 +8,7 @@ import {
   NotFoundException,
   Query,
   Delete,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { RedisService } from '../../redis/redis.service';
 import { RoomDataDto } from './dto/room-data.dto';
@@ -52,93 +53,50 @@ export class RoomController {
     description: '현재 페이지의 게임 방 목록이 성공적으로 반환됩니다.',
     type: [RoomDataDto],
   })
-  getRoomUpdates(@Query('page') page: number = 0): Observable<MessageEvent> {
+  getRoomUpdates(
+    @Query('page', ParseIntPipe) page: number = 0,
+  ): Observable<MessageEvent> {
     const start = page * RoomsConstant.ROOMS_LIMIT;
     const end = start + RoomsConstant.ROOMS_LIMIT - 1;
 
     return this.roomUpdateSubject.pipe(
       concatMap(async (event: MessageEvent) => {
-        const messageString = event.data as string;
-        const message = JSON.parse(messageString);
-        const { type, key, nextPage, deletedPage } = message;
-        const updatedRoomKey = key ? key.slice(5) : null;
+        const totalRooms = await this.redisService.llen('roomsList');
+        const totalPages = Math.ceil(totalRooms / RoomsConstant.ROOMS_LIMIT);
         const roomList = await this.redisService.lrange(
           'roomsList',
           start,
           end,
         );
-        if (type === 'CREATE') {
-          if (roomList.includes(updatedRoomKey)) {
-            const rooms = await Promise.all(
-              roomList.map(async (roomKey) => {
-                const roomData = await this.redisService.hgetAll<RoomDataDto>(
-                  `room:${roomKey}`,
-                );
-                return roomData;
-              }),
-            );
-            return {
-              data: rooms,
-            } as MessageEvent;
-          } else {
-            return null;
-          }
-        } else if (type === 'DELETE') {
-          if (page != deletedPage) {
-            return null;
-          } else {
-            const rooms = await Promise.all(
-              roomList.map(async (roomKey) => {
-                const roomData = await this.redisService.hgetAll<RoomDataDto>(
-                  `room:${roomKey}`,
-                );
-                return roomData;
-              }),
-            );
 
-            if (rooms.length === RoomsConstant.ROOMS_LIMIT) {
-              const nextPageEvent = {
-                data: JSON.stringify({
-                  type: 'UPDATE',
-                  nextPage: Number(page) + 1,
-                }),
-              };
+        const messageString = event.data as string;
+        const message = JSON.parse(messageString);
+        const { updatePage } = message;
 
-              this.roomUpdateSubject.next(nextPageEvent);
-            }
-            return {
-              data: rooms,
-            } as MessageEvent;
-          }
-        } else if (type === 'UPDATE') {
-          if (page != nextPage) {
-            return null;
-          }
-          const rooms = await Promise.all(
-            roomList.map(async (roomKey) => {
-              const roomData = await this.redisService.hgetAll<RoomDataDto>(
-                `room:${roomKey}`,
-              );
-              return roomData;
-            }),
-          );
-
-          if (rooms.length === RoomsConstant.ROOMS_LIMIT) {
-            const nextPageEvent = {
-              data: JSON.stringify({
-                type: 'UPDATE',
-                nextPage: Number(page) + 1,
-              }),
-            };
-            this.logger.log(
-              `SSE 업데이트 이벤트 현재 page: ${Number(page)} 다음 page: ${Number(page) + 1}`,
-            );
-            this.roomUpdateSubject.next(nextPageEvent);
-          }
-          return {
-            data: rooms,
-          } as MessageEvent;
+        if (updatePage !== undefined && updatePage != page) {
+          return null;
         }
+
+        const rooms = await Promise.all(
+          roomList.map(async (roomKey) => {
+            const roomData = await this.redisService.hgetAll<RoomDataDto>(
+              `room:${roomKey}`,
+            );
+            return roomData;
+          }),
+        );
+        return {
+          data: {
+            rooms: rooms,
+            pagination: {
+              currentPage: Number(page),
+              totalPages,
+              totalItems: totalRooms,
+              hasNextPage: page < totalPages - 1,
+              hasPreviousPage: page > 0,
+            },
+          },
+        } as MessageEvent;
       }),
       filter((event: MessageEvent) => event !== null),
     );
