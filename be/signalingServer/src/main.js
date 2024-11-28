@@ -5,6 +5,7 @@ const config = require("./config/app.config");
 const SocketService = require("./services/socket.service");
 
 const app = express();
+app.get("/health-check", (req, res) => res.status(200).send("Healthy"));
 
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
