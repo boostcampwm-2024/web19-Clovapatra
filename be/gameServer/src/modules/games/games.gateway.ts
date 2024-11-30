@@ -237,13 +237,7 @@ export class GamesGateway implements OnGatewayDisconnect {
           this.server.to(roomId).emit('voiceProcessingResult', {
             result: 'PASS',
             playerNickname,
-            note: averageNote,
-            preNote: numberToNote(gameData.previousPitch),
-            prelayerNickname:
-              gameData.previousPlayers.length === 0
-                ? null
-                : gameData.previousPlayers[gameData.previousPlayers.length - 1],
-            previousPlayerNote: numberToNote(gameData.previousPitch),
+            note: numberToNote(note),
           });
           gameData.previousPitch = note;
         } else {
@@ -253,12 +247,7 @@ export class GamesGateway implements OnGatewayDisconnect {
           this.server.to(roomId).emit('voiceProcessingResult', {
             result: 'FAIL',
             playerNickname,
-            playerNote: averageNote,
-            previousPlayerNickname:
-              gameData.previousPlayers.length === 0
-                ? null
-                : gameData.previousPlayers[gameData.previousPlayers.length - 1],
-            previousPlayerNote: numberToNote(gameData.previousPitch),
+            note: numberToNote(note),
           });
           removePlayerFromGame(gameData, playerNickname);
         }
