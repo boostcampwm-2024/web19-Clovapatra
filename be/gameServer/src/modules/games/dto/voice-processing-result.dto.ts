@@ -14,4 +14,19 @@ export class VoiceProcessingResultDto {
     description: '결과',
   })
   result: string;
+
+  @ApiProperty({
+    example: '3옥도#',
+    type: String,
+    description: '음계',
+    required: false,
+  })
+  note?: string;
+
+  @ApiProperty({
+    example: 99,
+    type: Number,
+    description: '발음 게임 점수',
+  })
+  procounceScore?: number;
 }
