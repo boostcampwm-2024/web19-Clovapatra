@@ -118,10 +118,10 @@ const GamePage = () => {
       </div>
       <div className="flex mt-6">
         <div className="ml-auto">
-          <Button onClick={handleCopyLink} className="font-galmuri mr-4">
+          <Button onClick={handleCopyLink} className="font-galmuri border mr-4">
             ✨링크 복사✨
           </Button>
-          <Button onClick={handleClickExit} className="font-galmuri">
+          <Button onClick={handleClickExit} className="font-galmuri border">
             나가기
           </Button>
         </div>

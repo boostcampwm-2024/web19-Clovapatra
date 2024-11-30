@@ -46,9 +46,9 @@ const VolumeBar = ({ playerNickname }: VolumeBarProps) => {
         className="hover:opacity-80 transition-opacity"
       >
         {volumeLevel > 0 ? (
-          <HiSpeakerWave className="h-4 w-4" />
+          <HiSpeakerWave className="h-5 w-5 text-cyan-700" />
         ) : (
-          <HiSpeakerXMark className="h-4 w-4 text-muted-foreground" />
+          <HiSpeakerXMark className="h-5 w-5 text-muted-foreground" />
         )}
       </button>
       <Slider

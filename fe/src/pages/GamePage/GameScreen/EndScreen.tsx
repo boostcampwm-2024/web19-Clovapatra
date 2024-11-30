@@ -32,7 +32,7 @@ const EndScreen = () => {
   };
 
   return (
-    <div className="relative h-[27rem] bg-muted rounded-lg overflow-hidden">
+    <div className="relative h-[27rem] bg-white rounded-lg overflow-hidden">
       <div className="relative w-full h-full flex items-center justify-center">
         <Lottie
           animationData={podiumAnimation}

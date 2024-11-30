@@ -72,6 +72,10 @@
   }
   body {
     @apply bg-background text-foreground;
+    @apply relative;
+  }
+  body::before {
+    @apply content-[''] absolute inset-0 bg-main-desert bg-cover bg-center opacity-75 -z-10;
   }
 }
 

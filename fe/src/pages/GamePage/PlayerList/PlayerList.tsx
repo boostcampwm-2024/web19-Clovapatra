@@ -17,7 +17,7 @@ const PlayerList = ({ players }: PlayerListProps) => {
       {Array.from({ length: emptySlots }).map((_, index) => (
         <div
           key={`empty-${index}`}
-          className="w-full h-[4.7rem] border border-dashed rounded-lg border-muted-foreground/25"
+          className="w-full h-[4.7rem] bg-white bg-opacity-60 border border-dashed rounded-lg"
         />
       ))}
     </div>

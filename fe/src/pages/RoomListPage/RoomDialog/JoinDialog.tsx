@@ -13,7 +13,6 @@ import { ERROR_CODES, ERROR_MESSAGES } from '@/constants/errors';
 import { useAudioPermission } from '@/hooks/useAudioPermission';
 import { useDialogForm } from '@/hooks/useDialogForm';
 import { useFormValidation } from '@/hooks/useFormValidation';
-import { cn } from '@/lib/utils';
 import { gameSocket } from '@/services/gameSocket';
 import { signalingSocket } from '@/services/signalingSocket';
 import { getCurrentRoomQuery } from '@/stores/queries/getCurrentRoomQuery';
@@ -34,16 +33,17 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
   const { data: currentRoom } = getCurrentRoomQuery(roomId);
   const setCurrentPlayer = useRoomStore((state) => state.setCurrentPlayer);
   const { requestPermission } = useAudioPermission();
-  const { errors, validateForm, updateInput, setErrors } = useFormValidation();
+  const { errors, validateForm, updateInput, setErrors, resetForm } =
+    useFormValidation();
   const isFormValid = !errors.nickname && playerNickname.trim();
 
   useEffect(() => {
     if (!open) {
       setPlayerNickname('');
       setIsLoading(false);
-      setErrors({ nickname: '', roomName: '' });
+      resetForm();
     }
-  }, [open, setErrors]);
+  }, [open]);
 
   const resetAndClose = () => {
     onOpenChange(false);
@@ -142,10 +142,7 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
               value={playerNickname}
               onChange={handleNicknameChange}
               placeholder="닉네임을 입력하세요"
-              className={cn(
-                'col-span-3',
-                errors.nickname && 'border-red-500 focus-visible:ring-red-500'
-              )}
+              className="col-span-3"
               disabled={isLoading}
               ref={(el) => (inputRefs.current[0] = el)}
               onKeyDown={(e) => handleKeyDown(e, 0)}
