@@ -23,7 +23,15 @@ export default {
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
       },
+
       colors: {
+        brand: {
+          main: '#74D7C1',
+          navy: '#02032F',
+          gold: '#FFB400',
+          mint: '#13E7EF',
+        },
+
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         card: {

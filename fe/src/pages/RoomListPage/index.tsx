@@ -31,7 +31,11 @@ const RoomListPage = () => {
         <SearchBar />
         {isEmpty ? (
           <div className="h-[calc(100vh-220px)] flex items-center justify-center font-galmuri text-muted-foreground text-xl">
-            생성된 방이 없습니다.
+            <img
+              src="https://i.imgur.com/sXJUeME.png"
+              alt="생성된 방이 없습니다. 게임방을 만들어 주세요."
+              className="w-[28rem] h-[9rem]"
+            />
           </div>
         ) : (
           <RoomList />

@@ -75,7 +75,7 @@
     @apply relative;
   }
   body::before {
-    @apply content-[''] absolute inset-0 bg-main-desert bg-cover bg-center opacity-85 -z-10;
+    @apply content-[''] absolute inset-0 bg-main-desert bg-cover bg-center opacity-75 -z-10;
   }
 }
 

@@ -43,12 +43,6 @@ const RoomList = () => {
 
       {showPagination && <Pagination />}
 
-      {isEmpty && (
-        <div className="font-galmuri text-center py-8 text-muted-foreground">
-          생성된 방이 없습니다.
-        </div>
-      )}
-
       {selectedRoomId && (
         <JoinDialog
           open={isJoinDialogOpen}
