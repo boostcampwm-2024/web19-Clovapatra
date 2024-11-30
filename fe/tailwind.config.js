@@ -4,11 +4,16 @@ export default {
   content: ['./index.html', './src/**/*.{ts,tsx,js,jsx}'],
   theme: {
     extend: {
+      backgroundImage: {
+        'main-desert': 'url(https://i.imgur.com/RMCkgEF.png)',
+      },
+
       fontFamily: {
         galmuri: ['Galmuri11', 'monospace'],
         galmuri9: ['Galmuri9', 'monospace'],
         galmuri14: ['Galmuri14', 'monospace'],
       },
+
       fontSize: {
         'galmuri-20': ['20px'],
       },
