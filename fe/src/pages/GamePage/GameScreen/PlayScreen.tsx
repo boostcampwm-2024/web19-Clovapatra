@@ -11,24 +11,26 @@ import { gameSocket } from '@/services/gameSocket';
 import EndScreen from './EndScreen';
 import ReadyScreen from './ReadyScreen';
 import PitchVisualizer from '@/components/game/PitchVisualizer';
+import { useParams } from 'react-router-dom';
 
 type GamePhase = 'intro' | 'gameplay' | 'grading' | 'result';
 
 const PlayScreen = () => {
-  const { currentRoom, currentPlayer } = useRoomStore();
+  const { currentPlayer } = useRoomStore();
   const { setGameResult } = useGameStore();
   const turnData = useGameStore((state) => state.turnData);
   const resultData = useGameStore((state) => state.resultData);
   const rank = useGameStore((state) => state.rank);
   const [gamePhase, setGamePhase] = useState<GamePhase>('intro');
   const [timeLeft, setTimeLeft] = useState(0);
+  const { roomId: roomIdParam } = useParams();
 
   const INTRO_TIME = 2000;
   const RESULT_TIME = 3000;
 
   // 턴 데이터 변경 시 게임 초기화
   useEffect(() => {
-    if (!turnData && !resultData) return;
+    if (!turnData) return;
     if (rank.length > 0) return;
 
     setGamePhase('intro');
@@ -39,11 +41,11 @@ const PlayScreen = () => {
       setTimeLeft(turnData.timeLimit); // gameplay 페이즈로 전환될 때 시간 설정
 
       // 현재 플레이어 차례이고 게임 참여 가능한 경우에만 녹음 시작
-      if (currentPlayer === turnData.playerNickname && currentRoom) {
+      if (currentPlayer === turnData.playerNickname) {
         voiceSocket
           .startRecording(
             signalingSocket.getLocalStream(),
-            currentRoom.roomId,
+            roomIdParam,
             currentPlayer
           )
           .catch(console.error);
@@ -51,7 +53,7 @@ const PlayScreen = () => {
     }, INTRO_TIME);
 
     return () => clearTimeout(introTimer);
-  }, [turnData, currentRoom, currentPlayer]);
+  }, [turnData]);
 
   // 타이머 처리
   useEffect(() => {
@@ -75,9 +77,9 @@ const PlayScreen = () => {
 
   // 채점 중 -> 결과 화면 전환
   useEffect(() => {
-    if (resultData && gamePhase === 'grading') {
-      setGamePhase('result');
-    }
+    if (!resultData || gamePhase !== 'grading') return;
+
+    setGamePhase('result');
   }, [resultData, gamePhase]);
 
   // 다음 턴 result -> next 처리를 별도로
@@ -114,7 +116,7 @@ const PlayScreen = () => {
               현재 차례 : {turnData.playerNickname}
             </div>
             <div className="font-galmuri text-2xl">
-              {turnData.gameMode === 'CLEOPATRA' ? '클레오파트라' : '발음 미션'}
+              {turnData.gameMode === 'CLEOPATRA' ? '클레오파트라' : '발음 게임'}
             </div>
           </motion.div>
         )}

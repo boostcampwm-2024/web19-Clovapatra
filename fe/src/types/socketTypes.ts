@@ -34,6 +34,8 @@ export interface TurnData {
 export interface GameResultProps {
   playerNickname: string;
   result: string;
+  note?: string;
+  pronounceScore?: number;
 }
 
 export type MuteStatus = {
