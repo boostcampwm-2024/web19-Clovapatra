@@ -2,9 +2,18 @@ import useGameStore from '@/stores/zustand/useGameStore';
 import { motion } from 'framer-motion';
 
 const GameResult = () => {
-  const resultData = useGameStore((state) => state.resultData);
+  const { resultData, turnData } = useGameStore();
 
   if (!resultData) return null;
+
+  const getResultText = () => {
+    const resultText = resultData.result === 'PASS' ? 'PASS!' : 'FAIL!';
+
+    if (turnData?.gameMode === 'CLEOPATRA') {
+      return `${resultData.note} ${resultText}`;
+    }
+    return `${resultData.pronounceScore}점 ${resultText}`;
+  };
 
   return (
     <motion.div
@@ -15,7 +24,7 @@ const GameResult = () => {
       className="absolute inset-0 flex items-center justify-center"
     >
       <div className="text-center">
-        <div className="font-galmuri text-5xl font-bold mb-3">
+        <div className="font-galmuri text-6xl font-bold mb-3">
           {resultData.playerNickname}
         </div>
         <motion.div
@@ -34,7 +43,7 @@ const GameResult = () => {
             repeatType: 'loop',
           }}
         >
-          {resultData.result === 'PASS' ? 'PASS!' : 'FAIL!'}
+          {getResultText()}
         </motion.div>
       </div>
     </motion.div>

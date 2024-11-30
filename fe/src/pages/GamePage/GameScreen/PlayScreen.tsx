@@ -116,7 +116,7 @@ const PlayScreen = () => {
               현재 차례 : {turnData.playerNickname}
             </div>
             <div className="font-galmuri text-2xl">
-              {turnData.gameMode === 'CLEOPATRA' ? '클레오파트라' : '발음 미션'}
+              {turnData.gameMode === 'CLEOPATRA' ? '클레오파트라' : '발음 게임'}
             </div>
           </motion.div>
         )}
