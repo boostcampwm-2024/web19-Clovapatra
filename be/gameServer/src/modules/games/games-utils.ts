@@ -125,23 +125,29 @@ export function noteToNumber(note: string): number {
 }
 
 export function numberToNote(number: number): string {
-  const notes = [
-    'C',
-    'C#',
-    'D',
-    'D#',
-    'E',
-    'F',
-    'F#',
-    'G',
-    'G#',
-    'A',
-    'A#',
-    'B',
-  ];
+  const koreanNoteNames = {
+    C: '도',
+    'C#': '도#',
+    D: '레',
+    'D#': '레#',
+    E: '미',
+    F: '파',
+    'F#': '파#',
+    G: '솔',
+    'G#': '솔#',
+    A: '라',
+    'A#': '라#',
+    B: '시',
+  };
+
+  const noteNames = Object.keys(koreanNoteNames);
+  const noteBase = number % 12;
   const octave = Math.floor(number / 12) - 1;
-  const noteIndex = Math.round(number) % 12;
-  return `${notes[noteIndex]}${octave}`;
+
+  const noteName = noteNames[noteBase];
+  const koreanNote = koreanNoteNames[noteName];
+
+  return `${octave}옥${koreanNote}`;
 }
 
 export function updatePreviousPlayers(
