@@ -25,7 +25,8 @@ const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
   const [hostNickname, setHostNickname] = useState('');
   const navigate = useNavigate();
   const setCurrentPlayer = useRoomStore((state) => state.setCurrentPlayer);
-  const { errors, validateForm, updateInput, setErrors } = useFormValidation();
+  const { errors, validateForm, updateInput, setErrors, resetForm } =
+    useFormValidation();
   const { requestPermission } = useAudioPermission();
   const isFormValid =
     !errors.nickname &&
@@ -38,7 +39,7 @@ const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
       setRoomName('');
       setHostNickname('');
       setIsLoading(false);
-      setErrors({ nickname: '', roomName: '' });
+      resetForm();
     }
   }, [open, setErrors]);
 
