@@ -39,13 +39,13 @@ const GameRoom = ({ room, onJoinRoom }: GameRoomProps) => {
           </div>
           <div className="flex items-center gap-2">
             <FaCircle
-              className={`text-sm ${isGameStarted(room.status) ? 'text-red-500' : 'text-green-500'}`}
+              className={`text-sm ${isGameStarted(room.status) ? 'text-red-500' : 'text-cyan-500'}`}
             />
             <span>
               상태:{' '}
               <span
                 className={
-                  isGameStarted(room.status) ? 'text-red-500' : 'text-green-500'
+                  isGameStarted(room.status) ? 'text-red-500' : 'text-cyan-500'
                 }
               >
                 {isGameStarted(room.status) ? '게임 중' : '대기 중'}

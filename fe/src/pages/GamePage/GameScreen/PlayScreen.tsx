@@ -100,7 +100,7 @@ const PlayScreen = () => {
   if (!turnData && !rank.length) return;
 
   return (
-    <div className="relative h-[27rem] bg-muted rounded-lg overflow-hidden">
+    <div className="relative h-[27rem] bg-white rounded-lg overflow-hidden">
       <AnimatePresence mode="wait">
         {gamePhase === 'intro' && (
           <motion.div
