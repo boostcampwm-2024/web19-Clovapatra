@@ -37,15 +37,23 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
     useFormValidation();
   const isFormValid = !errors.nickname && playerNickname.trim();
 
-  useEffect(() => {
-    if (!open) {
-      setPlayerNickname('');
-      setIsLoading(false);
-      resetForm();
-    }
-  }, [open]);
+  const resetState = () => {
+    setPlayerNickname('');
+    setIsLoading(false);
+    resetForm();
+  };
 
-  const resetAndClose = () => {
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      resetState();
+      navigate('/');
+    }
+    onOpenChange(isOpen);
+  };
+
+  const handleCancel = () => {
+    resetState();
+    navigate('/');
     onOpenChange(false);
   };
 
@@ -65,43 +73,41 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
     try {
       setIsLoading(true);
 
-      try {
-        // 참가자 닉네임 저장
-        sessionStorage.setItem('user_nickname', playerNickname.trim());
-        setCurrentPlayer(playerNickname.trim());
-        setCurrentRoom(currentRoom);
+      // 참가자 닉네임 저장
+      sessionStorage.setItem('user_nickname', playerNickname.trim());
+      setCurrentPlayer(playerNickname.trim());
+      setCurrentRoom(currentRoom);
 
-        // 게임 소켓 입장 시도
-        gameSocket.connect();
-        await gameSocket.joinRoom(roomId, playerNickname.trim());
+      // 게임 소켓 입장 시도
+      gameSocket.connect();
+      await gameSocket.joinRoom(roomId, playerNickname.trim());
 
-        // 오디오 권한 요청 -> 허용하지 않을 시 입장 불가
-        const stream = await requestPermission();
+      // 오디오 권한 요청
+      const stream = await requestPermission();
 
-        // 스트림 생성 후 방 입장
-        signalingSocket.connect();
-        await signalingSocket.setupLocalStream(stream);
-        await signalingSocket.joinRoom(currentRoom, playerNickname.trim());
+      // 스트림 생성 후 방 입장
+      signalingSocket.connect();
+      await signalingSocket.setupLocalStream(stream);
+      await signalingSocket.joinRoom(currentRoom, playerNickname.trim());
 
-        // 다이얼로그 닫고 페이지 이동
-        onOpenChange(false);
-        navigate(`/game/${roomId}`);
-      } catch (error) {
-        if (error === ERROR_CODES.duplicatedNickname) {
-          setErrors((prev) => ({
-            ...prev,
-            nickname: ERROR_MESSAGES.duplicatedNickname,
-          }));
-        }
-
-        // 소켓 연결 정리
+      // 성공시 게임방으로 이동
+      onOpenChange(false);
+      navigate(`/game/${roomId}`);
+    } catch (error) {
+      if (error === ERROR_CODES.duplicatedNickname) {
+        setErrors((prev) => ({
+          ...prev,
+          nickname: ERROR_MESSAGES.duplicatedNickname,
+        }));
+        // 닉네임 중복 에러의 경우 홈 리다이렉션하지 않음
         gameSocket.disconnect();
         signalingSocket.disconnect();
-      }
-    } catch (error) {
-      console.error('방 입장 실패:', error);
-      if (error === ERROR_CODES.validation) {
-        console.error('[ERROR] 사용자 입력값 ERROR', error);
+      } else {
+        // 다른 에러의 경우 홈으로 리다이렉션
+        console.error('방 입장 실패:', error);
+        gameSocket.disconnect();
+        signalingSocket.disconnect();
+        navigate('/');
       }
     } finally {
       setIsLoading(false);
@@ -123,7 +129,7 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
   });
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="font-galmuri sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="mb-2">방 입장하기</DialogTitle>
@@ -156,7 +162,7 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
           <Button
             type="button"
             variant="outline"
-            onClick={resetAndClose}
+            onClick={handleCancel}
             disabled={isLoading}
           >
             취소
