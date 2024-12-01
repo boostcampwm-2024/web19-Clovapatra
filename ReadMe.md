@@ -64,10 +64,11 @@
 ### 프론트엔드
 
 - **React**: 사용자 인터페이스 개발
-- **WebRTC**: 실시간 통신 및 음성 데이터 전송
 - **Zustand**: 클라이언트 전역 상태 관리
 - **TanStack Query**: 서버 상태 관리
 - **shadcn/ui**: Radix UI + TailwindCSS 컴포넌트 기반 스타일링
+- **WebRTC**: 실시간 통신 및 음성 데이터 전송
+- **Socket.IO**: 실시간 양방향 통신
 
 ### 백엔드
 
