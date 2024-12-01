@@ -160,22 +160,6 @@ export function updatePreviousPlayers(
   gameData.previousPlayers.push(playerNickname);
 }
 
-const PRONOUNCE_SCORE_ORIGINAL_THRESOLHD = 50;
-const PRONOUNCE_SCORE_THRESOLHD = 90;
-const INCREMENT = 2 / 7;
-const DECREMENT = 3;
-
-export function transformScore(originalScore) {
-  let transformed;
-  if (originalScore >= PRONOUNCE_SCORE_ORIGINAL_THRESOLHD) {
-    transformed =
-      PRONOUNCE_SCORE_THRESOLHD +
-      (originalScore - PRONOUNCE_SCORE_ORIGINAL_THRESOLHD) * INCREMENT;
-  } else {
-    transformed =
-      PRONOUNCE_SCORE_THRESOLHD -
-      (PRONOUNCE_SCORE_ORIGINAL_THRESOLHD - originalScore) * DECREMENT;
-  }
-
-  return Math.max(Math.min(Math.round(transformed), 100), 0);
+export function transformScore(originalScore: number) {
+  return Math.max(originalScore + 45, 100);
 }
