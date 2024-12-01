@@ -27,7 +27,7 @@ import {
 import { ErrorMessages } from '../../common/constant';
 
 const VOICE_SERVERS = 'voice-servers';
-const PRONOUNCE_SCORE_THRESOLHD = 50;
+const PRONOUNCE_SCORE_THRESOLHD = 45;
 
 @WebSocketGateway({
   namespace: '/rooms',
