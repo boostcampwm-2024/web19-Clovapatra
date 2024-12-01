@@ -2,8 +2,6 @@ import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 
 export const useBackExit = ({ setShowExitDialog }) => {
-  const location = useLocation();
-  const isInitialRender = useRef(true);
   const popStateListenerRef = useRef<(() => void) | null>(null);
 
   // 컴포넌트 마운트 시 한 번만 실행
