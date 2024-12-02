@@ -12,6 +12,7 @@ import EndScreen from './EndScreen';
 import ReadyScreen from './ReadyScreen';
 import PitchVisualizer from '@/components/game/PitchVisualizer';
 import { useParams } from 'react-router-dom';
+import { usePreventRefresh } from '@/hooks/usePreventRefresh';
 
 type GamePhase = 'intro' | 'gameplay' | 'grading' | 'result';
 
@@ -23,10 +24,13 @@ const PlayScreen = () => {
   const rank = useGameStore((state) => state.rank);
   const [gamePhase, setGamePhase] = useState<GamePhase>('intro');
   const [timeLeft, setTimeLeft] = useState(0);
-  const { roomId: roomIdParam } = useParams();
+  const { roomId } = useParams();
 
   const INTRO_TIME = 2000;
   const RESULT_TIME = 3000;
+
+  // 새로고침 방지
+  usePreventRefresh(Boolean(turnData && rank.length === 0));
 
   // 턴 데이터 변경 시 게임 초기화
   useEffect(() => {
@@ -36,16 +40,16 @@ const PlayScreen = () => {
     setGamePhase('intro');
     setGameResult(null);
 
-    const introTimer = setTimeout(() => {
+    const introTimer = setTimeout(async () => {
       setGamePhase('gameplay');
       setTimeLeft(turnData.timeLimit); // gameplay 페이즈로 전환될 때 시간 설정
 
       // 현재 플레이어 차례이고 게임 참여 가능한 경우에만 녹음 시작
       if (currentPlayer === turnData.playerNickname) {
-        voiceSocket
+        await voiceSocket
           .startRecording(
             signalingSocket.getLocalStream(),
-            roomIdParam,
+            roomId,
             currentPlayer
           )
           .catch(console.error);
@@ -73,7 +77,7 @@ const PlayScreen = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [gamePhase, currentPlayer, turnData]);
+  }, [gamePhase, turnData]);
 
   // 채점 중 -> 결과 화면 전환
   useEffect(() => {
