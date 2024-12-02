@@ -25,10 +25,6 @@ const SAMPLE_DATA = [
     timeLimit: 6,
     lyrics: '중앙청 창살은 쌍창살이고 시청의 창살은 외창살이다.',
   },
-  {
-    timeLimit: 4,
-    lyrics: '페페페페페페페페페페',
-  },
 ];
 
 export function createTurnData(
@@ -38,8 +34,9 @@ export function createTurnData(
   const gameModes = [
     GameMode.PRONUNCIATION,
     GameMode.CLEOPATRA,
-    // GameMode.CLEOPATRA,
-    // GameMode.CLEOPATRA,
+    GameMode.CLEOPATRA,
+    GameMode.CLEOPATRA,
+    GameMode.CLEOPATRA,
   ];
   const gameMode = gameModes[Math.floor(Math.random() * gameModes.length)];
 
@@ -161,5 +158,5 @@ export function updatePreviousPlayers(
 }
 
 export function transformScore(originalScore: number) {
-  return Math.min(originalScore + 45, 100);
+  return Math.min(originalScore + 50, 100);
 }

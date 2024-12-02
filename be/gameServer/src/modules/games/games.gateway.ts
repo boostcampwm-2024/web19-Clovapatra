@@ -27,7 +27,7 @@ import {
 import { ErrorMessages } from '../../common/constant';
 
 const VOICE_SERVERS = 'voice-servers';
-const PRONOUNCE_SCORE_THRESOLHD = 45;
+const PRONOUNCE_SCORE_THRESOLHD = 40;
 
 @WebSocketGateway({
   namespace: '/rooms',
@@ -104,6 +104,7 @@ export class GamesGateway implements OnGatewayDisconnect {
 
       const gameData: GameDataDto = {
         gameId: roomId,
+        players: roomData.players,
         alivePlayers,
         rank: [],
         currentTurn: 1,
@@ -250,6 +251,15 @@ export class GamesGateway implements OnGatewayDisconnect {
             note: numberToNote(note),
           });
           removePlayerFromGame(gameData, playerNickname);
+
+          const player = gameData.players.find(
+            (p) => p.playerNickname === playerNickname,
+          );
+
+          if (player) {
+            player.isDead = true;
+            this.server.to(roomId).emit('updateUsers', gameData.players);
+          }
         }
       } else if (pronounceScore !== undefined) {
         this.logger.log(
@@ -268,6 +278,14 @@ export class GamesGateway implements OnGatewayDisconnect {
             pronounceScore: transformScore(pronounceScore),
           });
           removePlayerFromGame(gameData, playerNickname);
+          const player = gameData.players.find(
+            (p) => p.playerNickname === playerNickname,
+          );
+
+          if (player) {
+            player.isDead = true;
+            this.server.to(roomId).emit('updateUsers', gameData.players);
+          }
         }
       } else {
         this.logger.log('pronounceScore nor averageNote');
@@ -288,7 +306,7 @@ export class GamesGateway implements OnGatewayDisconnect {
       this.logger.error('Error handling voiceResult:', error);
       client.emit('error', ErrorMessages.INTERNAL_ERROR);
 
-      // 오류 일때
+      // 턴데이터에 맞춰서 가상의 점수로 실패
     }
   }
 
@@ -308,6 +326,16 @@ export class GamesGateway implements OnGatewayDisconnect {
       const gameData: GameDataDto = JSON.parse(gameDataString);
 
       removePlayerFromGame(gameData, playerNickname);
+
+      const player = gameData.players.find(
+        (p) => p.playerNickname === playerNickname,
+      );
+
+      if (player) {
+        player.isLeft = true;
+        await this.redisService.set(`game:${roomId}`, JSON.stringify(gameData));
+        this.server.to(roomId).emit('updateUsers', gameData.players);
+      }
 
       if (gameData.alivePlayers.length <= 0) {
         this.logger.log(`${roomId} deleting game`);
