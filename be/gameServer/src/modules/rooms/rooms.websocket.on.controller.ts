@@ -22,7 +22,7 @@ export class RoomsWebSocketOnController {
   @ApiOperation({
     summary: '게임 방 입장',
     description:
-      'wss://clovapatra.com/rooms 에서 "joinRoom" 이벤트를 emit해 사용합니다. 성공적으로 입장하면 입장한 방의 사용자들에게 "updateUsers" 이벤트를 통해 갱신된 사용자 목록을 제공합니다.',
+      'wss://clovapatra.com/rooms 에서 "joinRoom" 이벤트를 emit해 사용합니다. 성공적으로 입장하면 입장한 방의 사용자들에게 "updateUsers" 이벤트를 통해 갱신된 사용자 목록을 제공합니다. 이미 게임중인 경우 들어가지 못하며 GameAlreadyInProgress 에러 메시지를 가진 에러를 전송합니다.',
   })
   @ApiBody({ type: JoinRoomDto })
   joinRoom(@Body() joinRoomDto: JoinRoomDto) {

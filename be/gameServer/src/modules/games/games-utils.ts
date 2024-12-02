@@ -161,5 +161,5 @@ export function updatePreviousPlayers(
 }
 
 export function transformScore(originalScore: number) {
-  return Math.min(originalScore + 45, 100);
+  return Math.min(originalScore + 50, 100);
 }

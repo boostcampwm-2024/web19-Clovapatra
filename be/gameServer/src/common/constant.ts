@@ -9,6 +9,7 @@ export enum ErrorMessages {
   ALL_PLAYERS_MUST_BE_READY = 'AllPlayersMustBeReady',
   NOT_ENOUGH_PLAYERS = 'NotEnoughPlayers',
   VALIDATION_FAILED = 'ValidationFailed',
+  GAME_ALREADY_IN_PROGRESS = 'GameAlreadyInProgress',
 }
 
 export enum RedisKeys {
