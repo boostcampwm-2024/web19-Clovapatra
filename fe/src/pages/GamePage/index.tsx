@@ -17,11 +17,15 @@ import JoinDialog from '../RoomListPage/RoomDialog/JoinDialog';
 const GamePage = () => {
   const [showJoinDialog, setShowJoinDialog] = useState(false);
   const [showExitDialog, setShowExitDialog] = useState(false);
-  const { currentRoom, kickedPlayer, setKickedPlayer } = useRoomStore();
+  const { kickedPlayer, setKickedPlayer } = useRoomStore();
+  const currentRoom = useRoomStore((state) => state.currentRoom);
   const audioManager = useAudioManager();
   const { roomId } = useParams();
   const { data: room } = getCurrentRoomQuery(roomId);
   const nickname = sessionStorage.getItem('user_nickname');
+
+  useReconnect({ currentRoom });
+  useBackExit({ setShowExitDialog });
 
   useEffect(() => {
     if (room && !currentRoom) {
@@ -30,9 +34,6 @@ const GamePage = () => {
       }
     }
   }, [room, currentRoom, nickname]);
-
-  useReconnect({ currentRoom });
-  useBackExit({ setShowExitDialog });
 
   // 오디오 매니저 설정
   useEffect(() => {
@@ -113,6 +114,8 @@ const GamePage = () => {
           players={currentRoom.players.map((player) => ({
             playerNickname: player.playerNickname,
             isReady: player.isReady,
+            isDead: player.isDead,
+            isLeft: player.isLeft,
           }))}
         />
       </div>

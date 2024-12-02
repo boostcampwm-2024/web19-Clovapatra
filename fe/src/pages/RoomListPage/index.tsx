@@ -5,12 +5,14 @@ import { useEffect, useState } from 'react';
 import CustomAlertDialog from '@/components/common/CustomAlertDialog';
 import useRoomStore from '@/stores/zustand/useRoomStore';
 import { useRoomsSSE } from '@/hooks/useRoomsSSE';
+import useGameStore from '@/stores/zustand/useGameStore';
 
 const RoomListPage = () => {
   const [showAlert, setShowAlert] = useState(false);
   const [kickedRoomName, setKickedRoomName] = useState('');
   const { rooms } = useRoomStore();
   const isEmpty = rooms.length === 0;
+  const { setGameInProgressError } = useGameStore();
 
   useRoomsSSE();
 
@@ -23,6 +25,10 @@ const RoomListPage = () => {
       sessionStorage.removeItem('kickedRoomName');
     }
   }, []);
+
+  const handleGameInProgressError = () => {
+    setGameInProgressError(false);
+  };
 
   return (
     <div className="min-h-screen flex flex-col pb-16 relative">

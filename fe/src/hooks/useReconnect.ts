@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAudioPermission } from './useAudioPermission';
 import { useAudioManager } from './useAudioManager';
+import useGameStore from '@/stores/zustand/useGameStore';
 
 export const useReconnect = ({ currentRoom }) => {
   const { roomId } = useParams();
@@ -14,6 +15,7 @@ export const useReconnect = ({ currentRoom }) => {
   const { data: room } = getCurrentRoomQuery(roomId);
   const { requestPermission } = useAudioPermission();
   const audioManager = useAudioManager();
+  const { setGameInProgressError } = useGameStore();
 
   useEffect(() => {
     const handleReconnect = async () => {
@@ -42,19 +44,24 @@ export const useReconnect = ({ currentRoom }) => {
           signalingSocket.setupLocalStream(stream);
 
           // 5. 방 참가
-          gameSocket.joinRoom(roomId, nickname);
-          signalingSocket.joinRoom(room, nickname);
+          await gameSocket.joinRoom(roomId, nickname);
+          await signalingSocket.joinRoom(room, nickname);
         }
       } catch (error) {
         console.error('Reconnection failed:', error);
         // 실패 시 audioManager 제거
         signalingSocket.setAudioManager(null);
+
+        if (error === 'GameAlreadyInProgress') {
+          setGameInProgressError(true);
+
+          window.location.href = '/';
+        }
       }
     };
 
     handleReconnect();
 
-    // cleanup
     return () => {
       signalingSocket.setAudioManager(null);
     };
