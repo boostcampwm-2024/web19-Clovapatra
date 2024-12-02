@@ -13,7 +13,7 @@ export const usePreventRefresh = (isPlaying: boolean) => {
       ) {
         e.preventDefault();
 
-        toast.error('게임 중에는 새로고침할 수 없습니다!', {
+        toast.error('게임 중에는 새로고침 할 수 없습니다!', {
           position: 'top-left',
           autoClose: 1000,
           style: {
