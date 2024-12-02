@@ -15,7 +15,7 @@ const GameScreen = () => {
         setCurrentPlayer(nickname);
       }
     }
-  }, [currentPlayer, setCurrentPlayer]);
+  }, [currentPlayer]);
 
   return turnData ? <PlayScreen /> : <ReadyScreen />;
 };

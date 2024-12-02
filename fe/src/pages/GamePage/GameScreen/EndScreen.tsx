@@ -3,13 +3,29 @@ import podiumAnimation from '@/assets/lottie/podium.json';
 import useGameStore from '@/stores/zustand/useGameStore';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { useParams } from 'react-router-dom';
+import { getCurrentRoomQuery } from '@/stores/queries/getCurrentRoomQuery';
+import useRoomStore from '@/stores/zustand/useRoomStore';
 
 const EndScreen = () => {
   const rank = useGameStore((state) => state.rank);
   const resetGame = useGameStore((state) => state.resetGame);
+  const { roomId } = useParams();
+  const { refetch } = getCurrentRoomQuery(roomId);
+  const { setCurrentRoom } = useRoomStore();
 
-  const handleGameEnd = () => {
-    resetGame();
+  const handleGameEnd = async () => {
+    try {
+      resetGame();
+      // room 정보 다시 가져오기
+      const { data } = await refetch();
+      // 새로운 room 정보로 상태 업데이트
+      if (data) {
+        setCurrentRoom(data);
+      }
+    } catch (error) {
+      console.error('Failed to refresh room data:', error);
+    }
   };
 
   const positions = {
@@ -43,7 +59,7 @@ const EndScreen = () => {
         <div className="absolute inset-0 pointer-events-none">
           {rank.slice(0, 3).map((playerName, index) => (
             <motion.div
-              key={playerName}
+              key={`rank-${index}-${playerName}`}
               className="absolute"
               style={{
                 top: positions[index as keyof typeof positions].top,
@@ -76,7 +92,6 @@ const EndScreen = () => {
           ))}
         </div>
 
-        {/* 최종 순위 리스트 */}
         <motion.div
           className="absolute top-4 right-4 bg-white/90 p-4 rounded-lg shadow-lg"
           initial={{ opacity: 0, y: -20 }}
@@ -97,7 +112,6 @@ const EndScreen = () => {
           </div>
         </motion.div>
 
-        {/* 게임 종료 버튼 */}
         <motion.div
           className="absolute bottom-4 right-4 z-10"
           initial={{ opacity: 0, y: 20 }}

@@ -1,6 +1,8 @@
 export interface PlayerProps {
   playerNickname: string;
   isReady: boolean;
+  isDead: boolean;
+  isLeft: boolean;
 }
 
 export interface Room {

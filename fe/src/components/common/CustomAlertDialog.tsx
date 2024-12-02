@@ -14,6 +14,7 @@ interface CustomAlertDialogProps {
   title: string;
   description?: string;
   actionText?: string;
+  handleClick?: () => void;
 }
 
 const CustomAlertDialog = ({
@@ -22,6 +23,7 @@ const CustomAlertDialog = ({
   title,
   description,
   actionText = '확인',
+  handleClick,
 }: CustomAlertDialogProps) => {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -33,7 +35,10 @@ const CustomAlertDialog = ({
           )}
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogAction className="bg-primary hover:bg-primary/90">
+          <AlertDialogAction
+            className="bg-primary hover:bg-primary/90"
+            onClick={handleClick}
+          >
             {actionText}
           </AlertDialogAction>
         </AlertDialogFooter>
