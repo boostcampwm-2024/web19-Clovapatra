@@ -11,7 +11,6 @@ const RoomList = () => {
   const [isJoinDialogOpen, setIsJoinDialogOpen] = useState(false);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [showPagination, setShowPagination] = useState(false);
-  const isEmpty = rooms.length === 0;
 
   useEffect(() => {
     if (pagination?.totalPages > 1) {

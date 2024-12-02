@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
 
 export const useBackExit = ({ setShowExitDialog }) => {
   const popStateListenerRef = useRef<(() => void) | null>(null);
