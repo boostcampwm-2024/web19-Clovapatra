@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import RoomListPage from './pages/RoomListPage';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import LandingPage from './pages/LandingPage';
 
 const queryClient = new QueryClient();
 
@@ -14,7 +15,8 @@ function App() {
       <div className="app">
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<RoomListPage />} />
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/rooms" element={<RoomListPage />} />
             <Route path="/game/:roomId" element={<GamePage />} />
           </Routes>
         </BrowserRouter>

@@ -12,6 +12,7 @@ export default {
         galmuri: ['Galmuri11', 'monospace'],
         galmuri9: ['Galmuri9', 'monospace'],
         galmuri14: ['Galmuri14', 'monospace'],
+        pretendard: ['Pretendard', 'sans-serif'],
       },
 
       fontSize: {
