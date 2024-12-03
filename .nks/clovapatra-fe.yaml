@@ -21,6 +21,8 @@ spec:
           image: clovapatra-container-registry.kr.ncr.ntruss.com/clovapatra-fe:latest
           ports:
             - containerPort: 80
+          command: ["nginx"]
+          args: ["-g", "daemon off;"]
       nodeSelector:
         ncloud.com/nks-nodepool: fe-nginx
       imagePullSecrets:
@@ -54,7 +56,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80},{"HTTPS":443}]'
-    alb.ingress.kubernetes.io/ssl-certificate-no: "35205"
+    alb.ingress.kubernetes.io/ssl-certificate-no: "35255"
     alb.ingress.kubernetes.io/ssl-redirect: "443"
     alb.ingress.kubernetes.io/healthcheck-path: "/"
 spec:

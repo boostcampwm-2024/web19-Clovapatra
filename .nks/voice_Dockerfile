@@ -1,5 +1,8 @@
 FROM node:21.7.3-alpine
 
+# Install ffmpeg
+RUN apk add --no-cache ffmpeg
+
 WORKDIR /app
 
 # Copy package.json and package-lock.json

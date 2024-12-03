@@ -30,6 +30,8 @@ spec:
               value: "6379"
             - name: REDIS_PASSWORD
               value: ""
+          command: ["node"]
+          args: ["src/main.js"]
       nodeSelector:
         ncloud.com/nks-nodepool: signaling
       imagePullSecrets:
@@ -63,7 +65,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80},{"HTTPS":443}]'
-    alb.ingress.kubernetes.io/ssl-certificate-no: "35205"
+    alb.ingress.kubernetes.io/ssl-certificate-no: "35255"
     alb.ingress.kubernetes.io/ssl-redirect: "443"
     alb.ingress.kubernetes.io/healthcheck-path: "/health-check"
 spec:
