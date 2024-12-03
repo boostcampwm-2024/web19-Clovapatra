@@ -227,28 +227,47 @@ export class GamesGateway implements OnGatewayDisconnect {
       const gameData: GameDataDto = JSON.parse(gameDataString);
 
       if (averageNote !== undefined) {
-        const note = noteToNumber(averageNote);
-        this.logger.log(
-          `Processing averageNote for player ${playerNickname}: ${note}`,
-        );
-        if (gameData.previousPitch < note) {
+        try {
+          const note = noteToNumber(averageNote);
           this.logger.log(
-            `Success: Player ${playerNickname} has a higher note (${note}) than required pitch.`,
+            `Processing averageNote for player ${playerNickname}: ${note}`,
           );
-          this.server.to(roomId).emit('voiceProcessingResult', {
-            result: 'PASS',
-            playerNickname,
-            note: numberToNote(note),
-          });
-          gameData.previousPitch = note;
-        } else {
-          this.logger.log(
-            `Failure: Player ${playerNickname} failed to meet the required pitch.`,
-          );
+          if (gameData.previousPitch < note) {
+            this.logger.log(
+              `Success: Player ${playerNickname} has a higher note (${note}) than required pitch.`,
+            );
+            this.server.to(roomId).emit('voiceProcessingResult', {
+              result: 'PASS',
+              playerNickname,
+              note: numberToNote(note),
+            });
+            gameData.previousPitch = note;
+          } else {
+            this.logger.log(
+              `Failure: Player ${playerNickname} failed to meet the required pitch.`,
+            );
+            this.server.to(roomId).emit('voiceProcessingResult', {
+              result: 'FAIL',
+              playerNickname,
+              note: numberToNote(note),
+            });
+            removePlayerFromGame(gameData, playerNickname);
+
+            const player = gameData.players.find(
+              (p) => p.playerNickname === playerNickname,
+            );
+
+            if (player) {
+              player.isDead = true;
+              this.server.to(roomId).emit('updateUsers', gameData.players);
+            }
+          }
+        } catch (error) {
+          this.logger.error(error);
           this.server.to(roomId).emit('voiceProcessingResult', {
             result: 'FAIL',
             playerNickname,
-            note: numberToNote(note),
+            note: numberToNote(0),
           });
           removePlayerFromGame(gameData, playerNickname);
 
