@@ -209,10 +209,9 @@ export class GamesGateway implements OnGatewayDisconnect {
     @MessageBody() voiceResultFromServerDto: VoiceResultFromServerDto,
     @ConnectedSocket() client: Socket,
   ) {
+    const { roomId, playerNickname, averageNote, pronounceScore } =
+      voiceResultFromServerDto;
     try {
-      const { roomId, playerNickname, averageNote, pronounceScore } =
-        voiceResultFromServerDto;
-
       this.logger.log(
         `Received voice result for roomId: ${roomId}, player: ${playerNickname}, averageNote: ${averageNote}, pronounceScore: ${pronounceScore}`,
       );
@@ -304,9 +303,12 @@ export class GamesGateway implements OnGatewayDisconnect {
       await this.redisService.set(`game:${roomId}`, JSON.stringify(gameData));
     } catch (error) {
       this.logger.error('Error handling voiceResult:', error);
-      client.emit('error', ErrorMessages.INTERNAL_ERROR);
-
-      // 턴데이터에 맞춰서 가상의 점수로 실패
+      this.server.to(roomId).emit('voiceProcessingResult', {
+        result: 'FAIL',
+        playerNickname,
+        pronounceScore: 0,
+        note: '0옥도',
+      });
     }
   }
 
@@ -335,6 +337,22 @@ export class GamesGateway implements OnGatewayDisconnect {
         player.isLeft = true;
         await this.redisService.set(`game:${roomId}`, JSON.stringify(gameData));
         this.server.to(roomId).emit('updateUsers', gameData.players);
+
+        if (playerNickname === gameData.currentPlayer) {
+          this.logger.log(`leaved player === currentPlayer: ${playerNickname}`);
+          setTimeout(() => {
+            this.server.to(roomId).emit('voiceProcessingResult', {
+              result: 'FAIL',
+              playerNickname,
+              pronounceScore: 0,
+              note: '탈주',
+            });
+
+            this.logger.log(
+              `Voice processing result sent for player: ${playerNickname}`,
+            );
+          }, 7000);
+        }
       }
 
       if (gameData.alivePlayers.length <= 0) {
