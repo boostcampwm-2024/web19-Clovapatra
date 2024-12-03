@@ -1,19 +1,89 @@
-name: Push to Naver Cloud Source Commit Repo
+name: Build and Deploy to NCP
 
 on:
   push:
     branches:
       - main
 
+env:
+  REGISTRY: clovapatra-container-registry.kr.ncr.ntruss.com
+  FE_IMAGE: clovapatra-container-registry.kr.ncr.ntruss.com/clovapatra-fe
+  GAME_IMAGE: clovapatra-container-registry.kr.ncr.ntruss.com/clovapatra-game
+  SIGNALING_IMAGE: clovapatra-container-registry.kr.ncr.ntruss.com/clovapatra-signaling
+  VOICE_IMAGE: clovapatra-container-registry.kr.ncr.ntruss.com/clovapatra-voice
+
 jobs:
-  push_to_ncp:
+  build-and-push:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # 전체 히스토리 가져오기
+          fetch-depth: 0
 
+      # Copy Dockerfiles to root directory
+      - name: Copy Dockerfiles to root
+        run: |
+          cp .nks/fe_Dockerfile ./Dockerfile.fe
+          cp .nks/game_Dockerfile ./Dockerfile.game
+          cp .nks/signaling_Dockerfile ./Dockerfile.signaling
+          cp .nks/voice_Dockerfile ./Dockerfile.voice
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to NCP Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.NCP_ACCESS_KEY }}
+          password: ${{ secrets.NCP_SECRET_KEY }}
+
+      # Build and push Frontend
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.fe
+          push: true
+          tags: ${{ env.FE_IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Build and push Game Server
+      - name: Build and push game server image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.game
+          push: true
+          tags: ${{ env.GAME_IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Build and push Signaling Server
+      - name: Build and push signaling server image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.signaling
+          push: true
+          tags: ${{ env.SIGNALING_IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Build and push Voice Processing Server
+      - name: Build and push voice processing server image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.voice
+          push: true
+          tags: ${{ env.VOICE_IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Push to NCP Source Commit
       - name: Set up Git Config
         run: |
           git config --global user.name "GitHub Actions"

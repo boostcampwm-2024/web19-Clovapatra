@@ -41,6 +41,8 @@ spec:
               value: ""
             - name: REDIS_ROOM_KEY_EXPIRE_TIME
               value: "60000"
+          command: ["node"]
+          args: ["src/main.js"]
       nodeSelector:
         ncloud.com/nks-nodepool: voice
       imagePullSecrets:
@@ -72,7 +74,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80},{"HTTPS":443}]'
-    alb.ingress.kubernetes.io/ssl-certificate-no: "35205"
+    alb.ingress.kubernetes.io/ssl-certificate-no: "35255"
     alb.ingress.kubernetes.io/ssl-redirect: "443"
     alb.ingress.kubernetes.io/healthcheck-path: "/health-check"
 spec:
