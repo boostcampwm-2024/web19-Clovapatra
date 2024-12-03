@@ -5,6 +5,10 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      if ($host = "nks-fe.clovapatra.com") {
+        try_files $uri /index.html;
+      }
 spec:
   ingressClassName: nginx
   rules:
