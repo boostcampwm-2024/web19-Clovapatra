@@ -6,7 +6,6 @@ import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAudioPermission } from './useAudioPermission';
 import { useAudioManager } from './useAudioManager';
-import useGameStore from '@/stores/zustand/useGameStore';
 
 export const useReconnect = ({ currentRoom }) => {
   const { roomId } = useParams();
@@ -15,36 +14,35 @@ export const useReconnect = ({ currentRoom }) => {
   const { data: room } = getCurrentRoomQuery(roomId);
   const { requestPermission } = useAudioPermission();
   const audioManager = useAudioManager();
-  const { setGameInProgressError } = useGameStore();
 
   useEffect(() => {
     const handleReconnect = async () => {
       try {
         if (room && !currentRoom) {
-          // 1. 현재 방 설정
+          // 현재 방 설정
           setCurrentRoom(room);
 
-          // 2. 소켓 연결
+          // 게임 소켓 연결
           if (!gameSocket.socket?.connected) {
             gameSocket.connect();
+            await gameSocket.joinRoom(roomId, nickname);
           }
+
+          // 마이크 권한 요청 및 스트림 설정
+          const stream = await requestPermission();
 
           if (!signalingSocket.socket?.connected) {
             console.log('Connecting signalingSocket...');
             signalingSocket.connect();
+            await signalingSocket.setupLocalStream(stream);
           }
 
-          // 3. audioManager 설정 (소켓 연결 후)
+          // audioManager 설정 (소켓 연결 후)
           if (!signalingSocket.hasAudioManager()) {
             signalingSocket.setAudioManager(audioManager);
           }
 
-          // 4. 마이크 권한 요청 및 스트림 설정
-          const stream = await requestPermission();
-          signalingSocket.setupLocalStream(stream);
-
-          // 5. 방 참가
-          await gameSocket.joinRoom(roomId, nickname);
+          // 시그널링 방 참가
           await signalingSocket.joinRoom(room, nickname);
         }
       } catch (error) {
@@ -53,8 +51,7 @@ export const useReconnect = ({ currentRoom }) => {
         signalingSocket.setAudioManager(null);
 
         if (error === 'GameAlreadyInProgress') {
-          setGameInProgressError(true);
-
+          sessionStorage.setItem('gameInProgressError', 'true');
           window.location.href = '/';
         }
       }

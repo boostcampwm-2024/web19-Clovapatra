@@ -2,7 +2,7 @@ import { ERROR_MESSAGES } from '@/constants/errors';
 
 export const validateNickname = (nickname: string): string => {
   const trimmed = nickname.trim();
-  const regex = /^[a-zA-Z0-9가-힣ㄱ-ㅎ ]+$/;
+  const regex = /^[a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣ ]+$/;
   let error = '';
 
   switch (true) {

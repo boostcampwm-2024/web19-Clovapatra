@@ -5,30 +5,34 @@ import { useEffect, useState } from 'react';
 import CustomAlertDialog from '@/components/common/CustomAlertDialog';
 import useRoomStore from '@/stores/zustand/useRoomStore';
 import { useRoomsSSE } from '@/hooks/useRoomsSSE';
-import useGameStore from '@/stores/zustand/useGameStore';
 
 const RoomListPage = () => {
   const [showAlert, setShowAlert] = useState(false);
-  const [kickedRoomName, setKickedRoomName] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
   const { rooms } = useRoomStore();
   const isEmpty = rooms.length === 0;
-  const { setGameInProgressError } = useGameStore();
 
   useRoomsSSE();
 
   useEffect(() => {
     const kickedRoomName = sessionStorage.getItem('kickedRoomName');
 
+    // 강퇴 처리
     if (kickedRoomName) {
-      setKickedRoomName(kickedRoomName);
+      setAlertMessage(`${kickedRoomName}방에서 강퇴되었습니다.`);
       setShowAlert(true);
       sessionStorage.removeItem('kickedRoomName');
     }
-  }, []);
 
-  const handleGameInProgressError = () => {
-    setGameInProgressError(false);
-  };
+    // 게임 중 입장 에러
+    const gameInProgressError = sessionStorage.getItem('gameInProgressError');
+
+    if (gameInProgressError) {
+      setAlertMessage('게임이 진행 중인 방에는 입장할 수 없습니다.');
+      setShowAlert(true);
+      sessionStorage.removeItem('gameInProgressError');
+    }
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col pb-16 relative">
@@ -52,7 +56,7 @@ const RoomListPage = () => {
         open={showAlert}
         onOpenChange={setShowAlert}
         title="알림"
-        description={`${kickedRoomName}방에서 강퇴되었습니다.`}
+        description={alertMessage}
       />
     </div>
   );
