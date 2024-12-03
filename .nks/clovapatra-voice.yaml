@@ -79,7 +79,7 @@ metadata:
     alb.ingress.kubernetes.io/healthcheck-path: "/health-check"
 spec:
   rules:
-    - host: nks.voice-processing.clovapatra.com
+    - host: nks-voice-processing.clovapatra.com
       http:
         paths:
           - path: /*
