@@ -1,27 +1,13 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: host-ingress
+  name: be-ingress
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      if ($host = "nks-fe.clovapatra.com") {
-        try_files $uri /index.html;
-      }
 spec:
   ingressClassName: nginx
   rules:
-    - host: "nks-fe.clovapatra.com"
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: clovapatra-fe-service
-                port:
-                  number: 80
     - host: "nks-game.clovapatra.com"
       http:
         paths:
