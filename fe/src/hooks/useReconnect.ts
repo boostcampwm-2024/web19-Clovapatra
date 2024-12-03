@@ -52,7 +52,7 @@ export const useReconnect = ({ currentRoom }) => {
 
         if (error === 'GameAlreadyInProgress') {
           sessionStorage.setItem('gameInProgressError', 'true');
-          window.location.href = '/';
+          window.location.href = '/rooms';
         }
       }
     };

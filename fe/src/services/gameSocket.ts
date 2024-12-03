@@ -79,7 +79,7 @@ class GameSocket extends SocketService {
 
         setCurrentRoom(null);
         setCurrentPlayer(null);
-        window.location.href = '/';
+        window.location.href = '/rooms';
         return;
       }
 
