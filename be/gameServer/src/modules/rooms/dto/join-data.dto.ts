@@ -13,7 +13,7 @@ export class JoinRoomDto {
   @IsString({ message: 'playerNickname은 문자열이어야 합니다.' })
   @IsNotEmpty({ message: 'playerNickname은 필수 입력 항목입니다.' })
   @Length(2, 8, { message: 'playerNickname은 2자에서 8자 사이여야 합니다.' })
-  @Matches(/^[a-zA-Z0-9가-힣 ]+$/, {
+  @Matches(/^[a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣ ]+$/, {
     message: 'playerNickname은 한글, 알파벳, 숫자, 공백만 허용됩니다.',
   })
   @ApiProperty({

@@ -58,7 +58,13 @@ export class RoomsGateway implements OnGatewayDisconnect {
         roomName,
         hostNickname,
         players: [
-          { playerNickname: hostNickname, isReady: false, isMuted: false },
+          {
+            playerNickname: hostNickname,
+            isReady: false,
+            isMuted: false,
+            isDead: false,
+            isLeft: false,
+          },
         ],
         status: 'waiting',
       };
@@ -124,7 +130,19 @@ export class RoomsGateway implements OnGatewayDisconnect {
         return;
       }
 
-      roomData.players.push({ playerNickname, isReady: false, isMuted: false });
+      if (roomData.status === 'progress') {
+        this.logger.warn(`GAME_ALREADY_IN_PROGRESS`);
+        client.emit('error', ErrorMessages.GAME_ALREADY_IN_PROGRESS);
+        return;
+      }
+
+      roomData.players.push({
+        playerNickname,
+        isReady: false,
+        isMuted: false,
+        isDead: false,
+        isLeft: false,
+      });
 
       const totalRoomIdList = await this.redisService.lrange(
         `${RedisKeys.ROOMS_LIST}`,
@@ -170,9 +188,6 @@ export class RoomsGateway implements OnGatewayDisconnect {
 
       removePlayerFromRoom(roomData, playerNickname);
 
-      // todo
-      // 이 상태에서 다른 사용자가 방에 들어온다면?
-
       if (roomData.hostNickname === playerNickname) {
         const totalRoomIdList = await this.redisService.lrange(
           `${RedisKeys.ROOMS_LIST}`,
@@ -182,6 +197,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
         const index = totalRoomIdList.indexOf(roomId);
         if (roomData.players.length > 0) {
           changeRoomHost(roomData);
+
           await this.redisService.hmset(
             `room:${roomId}`,
             {
@@ -198,7 +214,9 @@ export class RoomsGateway implements OnGatewayDisconnect {
           this.logger.log(
             `host changed to ${roomData.players[0].playerNickname}`,
           );
-          this.server.to(roomId).emit('updateUsers', roomData.players);
+          if (roomData.status === 'waiting') {
+            this.server.to(roomId).emit('updateUsers', roomData.players);
+          }
         } else {
           this.logger.log(`${roomId} deleting room`);
           await this.redisService.lrem(
@@ -237,7 +255,9 @@ export class RoomsGateway implements OnGatewayDisconnect {
             : [Math.floor(index / RoomsConstant.ROOMS_LIMIT)]),
         );
         this.logger.log(`host ${playerNickname} leave room`);
-        this.server.to(roomId).emit('updateUsers', roomData.players);
+        if (roomData.status === 'waiting') {
+          this.server.to(roomId).emit('updateUsers', roomData.players);
+        }
       }
     } catch (error) {
       this.logger.error('Error handling disconnect: ', error.message);

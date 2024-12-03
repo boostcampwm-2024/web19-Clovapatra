@@ -25,10 +25,6 @@ const SAMPLE_DATA = [
     timeLimit: 6,
     lyrics: '중앙청 창살은 쌍창살이고 시청의 창살은 외창살이다.',
   },
-  {
-    timeLimit: 4,
-    lyrics: '페페페페페페페페페페',
-  },
 ];
 
 export function createTurnData(
@@ -38,8 +34,9 @@ export function createTurnData(
   const gameModes = [
     GameMode.PRONUNCIATION,
     GameMode.CLEOPATRA,
-    // GameMode.CLEOPATRA,
-    // GameMode.CLEOPATRA,
+    GameMode.CLEOPATRA,
+    GameMode.CLEOPATRA,
+    GameMode.CLEOPATRA,
   ];
   const gameMode = gameModes[Math.floor(Math.random() * gameModes.length)];
 
@@ -94,11 +91,15 @@ export function removePlayerFromGame(
   gameData: GameDataDto,
   playerNickname: string,
 ): void {
-  gameData.alivePlayers = gameData.alivePlayers.filter(
-    (player: string) => player !== playerNickname,
-  );
+  if (gameData.alivePlayers.includes(playerNickname)) {
+    gameData.alivePlayers = gameData.alivePlayers.filter(
+      (player: string) => player !== playerNickname,
+    );
 
-  gameData.rank.unshift(playerNickname);
+    if (!gameData.rank.includes(playerNickname)) {
+      gameData.rank.unshift(playerNickname);
+    }
+  }
 }
 
 export function noteToNumber(note: string): number {
@@ -125,23 +126,29 @@ export function noteToNumber(note: string): number {
 }
 
 export function numberToNote(number: number): string {
-  const notes = [
-    'C',
-    'C#',
-    'D',
-    'D#',
-    'E',
-    'F',
-    'F#',
-    'G',
-    'G#',
-    'A',
-    'A#',
-    'B',
-  ];
+  const koreanNoteNames = {
+    C: '도',
+    'C#': '도#',
+    D: '레',
+    'D#': '레#',
+    E: '미',
+    F: '파',
+    'F#': '파#',
+    G: '솔',
+    'G#': '솔#',
+    A: '라',
+    'A#': '라#',
+    B: '시',
+  };
+
+  const noteNames = Object.keys(koreanNoteNames);
+  const noteBase = number % 12;
   const octave = Math.floor(number / 12) - 1;
-  const noteIndex = Math.round(number) % 12;
-  return `${notes[noteIndex]}${octave}`;
+
+  const noteName = noteNames[noteBase];
+  const koreanNote = koreanNoteNames[noteName];
+
+  return `${octave}옥${koreanNote}`;
 }
 
 export function updatePreviousPlayers(
@@ -154,22 +161,6 @@ export function updatePreviousPlayers(
   gameData.previousPlayers.push(playerNickname);
 }
 
-const PRONOUNCE_SCORE_ORIGINAL_THRESOLHD = 50;
-const PRONOUNCE_SCORE_THRESOLHD = 90;
-const INCREMENT = 2 / 7;
-const DECREMENT = 3;
-
-export function transformScore(originalScore) {
-  let transformed;
-  if (originalScore >= PRONOUNCE_SCORE_ORIGINAL_THRESOLHD) {
-    transformed =
-      PRONOUNCE_SCORE_THRESOLHD +
-      (originalScore - PRONOUNCE_SCORE_ORIGINAL_THRESOLHD) * INCREMENT;
-  } else {
-    transformed =
-      PRONOUNCE_SCORE_THRESOLHD -
-      (PRONOUNCE_SCORE_ORIGINAL_THRESOLHD - originalScore) * DECREMENT;
-  }
-
-  return Math.max(Math.min(Math.round(transformed), 100), 0);
+export function transformScore(originalScore: number) {
+  return Math.min(originalScore + 50, 100);
 }

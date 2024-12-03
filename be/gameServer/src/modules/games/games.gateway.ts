@@ -27,7 +27,7 @@ import {
 import { ErrorMessages } from '../../common/constant';
 
 const VOICE_SERVERS = 'voice-servers';
-const PRONOUNCE_SCORE_THRESOLHD = 50;
+const PRONOUNCE_SCORE_THRESOLHD = 40;
 
 @WebSocketGateway({
   namespace: '/rooms',
@@ -104,6 +104,7 @@ export class GamesGateway implements OnGatewayDisconnect {
 
       const gameData: GameDataDto = {
         gameId: roomId,
+        players: roomData.players,
         alivePlayers,
         rank: [],
         currentTurn: 1,
@@ -208,23 +209,22 @@ export class GamesGateway implements OnGatewayDisconnect {
     @MessageBody() voiceResultFromServerDto: VoiceResultFromServerDto,
     @ConnectedSocket() client: Socket,
   ) {
+    const { roomId, playerNickname, averageNote, pronounceScore } =
+      voiceResultFromServerDto;
+    this.logger.log(
+      `Received voice result for roomId: ${roomId}, player: ${playerNickname}, averageNote: ${averageNote}, pronounceScore: ${pronounceScore}`,
+    );
+
+    const gameDataString = await this.redisService.get<string>(
+      `game:${roomId}`,
+    );
+    if (!gameDataString) {
+      return client.emit('error', ErrorMessages.GAME_NOT_FOUND);
+    }
+
+    const gameData: GameDataDto = JSON.parse(gameDataString);
+
     try {
-      const { roomId, playerNickname, averageNote, pronounceScore } =
-        voiceResultFromServerDto;
-
-      this.logger.log(
-        `Received voice result for roomId: ${roomId}, player: ${playerNickname}, averageNote: ${averageNote}, pronounceScore: ${pronounceScore}`,
-      );
-
-      const gameDataString = await this.redisService.get<string>(
-        `game:${roomId}`,
-      );
-      if (!gameDataString) {
-        return client.emit('error', ErrorMessages.GAME_NOT_FOUND);
-      }
-
-      const gameData: GameDataDto = JSON.parse(gameDataString);
-
       if (averageNote !== undefined) {
         const note = noteToNumber(averageNote);
         this.logger.log(
@@ -237,13 +237,7 @@ export class GamesGateway implements OnGatewayDisconnect {
           this.server.to(roomId).emit('voiceProcessingResult', {
             result: 'PASS',
             playerNickname,
-            note: averageNote,
-            preNote: numberToNote(gameData.previousPitch),
-            prelayerNickname:
-              gameData.previousPlayers.length === 0
-                ? null
-                : gameData.previousPlayers[gameData.previousPlayers.length - 1],
-            previousPlayerNote: numberToNote(gameData.previousPitch),
+            note: numberToNote(note),
           });
           gameData.previousPitch = note;
         } else {
@@ -253,14 +247,18 @@ export class GamesGateway implements OnGatewayDisconnect {
           this.server.to(roomId).emit('voiceProcessingResult', {
             result: 'FAIL',
             playerNickname,
-            playerNote: averageNote,
-            previousPlayerNickname:
-              gameData.previousPlayers.length === 0
-                ? null
-                : gameData.previousPlayers[gameData.previousPlayers.length - 1],
-            previousPlayerNote: numberToNote(gameData.previousPitch),
+            note: numberToNote(note),
           });
           removePlayerFromGame(gameData, playerNickname);
+
+          const player = gameData.players.find(
+            (p) => p.playerNickname === playerNickname,
+          );
+
+          if (player) {
+            player.isDead = true;
+            this.server.to(roomId).emit('updateUsers', gameData.players);
+          }
         }
       } else if (pronounceScore !== undefined) {
         this.logger.log(
@@ -279,6 +277,14 @@ export class GamesGateway implements OnGatewayDisconnect {
             pronounceScore: transformScore(pronounceScore),
           });
           removePlayerFromGame(gameData, playerNickname);
+          const player = gameData.players.find(
+            (p) => p.playerNickname === playerNickname,
+          );
+
+          if (player) {
+            player.isDead = true;
+            this.server.to(roomId).emit('updateUsers', gameData.players);
+          }
         }
       } else {
         this.logger.log('pronounceScore nor averageNote');
@@ -297,9 +303,36 @@ export class GamesGateway implements OnGatewayDisconnect {
       await this.redisService.set(`game:${roomId}`, JSON.stringify(gameData));
     } catch (error) {
       this.logger.error('Error handling voiceResult:', error);
-      client.emit('error', ErrorMessages.INTERNAL_ERROR);
+      this.server.to(roomId).emit('voiceProcessingResult', {
+        result: 'FAIL',
+        playerNickname,
+        pronounceScore: 0,
+        note: '0옥도',
+      });
 
-      // 오류 일때
+      removePlayerFromGame(gameData, playerNickname);
+
+      const player = gameData.players.find(
+        (p) => p.playerNickname === playerNickname,
+      );
+
+      if (player) {
+        player.isDead = true;
+        this.server.to(roomId).emit('updateUsers', gameData.players);
+      }
+
+      updatePreviousPlayers(gameData, playerNickname);
+      gameData.currentTurn++;
+      this.logger.log(`Turn updated: ${gameData.currentTurn}`);
+      gameData.currentPlayer = selectCurrentPlayer(
+        gameData.alivePlayers,
+        gameData.previousPlayers,
+      );
+
+      this.logger.log(
+        `Saving updated game data to Redis for roomId: ${roomId}`,
+      );
+      await this.redisService.set(`game:${roomId}`, JSON.stringify(gameData));
     }
   }
 
@@ -319,6 +352,43 @@ export class GamesGateway implements OnGatewayDisconnect {
       const gameData: GameDataDto = JSON.parse(gameDataString);
 
       removePlayerFromGame(gameData, playerNickname);
+
+      const player = gameData.players.find(
+        (p) => p.playerNickname === playerNickname,
+      );
+
+      if (player) {
+        player.isLeft = true;
+        await this.redisService.set(`game:${roomId}`, JSON.stringify(gameData));
+        this.server.to(roomId).emit('updateUsers', gameData.players);
+
+        if (playerNickname === gameData.currentPlayer) {
+          updatePreviousPlayers(gameData, playerNickname);
+          gameData.currentTurn++;
+          this.logger.log(`Turn updated: ${gameData.currentTurn}`);
+          gameData.currentPlayer = selectCurrentPlayer(
+            gameData.alivePlayers,
+            gameData.previousPlayers,
+          );
+          await this.redisService.set(
+            `game:${roomId}`,
+            JSON.stringify(gameData),
+          );
+          this.logger.log(`leaved player === currentPlayer: ${playerNickname}`);
+          setTimeout(() => {
+            this.server.to(roomId).emit('voiceProcessingResult', {
+              result: 'FAIL',
+              playerNickname,
+              pronounceScore: 0,
+              note: '탈주',
+            });
+
+            this.logger.log(
+              `Voice processing result sent for player: ${playerNickname}`,
+            );
+          }, 7000);
+        }
+      }
 
       if (gameData.alivePlayers.length <= 0) {
         this.logger.log(`${roomId} deleting game`);

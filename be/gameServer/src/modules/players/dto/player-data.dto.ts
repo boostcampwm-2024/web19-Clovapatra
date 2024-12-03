@@ -18,4 +18,16 @@ export class PlayerDataDto {
     description: '플레이어의 음소거 상태 (true: 음소거, false: 정상)',
   })
   isMuted: boolean;
+
+  @ApiProperty({
+    example: true,
+    description: '플레이어의 게임 진행 상태 (true: 탈락, false: 생존)',
+  })
+  isDead: boolean;
+
+  @ApiProperty({
+    example: true,
+    description: '플레이어의 탈주 상태 (true: 탈주)',
+  })
+  isLeft: boolean;
 }
