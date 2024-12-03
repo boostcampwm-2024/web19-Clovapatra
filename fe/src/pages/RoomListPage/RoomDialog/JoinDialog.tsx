@@ -18,7 +18,7 @@ import { signalingSocket } from '@/services/signalingSocket';
 import { getCurrentRoomQuery } from '@/stores/queries/getCurrentRoomQuery';
 import useRoomStore from '@/stores/zustand/useRoomStore';
 import { RoomDialogProps } from '@/types/roomTypes';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface JoinDialogProps extends RoomDialogProps {
