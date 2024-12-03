@@ -26,7 +26,7 @@ const ExitDialog = ({ open, onOpenChange }: RoomDialogProps) => {
 
     setCurrentRoom(null);
     resetGame();
-    navigate('/');
+    navigate('/rooms');
   };
 
   return (

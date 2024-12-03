@@ -46,14 +46,14 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
       resetState();
-      navigate('/');
+      navigate('/rooms');
     }
     onOpenChange(isOpen);
   };
 
   const handleCancel = () => {
     resetState();
-    navigate('/');
+    navigate('/rooms');
     onOpenChange(false);
   };
 
@@ -103,11 +103,11 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
         gameSocket.disconnect();
         signalingSocket.disconnect();
       } else {
-        // 다른 에러의 경우 홈으로 리다이렉션
+        // 다른 에러의 경우 방 목록 페이지로 리다이렉션
         console.error('방 입장 실패:', error);
         gameSocket.disconnect();
         signalingSocket.disconnect();
-        navigate('/');
+        navigate('/rooms');
       }
     } finally {
       setIsLoading(false);
