@@ -209,10 +209,9 @@ export class GamesGateway implements OnGatewayDisconnect {
     @MessageBody() voiceResultFromServerDto: VoiceResultFromServerDto,
     @ConnectedSocket() client: Socket,
   ) {
+    const { roomId, playerNickname, averageNote, pronounceScore } =
+      voiceResultFromServerDto;
     try {
-      const { roomId, playerNickname, averageNote, pronounceScore } =
-        voiceResultFromServerDto;
-
       this.logger.log(
         `Received voice result for roomId: ${roomId}, player: ${playerNickname}, averageNote: ${averageNote}, pronounceScore: ${pronounceScore}`,
       );
@@ -227,47 +226,28 @@ export class GamesGateway implements OnGatewayDisconnect {
       const gameData: GameDataDto = JSON.parse(gameDataString);
 
       if (averageNote !== undefined) {
-        try {
-          const note = noteToNumber(averageNote);
+        const note = noteToNumber(averageNote);
+        this.logger.log(
+          `Processing averageNote for player ${playerNickname}: ${note}`,
+        );
+        if (gameData.previousPitch < note) {
           this.logger.log(
-            `Processing averageNote for player ${playerNickname}: ${note}`,
+            `Success: Player ${playerNickname} has a higher note (${note}) than required pitch.`,
           );
-          if (gameData.previousPitch < note) {
-            this.logger.log(
-              `Success: Player ${playerNickname} has a higher note (${note}) than required pitch.`,
-            );
-            this.server.to(roomId).emit('voiceProcessingResult', {
-              result: 'PASS',
-              playerNickname,
-              note: numberToNote(note),
-            });
-            gameData.previousPitch = note;
-          } else {
-            this.logger.log(
-              `Failure: Player ${playerNickname} failed to meet the required pitch.`,
-            );
-            this.server.to(roomId).emit('voiceProcessingResult', {
-              result: 'FAIL',
-              playerNickname,
-              note: numberToNote(note),
-            });
-            removePlayerFromGame(gameData, playerNickname);
-
-            const player = gameData.players.find(
-              (p) => p.playerNickname === playerNickname,
-            );
-
-            if (player) {
-              player.isDead = true;
-              this.server.to(roomId).emit('updateUsers', gameData.players);
-            }
-          }
-        } catch (error) {
-          this.logger.error(error);
+          this.server.to(roomId).emit('voiceProcessingResult', {
+            result: 'PASS',
+            playerNickname,
+            note: numberToNote(note),
+          });
+          gameData.previousPitch = note;
+        } else {
+          this.logger.log(
+            `Failure: Player ${playerNickname} failed to meet the required pitch.`,
+          );
           this.server.to(roomId).emit('voiceProcessingResult', {
             result: 'FAIL',
             playerNickname,
-            note: numberToNote(0),
+            note: numberToNote(note),
           });
           removePlayerFromGame(gameData, playerNickname);
 
@@ -323,9 +303,12 @@ export class GamesGateway implements OnGatewayDisconnect {
       await this.redisService.set(`game:${roomId}`, JSON.stringify(gameData));
     } catch (error) {
       this.logger.error('Error handling voiceResult:', error);
-      client.emit('error', ErrorMessages.INTERNAL_ERROR);
-
-      // 턴데이터에 맞춰서 가상의 점수로 실패
+      this.server.to(roomId).emit('voiceProcessingResult', {
+        result: 'FAIL',
+        playerNickname,
+        pronounceScore: 0,
+        note: '0옥도',
+      });
     }
   }
 
