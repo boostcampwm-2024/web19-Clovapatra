@@ -91,11 +91,15 @@ export function removePlayerFromGame(
   gameData: GameDataDto,
   playerNickname: string,
 ): void {
-  gameData.alivePlayers = gameData.alivePlayers.filter(
-    (player: string) => player !== playerNickname,
-  );
+  if (gameData.alivePlayers.includes(playerNickname)) {
+    gameData.alivePlayers = gameData.alivePlayers.filter(
+      (player: string) => player !== playerNickname,
+    );
 
-  gameData.rank.unshift(playerNickname);
+    if (!gameData.rank.includes(playerNickname)) {
+      gameData.rank.unshift(playerNickname);
+    }
+  }
 }
 
 export function noteToNumber(note: string): number {
