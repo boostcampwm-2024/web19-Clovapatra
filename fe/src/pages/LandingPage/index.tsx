@@ -27,9 +27,7 @@ export default function LandingPage() {
           <Button
             size="lg"
             className="bg-[#00b894] hover:bg-[#00a884] font-pretendard font-bold text-white text-lg px-8 py-6 rounded-full shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
-            onClick={() =>
-              (window.location.href = 'https://clovapatra.com/rooms')
-            }
+            onClick={() => (window.location.href = '/rooms')}
           >
             지금 바로 게임하기
           </Button>
@@ -201,9 +199,7 @@ export default function LandingPage() {
           <Button
             size="lg"
             className="bg-white font-pretendard font-bold text-[#00b894] hover:bg-gray-100 text-lg px-8 py-6 rounded-full shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
-            onClick={() =>
-              (window.location.href = 'https://clovapatra.com/rooms')
-            }
+            onClick={() => (window.location.href = '/rooms')}
           >
             게임 시작하기
           </Button>
