@@ -363,6 +363,17 @@ export class GamesGateway implements OnGatewayDisconnect {
         this.server.to(roomId).emit('updateUsers', gameData.players);
 
         if (playerNickname === gameData.currentPlayer) {
+          updatePreviousPlayers(gameData, playerNickname);
+          gameData.currentTurn++;
+          this.logger.log(`Turn updated: ${gameData.currentTurn}`);
+          gameData.currentPlayer = selectCurrentPlayer(
+            gameData.alivePlayers,
+            gameData.previousPlayers,
+          );
+          await this.redisService.set(
+            `game:${roomId}`,
+            JSON.stringify(gameData),
+          );
           this.logger.log(`leaved player === currentPlayer: ${playerNickname}`);
           setTimeout(() => {
             this.server.to(roomId).emit('voiceProcessingResult', {
