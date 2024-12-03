@@ -64,7 +64,7 @@ const Player = ({ playerNickname, isReady, isDead, isLeft }: PlayerProps) => {
           <span className="font-galmuri">{playerNickname}</span>
         </div>
 
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 ml-1 mr-1">
           {isLeft ? (
             <img
               className="w-16 h-10 md:w-20 md:h-12 lg:w-[6.875rem] lg:h-[3.625rem]"
