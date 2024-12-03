@@ -24,6 +24,10 @@ jobs:
       # Copy Dockerfiles to root directory
       - name: Copy Dockerfiles to root
         run: |
+          echo "${{ secrets.FE_ENV }}" > .fe/.env
+          echo "${{ secrets.ENV_GAME }}" > ./be/gameServer/.env
+          echo "${{ secrets.ENV_SIGNALING }}" > ./be/signalingServer/.env
+          echo "${{ secrets.ENV_VOICE }}" > ./be/voiceProcessingServer/.env
           cp .nks/fe_Dockerfile ./Dockerfile.fe
           cp .nks/game_Dockerfile ./Dockerfile.game
           cp .nks/signaling_Dockerfile ./Dockerfile.signaling
