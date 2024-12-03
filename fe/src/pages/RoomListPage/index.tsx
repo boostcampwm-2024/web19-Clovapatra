@@ -35,7 +35,7 @@ const RoomListPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col pb-16 relative">
+    <div className="game-wrapper">
       <div className="flex-1">
         <RoomHeader />
         <SearchBar />
