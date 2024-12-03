@@ -32,7 +32,7 @@ spec:
             - name: CLOVA_API_URL
               value: "https://clovaspeech-gw.ncloud.com/recog/v1/stt"
             - name: GAME_SERVER_URL
-              value: "wss://nks.game.clovapatra.com/rooms"
+              value: "wss://nks-game.clovapatra.com/rooms"
             - name: REDIS_HOST
               value: "redisc-2vvlm0.vpc-cdb.ntruss.com"
             - name: REDIS_PORT
