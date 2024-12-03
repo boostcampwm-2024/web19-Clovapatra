@@ -61,7 +61,7 @@ metadata:
     alb.ingress.kubernetes.io/healthcheck-path: "/"
 spec:
   rules:
-    - host: nks.fe.clovapatra.com
+    - host: nks-fe.clovapatra.com
       http:
         paths:
           - path: /*
