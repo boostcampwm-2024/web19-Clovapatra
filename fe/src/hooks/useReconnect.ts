@@ -53,8 +53,7 @@ export const useReconnect = ({ currentRoom }) => {
         signalingSocket.setAudioManager(null);
 
         if (error === 'GameAlreadyInProgress') {
-          setGameInProgressError(true);
-
+          sessionStorage.setItem('gameInProgressError', 'true');
           window.location.href = '/';
         }
       }
