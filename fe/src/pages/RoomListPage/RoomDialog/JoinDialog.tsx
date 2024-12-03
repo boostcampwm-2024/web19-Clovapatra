@@ -9,8 +9,10 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ERROR_CODES, ERROR_MESSAGES } from '@/constants/errors';
 import { useAudioPermission } from '@/hooks/useAudioPermission';
 import { useDialogForm } from '@/hooks/useDialogForm';
+import { useFormValidation } from '@/hooks/useFormValidation';
 import { gameSocket } from '@/services/gameSocket';
 import { signalingSocket } from '@/services/signalingSocket';
 import { getCurrentRoomQuery } from '@/stores/queries/getCurrentRoomQuery';
@@ -31,39 +33,82 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
   const { data: currentRoom } = getCurrentRoomQuery(roomId);
   const setCurrentPlayer = useRoomStore((state) => state.setCurrentPlayer);
   const { requestPermission } = useAudioPermission();
+  const { errors, validateForm, updateInput, setErrors, resetForm } =
+    useFormValidation();
+  const isFormValid = !errors.nickname && playerNickname.trim();
 
-  const resetAndClose = () => {
+  const resetState = () => {
     setPlayerNickname('');
     setIsLoading(false);
+    resetForm();
+  };
+
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      resetState();
+      navigate('/rooms');
+    }
+    onOpenChange(isOpen);
+  };
+
+  const handleCancel = () => {
+    resetState();
+    navigate('/rooms');
     onOpenChange(false);
   };
 
+  const handleNicknameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setPlayerNickname(value);
+    updateInput('nickname', value);
+
+    if (errors.nickname) {
+      setErrors((prev) => ({ ...prev, nickname: '' }));
+    }
+  };
+
   const handleJoin = async () => {
-    if (!playerNickname.trim()) return;
+    if (!validateForm(playerNickname)) return;
 
     try {
       setIsLoading(true);
 
-      // 오디오 권한 요청 -> 허용하지 않을 시 입장 불가
-      const stream = await requestPermission();
-
       // 참가자 닉네임 저장
       sessionStorage.setItem('user_nickname', playerNickname.trim());
-      setCurrentRoom(currentRoom);
       setCurrentPlayer(playerNickname.trim());
+      setCurrentRoom(currentRoom);
 
+      // 게임 소켓 입장 시도
       gameSocket.connect();
-      signalingSocket.connect();
+      await gameSocket.joinRoom(roomId, playerNickname.trim());
+
+      // 오디오 권한 요청
+      const stream = await requestPermission();
 
       // 스트림 생성 후 방 입장
+      signalingSocket.connect();
       await signalingSocket.setupLocalStream(stream);
       await signalingSocket.joinRoom(currentRoom, playerNickname.trim());
-      gameSocket.joinRoom(roomId, playerNickname.trim());
 
-      resetAndClose();
+      // 성공시 게임방으로 이동
+      onOpenChange(false);
       navigate(`/game/${roomId}`);
     } catch (error) {
-      console.error('방 입장 실패:', error);
+      if (error === ERROR_CODES.duplicatedNickname) {
+        setErrors((prev) => ({
+          ...prev,
+          nickname: ERROR_MESSAGES.duplicatedNickname,
+        }));
+        // 닉네임 중복 에러의 경우 홈 리다이렉션하지 않음
+        gameSocket.disconnect();
+        signalingSocket.disconnect();
+      } else {
+        // 다른 에러의 경우 방 목록 페이지로 리다이렉션
+        console.error('방 입장 실패:', error);
+        gameSocket.disconnect();
+        signalingSocket.disconnect();
+        navigate('/rooms');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -80,10 +125,11 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
     ],
     onSubmit: handleJoin,
     isSubmitDisabled: !playerNickname.trim() || isLoading,
+    open,
   });
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="font-galmuri sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="mb-2">방 입장하기</DialogTitle>
@@ -100,20 +146,23 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
             <Input
               id="playerNickname"
               value={playerNickname}
-              onChange={(e) => setPlayerNickname(e.target.value)}
+              onChange={handleNicknameChange}
               placeholder="닉네임을 입력하세요"
               className="col-span-3"
               disabled={isLoading}
               ref={(el) => (inputRefs.current[0] = el)}
               onKeyDown={(e) => handleKeyDown(e, 0)}
             />
+            {errors.nickname && (
+              <p className="text-sm text-red-500">{errors.nickname}</p>
+            )}
           </div>
         </div>
         <DialogFooter className="gap-2 mt-2">
           <Button
             type="button"
             variant="outline"
-            onClick={resetAndClose}
+            onClick={handleCancel}
             disabled={isLoading}
           >
             취소
@@ -121,7 +170,7 @@ const JoinDialog = ({ open, onOpenChange, roomId }: JoinDialogProps) => {
           <Button
             type="button"
             onClick={handleJoin}
-            disabled={!playerNickname.trim() || isLoading}
+            disabled={!isFormValid || isLoading}
           >
             입장하기
           </Button>

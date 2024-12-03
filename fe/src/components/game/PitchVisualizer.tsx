@@ -3,7 +3,6 @@ import useGameStore from '@/stores/zustand/useGameStore';
 import useRoomStore from '@/stores/zustand/useRoomStore';
 import usePitchStore from '@/stores/zustand/usePitchStore';
 import { signalingSocket } from '@/services/signalingSocket';
-import angryPepe from '@/assets/images/angry-pepe.png';
 import { PITCH_CONSTANTS } from '@/constants/pitch';
 import { usePitchDetection } from '@/hooks/usePitchDetection';
 
@@ -102,7 +101,7 @@ const PitchVisualizer = ({ isGameplayPhase }: PitchVisualizerProps) => {
           }}
         >
           <img
-            src={angryPepe}
+            src="https://i.imgur.com/q6TZIlM.png"
             alt="Angry Pepe"
             style={{
               width: '100%',

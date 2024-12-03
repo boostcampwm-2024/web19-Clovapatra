@@ -79,7 +79,7 @@ class GameSocket extends SocketService {
 
         setCurrentRoom(null);
         setCurrentPlayer(null);
-        window.location.href = '/';
+        window.location.href = '/rooms';
         return;
       }
 
@@ -112,7 +112,19 @@ class GameSocket extends SocketService {
   }
 
   joinRoom(roomId: string, playerNickname: string) {
-    this.socket?.emit('joinRoom', { roomId, playerNickname });
+    return new Promise((resolve, reject) => {
+      // error 한번만 체크하는 이벤트 리스너
+      this.socket?.once('error', (error) => {
+        reject(error);
+      });
+
+      // updateUsers가 오면 성공으로 처리
+      this.socket?.once('updateUsers', () => {
+        resolve(true);
+      });
+
+      this.socket?.emit('joinRoom', { roomId, playerNickname });
+    });
   }
 
   kickPlayer(playerNickname: string) {

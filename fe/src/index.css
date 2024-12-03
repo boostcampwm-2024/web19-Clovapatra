@@ -12,6 +12,7 @@
     font-weight: normal;
     font-style: normal;
   }
+
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
@@ -71,7 +72,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground relative;
   }
 }
 
@@ -93,7 +94,6 @@ html,
 body,
 #root {
   height: 100%;
-  overflow: hidden;
 }
 
 body {
@@ -102,4 +102,12 @@ body {
 
 .app {
   @apply flex flex-col mx-auto justify-center max-w-[1074px] lg:px-0 p-8;
+}
+
+.game-wrapper {
+  @apply relative w-full min-h-screen;
+}
+
+.game-wrapper::before {
+  @apply content-[''] fixed inset-0 w-full h-full bg-main-desert bg-cover bg-center opacity-75 -z-10;
 }

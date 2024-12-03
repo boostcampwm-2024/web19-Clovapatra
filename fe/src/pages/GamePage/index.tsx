@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import ExitDialog from './GameDialog/ExitDialog';
 import { useReconnect } from '@/hooks/useReconnect';
 import { useBackExit } from '@/hooks/useBackExit';
-import { NotFound } from '@/components/common/NotFound';
+import { NotFound } from '@/pages/NotFoundPage';
 import GameScreen from './GameScreen/GameScreen';
 import { useAudioManager } from '@/hooks/useAudioManager';
 import { signalingSocket } from '@/services/signalingSocket';
@@ -17,11 +17,15 @@ import JoinDialog from '../RoomListPage/RoomDialog/JoinDialog';
 const GamePage = () => {
   const [showJoinDialog, setShowJoinDialog] = useState(false);
   const [showExitDialog, setShowExitDialog] = useState(false);
-  const { currentRoom, kickedPlayer, setKickedPlayer } = useRoomStore();
+  const { kickedPlayer, setKickedPlayer } = useRoomStore();
+  const currentRoom = useRoomStore((state) => state.currentRoom);
   const audioManager = useAudioManager();
   const { roomId } = useParams();
   const { data: room } = getCurrentRoomQuery(roomId);
   const nickname = sessionStorage.getItem('user_nickname');
+
+  useReconnect({ currentRoom });
+  useBackExit({ setShowExitDialog });
 
   useEffect(() => {
     if (room && !currentRoom) {
@@ -30,9 +34,6 @@ const GamePage = () => {
       }
     }
   }, [room, currentRoom, nickname]);
-
-  useReconnect({ currentRoom });
-  useBackExit({ setShowExitDialog });
 
   // 오디오 매니저 설정
   useEffect(() => {
@@ -106,27 +107,34 @@ const GamePage = () => {
   }
 
   return (
-    <div className="h-screen relative p-4">
-      <div className="space-y-6">
-        <GameScreen />
-        <PlayerList
-          players={currentRoom.players.map((player) => ({
-            playerNickname: player.playerNickname,
-            isReady: player.isReady,
-          }))}
-        />
-      </div>
-      <div className="flex mt-6">
-        <div className="ml-auto">
-          <Button onClick={handleCopyLink} className="font-galmuri mr-4">
-            ✨링크 복사✨
-          </Button>
-          <Button onClick={handleClickExit} className="font-galmuri">
-            나가기
-          </Button>
+    <div className="game-wrapper">
+      <div className="h-screen relative p-4">
+        <div className="space-y-6">
+          <GameScreen />
+          <PlayerList
+            players={currentRoom.players.map((player) => ({
+              playerNickname: player.playerNickname,
+              isReady: player.isReady,
+              isDead: player.isDead,
+              isLeft: player.isLeft,
+            }))}
+          />
         </div>
+        <div className="flex mt-6">
+          <div className="ml-auto">
+            <Button
+              onClick={handleCopyLink}
+              className="font-galmuri border mr-4"
+            >
+              ✨링크 복사✨
+            </Button>
+            <Button onClick={handleClickExit} className="font-galmuri border">
+              나가기
+            </Button>
+          </div>
+        </div>
+        <ExitDialog open={showExitDialog} onOpenChange={setShowExitDialog} />
       </div>
-      <ExitDialog open={showExitDialog} onOpenChange={setShowExitDialog} />
     </div>
   );
 };

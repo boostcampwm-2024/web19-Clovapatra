@@ -1,6 +1,8 @@
 export interface PlayerProps {
   playerNickname: string;
   isReady: boolean;
+  isDead: boolean;
+  isLeft: boolean;
 }
 
 export interface Room {
@@ -14,4 +16,17 @@ export interface Room {
 export interface RoomDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+}
+
+export interface PaginationData {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  rooms: T[];
+  pagination: PaginationData;
 }

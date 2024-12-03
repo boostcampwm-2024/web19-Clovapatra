@@ -7,7 +7,7 @@ interface GameStore {
   resultData: GameResultProps;
   muteStatus: MuteStatus;
   rank: string[];
-  isGameStarted: boolean;
+  gameInProgressError: boolean;
 }
 
 interface GameActions {
@@ -15,7 +15,7 @@ interface GameActions {
   setGameResult: (resultData: GameResultProps) => void;
   setMuteStatus: (muteStatus: MuteStatus) => void;
   setRank: (rank: string[]) => void;
-  setIsGameStarted: (isGameStarted: boolean) => void;
+  setGameInProgressError: (value: boolean) => void;
   resetGame: () => void;
 }
 
@@ -23,8 +23,8 @@ const initialState: GameStore = {
   turnData: null,
   resultData: null,
   muteStatus: {},
-  isGameStarted: false,
   rank: [],
+  gameInProgressError: false,
 };
 
 const useGameStore = create<GameStore & GameActions>()(
@@ -41,12 +41,10 @@ const useGameStore = create<GameStore & GameActions>()(
         resultData,
       })),
 
-    setIsGameStarted: (isGameStarted) =>
-      set(() => ({
-        isGameStarted,
-      })),
-
     setRank: (rank) => set(() => ({ rank })),
+
+    setGameInProgressError: (gameInProgressError) =>
+      set({ gameInProgressError }),
 
     resetGame: () =>
       set({

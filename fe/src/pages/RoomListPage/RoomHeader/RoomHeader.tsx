@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
-import RoomDialog from '../RoomDialog/CreateDialog';
+import CreateDialog from '../RoomDialog/CreateDialog';
 
 const RoomHeader = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -12,13 +12,13 @@ const RoomHeader = () => {
   return (
     <>
       <div className="flex justify-between items-center">
-        <span className="font-galmuri text-2xl">방 목록</span>
-        <Button className="font-galmuri" onClick={handleDialogOpen}>
+        <span className="font-galmuri text-3xl">방 목록</span>
+        <Button className="font-galmuri border" onClick={handleDialogOpen}>
           방 만들기
         </Button>
       </div>
 
-      <RoomDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
+      <CreateDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
     </>
   );
 };

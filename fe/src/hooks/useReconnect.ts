@@ -19,42 +19,46 @@ export const useReconnect = ({ currentRoom }) => {
     const handleReconnect = async () => {
       try {
         if (room && !currentRoom) {
-          // 1. 현재 방 설정
+          // 현재 방 설정
           setCurrentRoom(room);
 
-          // 2. 소켓 연결
+          // 게임 소켓 연결
           if (!gameSocket.socket?.connected) {
             gameSocket.connect();
+            await gameSocket.joinRoom(roomId, nickname);
           }
+
+          // 마이크 권한 요청 및 스트림 설정
+          const stream = await requestPermission();
 
           if (!signalingSocket.socket?.connected) {
             console.log('Connecting signalingSocket...');
             signalingSocket.connect();
+            await signalingSocket.setupLocalStream(stream);
           }
 
-          // 3. audioManager 설정 (소켓 연결 후)
+          // audioManager 설정 (소켓 연결 후)
           if (!signalingSocket.hasAudioManager()) {
             signalingSocket.setAudioManager(audioManager);
           }
 
-          // 4. 마이크 권한 요청 및 스트림 설정
-          const stream = await requestPermission();
-          signalingSocket.setupLocalStream(stream);
-
-          // 5. 방 참가
-          gameSocket.joinRoom(roomId, nickname);
-          signalingSocket.joinRoom(room, nickname);
+          // 시그널링 방 참가
+          await signalingSocket.joinRoom(room, nickname);
         }
       } catch (error) {
         console.error('Reconnection failed:', error);
         // 실패 시 audioManager 제거
         signalingSocket.setAudioManager(null);
+
+        if (error === 'GameAlreadyInProgress') {
+          sessionStorage.setItem('gameInProgressError', 'true');
+          window.location.href = '/rooms';
+        }
       }
     };
 
     handleReconnect();
 
-    // cleanup
     return () => {
       signalingSocket.setAudioManager(null);
     };

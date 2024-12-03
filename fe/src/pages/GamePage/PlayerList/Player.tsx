@@ -1,5 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { FaCrown, FaMicrophone, FaMicrophoneSlash } from 'react-icons/fa6';
+import { FaCrown, FaMicrophoneSlash, FaRegFaceSmile } from 'react-icons/fa6';
 import VolumeBar from './VolumeBar';
 import { PlayerProps } from '@/types/roomTypes';
 import { isHost } from '@/utils/playerUtils';
@@ -12,7 +12,7 @@ import { gameSocket } from '@/services/gameSocket';
 import MikeButton from '@/components/common/MikeButton';
 import useGameStore from '@/stores/zustand/useGameStore';
 
-const Player = ({ playerNickname, isReady }: PlayerProps) => {
+const Player = ({ playerNickname, isReady, isDead, isLeft }: PlayerProps) => {
   const { currentRoom, currentPlayer } = useRoomStore();
   // 본인이 방장인지
   const isCurrentPlayerHost = currentPlayer === currentRoom?.hostNickname;
@@ -54,11 +54,34 @@ const Player = ({ playerNickname, isReady }: PlayerProps) => {
 
   return (
     <Card className={`h-full ${!isPlayerHost && isReady ? 'bg-cyan-50' : ''}`}>
-      <CardContent className="flex h-[4.7rem] items-center justify-between p-4">
+      <CardContent className="relative flex h-[4.7rem] items-center justify-between p-4">
         <div className="flex items-center gap-2">
-          {isPlayerHost ? <FaCrown className="text-yellow-500" /> : ''}
+          {isPlayerHost ? (
+            <FaCrown className="text-yellow-500 mr-1" />
+          ) : (
+            <FaRegFaceSmile className="mr-1" />
+          )}
           <span className="font-galmuri">{playerNickname}</span>
         </div>
+
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 ml-1 mr-1">
+          {isLeft ? (
+            <img
+              className="w-16 h-10 md:w-20 md:h-12 lg:w-[6.875rem] lg:h-[3.625rem]"
+              src="https://i.imgur.com/JCNlJnB.png"
+              alt="탈주"
+            />
+          ) : isDead ? (
+            <img
+              className="w-16 h-10 md:w-20 md:h-12 lg:w-[6.875rem] lg:h-[3.625rem]"
+              src="https://i.imgur.com/kcsoaeY.png"
+              alt="탈락"
+            />
+          ) : (
+            ''
+          )}
+        </div>
+
         <div className="flex items-center gap-4">
           {isCurrentPlayer ? (
             <MikeButton isMuted={isCurrentPlayerMuted} onToggle={toggleMute} />

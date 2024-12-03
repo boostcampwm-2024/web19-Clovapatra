@@ -46,7 +46,7 @@ const ReadyScreen = () => {
   };
 
   return (
-    <div className="h-[27rem] bg-muted rounded-lg flex flex-col items-center justify-center space-y-4">
+    <div className="h-[27rem] bg-white rounded-lg flex flex-col items-center justify-center space-y-4">
       {isHost ? (
         <Button
           size="lg"
@@ -68,9 +68,13 @@ const ReadyScreen = () => {
         </Button>
       )}
 
-      {!canStartGame && (
+      {!canStartGame ? (
         <p className="font-galmuri text-sm text-muted-foreground mt-2">
           모든 플레이어가 준비를 완료해야 게임을 시작할 수 있습니다.
+        </p>
+      ) : (
+        <p className="font-galmuri text-sm text-muted-foreground mt-2">
+          모든 플레이어가 준비 완료되었습니다. 게임을 시작해 주세요!
         </p>
       )}
     </div>
