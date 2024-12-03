@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import ExitDialog from './GameDialog/ExitDialog';
 import { useReconnect } from '@/hooks/useReconnect';
 import { useBackExit } from '@/hooks/useBackExit';
-import { NotFound } from '@/components/common/NotFound';
+import { NotFound } from '@/pages/NotFoundPage';
 import GameScreen from './GameScreen/GameScreen';
 import { useAudioManager } from '@/hooks/useAudioManager';
 import { signalingSocket } from '@/services/signalingSocket';
