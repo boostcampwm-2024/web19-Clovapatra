@@ -15,7 +15,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: naver
+                name: clovapatra-fe-service
                 port:
                   number: 80
     - host: "nks-game.clovapatra.com"
@@ -25,7 +25,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: naver
+                name: clovapatra-game-service
                 port:
                   number: 8000
     - host: "nks-signaling.clovapatra.com"
@@ -35,7 +35,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: naver
+                name: clovapatra-signaling-service
                 port:
                   number: 8001
     - host: "nks-voice-processing.clovapatra.com"
@@ -45,6 +45,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: naver
+                name: clovapatra-voice-service
                 port:
                   number: 8002
