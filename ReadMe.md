@@ -88,7 +88,12 @@
 
 ## 🏛️ 시스템 아키텍처
 
-![System Architecture](https://github.com/user-attachments/assets/25683f10-1daa-41d8-a82f-5fe7f2b3f55f)
+
+![서비스 흐름도](https://github.com/user-attachments/assets/3a8f6a67-82bd-4c33-ae17-5c316a9a06ae)
+
+![배포 파이프라인](https://github.com/user-attachments/assets/eda6f750-0cba-49ef-82ca-f1b9ca67382c)
+
+![네트워크 구성도](https://github.com/user-attachments/assets/0f96bdc9-e761-43b0-91fd-c491b980649d)
 
 ### 주요 컴포넌트
 
