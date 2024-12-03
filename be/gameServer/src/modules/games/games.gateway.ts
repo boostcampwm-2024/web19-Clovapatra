@@ -211,20 +211,20 @@ export class GamesGateway implements OnGatewayDisconnect {
   ) {
     const { roomId, playerNickname, averageNote, pronounceScore } =
       voiceResultFromServerDto;
+    this.logger.log(
+      `Received voice result for roomId: ${roomId}, player: ${playerNickname}, averageNote: ${averageNote}, pronounceScore: ${pronounceScore}`,
+    );
+
+    const gameDataString = await this.redisService.get<string>(
+      `game:${roomId}`,
+    );
+    if (!gameDataString) {
+      return client.emit('error', ErrorMessages.GAME_NOT_FOUND);
+    }
+
+    const gameData: GameDataDto = JSON.parse(gameDataString);
+
     try {
-      this.logger.log(
-        `Received voice result for roomId: ${roomId}, player: ${playerNickname}, averageNote: ${averageNote}, pronounceScore: ${pronounceScore}`,
-      );
-
-      const gameDataString = await this.redisService.get<string>(
-        `game:${roomId}`,
-      );
-      if (!gameDataString) {
-        return client.emit('error', ErrorMessages.GAME_NOT_FOUND);
-      }
-
-      const gameData: GameDataDto = JSON.parse(gameDataString);
-
       if (averageNote !== undefined) {
         const note = noteToNumber(averageNote);
         this.logger.log(
@@ -309,6 +309,30 @@ export class GamesGateway implements OnGatewayDisconnect {
         pronounceScore: 0,
         note: '0옥도',
       });
+
+      removePlayerFromGame(gameData, playerNickname);
+
+      const player = gameData.players.find(
+        (p) => p.playerNickname === playerNickname,
+      );
+
+      if (player) {
+        player.isDead = true;
+        this.server.to(roomId).emit('updateUsers', gameData.players);
+      }
+
+      updatePreviousPlayers(gameData, playerNickname);
+      gameData.currentTurn++;
+      this.logger.log(`Turn updated: ${gameData.currentTurn}`);
+      gameData.currentPlayer = selectCurrentPlayer(
+        gameData.alivePlayers,
+        gameData.previousPlayers,
+      );
+
+      this.logger.log(
+        `Saving updated game data to Redis for roomId: ${roomId}`,
+      );
+      await this.redisService.set(`game:${roomId}`, JSON.stringify(gameData));
     }
   }
 
