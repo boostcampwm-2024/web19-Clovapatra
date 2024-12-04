@@ -90,8 +90,17 @@
   box-sizing: border-box;
 }
 
-html,
-body,
+html {
+  height: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  height: 100%;
+  margin: 0;
+  overflow-x: hidden;
+}
+
 #root {
   height: 100%;
 }
@@ -102,10 +111,30 @@ body {
 
 .app {
   @apply flex flex-col mx-auto justify-center max-w-[1074px] lg:px-0 p-8;
+  height: 100%;
 }
 
 .game-wrapper {
-  @apply relative w-full min-h-screen;
+  @apply relative w-full;
+  min-height: 100vh;
+}
+
+@media (min-width: 768px) {
+  .game-wrapper {
+    height: 100vh;
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 767px) {
+  .game-wrapper {
+    height: auto;
+    overflow-y: visible;
+  }
+
+  body {
+    overflow-y: auto;
+  }
 }
 
 .game-wrapper::before {

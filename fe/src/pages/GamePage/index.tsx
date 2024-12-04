@@ -108,7 +108,7 @@ const GamePage = () => {
 
   return (
     <div className="game-wrapper">
-      <div className="h-screen relative p-4">
+      <div className="relative overflow-y-auto p-6 mt-2 min-h-screen">
         <div className="space-y-6">
           <GameScreen />
           <PlayerList

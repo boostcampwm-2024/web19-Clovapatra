@@ -36,7 +36,7 @@ const RoomListPage = () => {
 
   return (
     <div className="game-wrapper">
-      <div className="flex-1">
+      <div className="relative overflow-y-auto p-6 mt-2 min-h-screen flex-1">
         <RoomHeader />
         <SearchBar />
         {isEmpty ? (
