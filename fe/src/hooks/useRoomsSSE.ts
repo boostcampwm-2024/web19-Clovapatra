@@ -19,7 +19,7 @@ export const useRoomsSSE = () => {
         setRooms(sseData.rooms);
         setPagination(sseData.pagination);
 
-        if (!sseData.rooms.length && userPage > 0) {
+        if (sseData.pagination.totalPages === 1 && userPage > 0) {
           setUserPage(sseData.pagination.currentPage - 1);
           return;
         }

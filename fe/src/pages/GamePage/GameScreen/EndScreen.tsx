@@ -29,9 +29,17 @@ const EndScreen = () => {
   };
 
   const positions = {
-    0: { top: '18%', left: '49.7%' },
-    1: { top: '54%', left: '34.5%' },
+    0: { top: '20%', left: '49.5%' },
+    1: { top: '54%', left: '38.5%' },
     2: { top: '68%', left: '60.5%' },
+  };
+
+  const getRelativePosition = (index: number) => {
+    const position = positions[index as keyof typeof positions];
+    return {
+      top: `calc(${position.top})`,
+      left: `calc(${position.left})`,
+    };
   };
 
   const getDelay = (index: number) => {
@@ -48,12 +56,12 @@ const EndScreen = () => {
   };
 
   return (
-    <div className="relative h-[27rem] bg-white rounded-lg overflow-hidden">
-      <div className="relative w-full h-full flex items-center justify-center">
+    <div className="relative h-[27rem] md:h-[calc(100vh-20rem)] md:min-h-[27rem] md:max-h-[34rem] bg-white rounded-lg overflow-hidden">
+      <div className="h-full w-full flex items-center">
         <Lottie
           animationData={podiumAnimation}
           loop={false}
-          className="w-full max-w-2xl absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+          className="w-full max-w-2xl absolute left-1/2 transform -translate-x-1/2"
         />
 
         <div className="absolute inset-0 pointer-events-none">
@@ -62,8 +70,7 @@ const EndScreen = () => {
               key={`rank-${index}-${playerName}`}
               className="absolute"
               style={{
-                top: positions[index as keyof typeof positions].top,
-                left: positions[index as keyof typeof positions].left,
+                ...getRelativePosition(index),
                 transform: 'translate(-50%, -120%)',
               }}
               initial={{ opacity: 0, y: 10 }}
@@ -91,7 +98,6 @@ const EndScreen = () => {
             </motion.div>
           ))}
         </div>
-
         <motion.div
           className="absolute top-4 right-4 bg-white/90 p-4 rounded-lg shadow-lg"
           initial={{ opacity: 0, y: -20 }}
@@ -111,7 +117,6 @@ const EndScreen = () => {
             ))}
           </div>
         </motion.div>
-
         <motion.div
           className="absolute bottom-4 right-4 z-10"
           initial={{ opacity: 0, y: 20 }}
