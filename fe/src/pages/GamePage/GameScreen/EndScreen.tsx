@@ -29,9 +29,17 @@ const EndScreen = () => {
   };
 
   const positions = {
-    0: { top: '18%', left: '49.7%' },
-    1: { top: '54%', left: '34.5%' },
+    0: { top: '20%', left: '49.5%' },
+    1: { top: '54%', left: '38.5%' },
     2: { top: '68%', left: '60.5%' },
+  };
+
+  const getRelativePosition = (index: number) => {
+    const position = positions[index as keyof typeof positions];
+    return {
+      top: `calc(${position.top})`,
+      left: `calc(${position.left})`,
+    };
   };
 
   const getDelay = (index: number) => {
@@ -55,14 +63,14 @@ const EndScreen = () => {
           loop={false}
           className="w-full max-w-2xl absolute left-1/2 transform -translate-x-1/2"
         />
+
         <div className="absolute inset-0 pointer-events-none">
           {rank.slice(0, 3).map((playerName, index) => (
             <motion.div
               key={`rank-${index}-${playerName}`}
               className="absolute"
               style={{
-                top: positions[index as keyof typeof positions].top,
-                left: positions[index as keyof typeof positions].left,
+                ...getRelativePosition(index),
                 transform: 'translate(-50%, -120%)',
               }}
               initial={{ opacity: 0, y: 10 }}
