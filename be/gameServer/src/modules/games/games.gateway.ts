@@ -396,7 +396,7 @@ export class GamesGateway implements OnGatewayDisconnect {
             this.logger.log(
               `Voice processing result sent for player: ${playerNickname}`,
             );
-          }, 7000);
+          }, 10000);
         }
       }
 
