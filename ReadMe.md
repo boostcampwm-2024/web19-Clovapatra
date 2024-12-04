@@ -80,6 +80,7 @@
 ### 기타
 
 - **Naver Cloud Platform**: 네이버 클라우드 플랫폼을 활용한 인프라 및 서비스 배포
+- **Kubernetes**: Container 기반 배포
 - **Naver Clova Speech Recognition API**: 음성 데이터 분석
 - **NGINX**: 로드 밸런싱 및 요청 라우팅
 - **AGT**: 우리가 제작한 GitHub 이슈 기반 프로젝트 관리 툴
