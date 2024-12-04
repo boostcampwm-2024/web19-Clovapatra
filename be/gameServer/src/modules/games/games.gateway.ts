@@ -359,9 +359,18 @@ export class GamesGateway implements OnGatewayDisconnect {
 
       if (player) {
         player.isLeft = true;
-        player.isMuted = true;
         await this.redisService.set(`game:${roomId}`, JSON.stringify(gameData));
         this.server.to(roomId).emit('updateUsers', gameData.players);
+
+        player.isMuted = true;
+        await this.redisService.hmset(`room:${roomId}`, {
+          players: JSON.stringify(gameData.players),
+        });
+        const muteStatus = gameData.players.reduce((acc, player) => {
+          acc[player.playerNickname] = player.isMuted;
+          return acc;
+        }, {});
+        this.server.to(roomId).emit('muteStatusChanged', muteStatus);
 
         if (playerNickname === gameData.currentPlayer) {
           updatePreviousPlayers(gameData, playerNickname);
