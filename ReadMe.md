@@ -121,7 +121,7 @@
 web19-boostproject/
 ├── .agt/                         # AGT (GitHub 이슈 기반 커스텀 프로젝트 관리 도구) 관련 설정 및 데이터 폴더
 ├── .github/                      # GitHub 관련 워크플로우 및 설정 파일 저장소 (CI/CD 파이프라인 등)
-├── .nks/                         # NKS (Naver Clova Speech API 관련 설정 및 키 관리) 폴더
+├── .nks/                         # NKS (Ncloud Kubernetes Service 관련 설정) 폴더
 ├── fe/                           # Frontend(React 기반 클라이언트)
 │   ├── src/                      # 소스 코드 폴더
 │   │   ├── components/           # UI 컴포넌트 폴더 (버튼, 입력창 등 재사용 가능한 컴포넌트)
