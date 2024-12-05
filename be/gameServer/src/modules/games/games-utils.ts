@@ -162,5 +162,5 @@ export function updatePreviousPlayers(
 }
 
 export function transformScore(originalScore: number) {
-  return Math.min(originalScore + 50, 100);
+  return Math.floor(Math.min(90 + ((originalScore - 40) / 60) * 10, 100));
 }
