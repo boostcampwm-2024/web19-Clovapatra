@@ -61,7 +61,8 @@
 
 ## ⚙️ 기술 스택
 
-![기술스택](https://github.com/user-attachments/assets/d4248088-f6b1-47cc-afee-b86341702310)
+![기술 스택](https://github.com/user-attachments/assets/5bce398c-9bd9-448d-bf50-4a6b15caadf9)
+
 
 ### 프론트엔드
 
