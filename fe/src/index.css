@@ -107,6 +107,7 @@ body {
 
 body {
   margin: 0;
+  overflow-y: scroll;
 }
 
 .app {
@@ -120,19 +121,19 @@ body {
 }
 
 @media (min-width: 768px) {
-  .game-wrapper {
+  .game-page {
     height: 100vh;
     overflow: hidden;
   }
 }
 
 @media (max-width: 767px) {
-  .game-wrapper {
+  .game-page {
     height: auto;
     overflow-y: visible;
   }
 
-  body {
+  .game-page body {
     overflow-y: auto;
   }
 }
