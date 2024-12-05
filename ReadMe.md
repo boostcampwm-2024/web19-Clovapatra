@@ -61,6 +61,8 @@
 
 ## ⚙️ 기술 스택
 
+![기술스택](https://github.com/user-attachments/assets/d4248088-f6b1-47cc-afee-b86341702310)
+
 ### 프론트엔드
 
 - **React**: 사용자 인터페이스 개발
