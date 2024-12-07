@@ -11,7 +11,7 @@ const GameRoom = ({ room, onJoinRoom }: GameRoomProps) => {
   const isGameStarted = (status: string) => {
     return status === 'progress';
   };
-  const isRoomFull = room.players.length >= 4;
+  const isRoomFull = room.players.length >= room.maxPlayers;
 
   const handleRoomClick = () => {
     if (!isGameStarted(room.status) && !isRoomFull) {
@@ -54,7 +54,9 @@ const GameRoom = ({ room, onJoinRoom }: GameRoomProps) => {
           </div>
           <div className="flex items-center gap-2">
             <FaUsers className="text-gray-500" />
-            <span>인원 수: {room.players.length} / 4</span>
+            <span>
+              인원 수: {room.players.length} / {room.maxPlayers}
+            </span>
           </div>
         </div>
       </CardHeader>

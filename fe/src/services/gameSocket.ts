@@ -1,4 +1,4 @@
-import { io, Socket } from 'socket.io-client';
+import { Socket, io } from 'socket.io-client';
 import {
   ClientToServerEvents,
   GameResultProps,
@@ -6,12 +6,24 @@ import {
   ServerToClientEvents,
   TurnData,
 } from '@/types/socketTypes';
-import { PlayerProps, Room } from '@/types/roomTypes';
+import {
+  CreateRoomOptions,
+  GameMode,
+  PlayerProps,
+  Room,
+} from '@/types/roomTypes';
 import { SocketService } from './SocketService';
 import useRoomStore from '@/stores/zustand/useRoomStore';
 import { ENV } from '@/config/env';
 import useGameStore from '@/stores/zustand/useGameStore';
 
+interface CreateRoomDto {
+  roomName: string;
+  hostNickname: string;
+  maxPlayers: number;
+  gameMode: GameMode;
+  randomModeRatio?: number;
+}
 class GameSocket extends SocketService {
   constructor() {
     super();
@@ -107,8 +119,22 @@ class GameSocket extends SocketService {
     });
   }
 
-  createRoom(roomName: string, hostNickname: string) {
-    this.socket?.emit('createRoom', { roomName, hostNickname });
+  createRoom(
+    roomName: string,
+    hostNickname: string,
+    options: CreateRoomOptions
+  ) {
+    const createRoomDto: CreateRoomDto = {
+      roomName,
+      hostNickname,
+      maxPlayers: options.maxPlayers,
+      gameMode: options.gameMode,
+      ...(options.gameMode === GameMode.RANDOM && {
+        randomModeRatio: options.randomModeRatio,
+      }),
+    };
+
+    this.socket?.emit('createRoom', createRoomDto);
   }
 
   joinRoom(roomId: string, playerNickname: string) {
