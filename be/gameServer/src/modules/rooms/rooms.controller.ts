@@ -185,21 +185,6 @@ export class RoomController {
     description: '조회할 게임 방의 ID',
     example: '1234',
   })
-  @ApiResponse({
-    description: '특정 roomId에 해당하는 게임 방이 성공적으로 반환됩니다.',
-    type: RoomDataDto,
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'roomId에 해당하는 게임 방을 찾지 못했습니다.',
-    schema: {
-      example: {
-        statusCode: 404,
-        message: 'Room with ID 1234 not found',
-        error: 'Not Found',
-      },
-    },
-  })
   async getRoomById(@Param('roomId') roomId: string): Promise<RoomDataDto> {
     this.logger.log(`요청 시작 - Room 조회: roomId=${roomId}`);
     const roomData = await this.redisService.hgetAll<RoomDataDto>(
@@ -211,6 +196,12 @@ export class RoomController {
       throw new NotFoundException(`Room with ID ${roomId} not found`);
     }
 
+    // 데이터 변환 확실히 하기
+    roomData.maxPlayers = Number(roomData.maxPlayers);
+    if (roomData.randomModeRatio) {
+      roomData.randomModeRatio = Number(roomData.randomModeRatio);
+    }
+
     this.logger.log(`요청 완료 - Room 조회 성공: roomId=${roomId}`);
     return roomData;
   }
@@ -218,8 +209,7 @@ export class RoomController {
   @Get()
   @ApiOperation({
     summary: '게임 방 목록 조회',
-    description:
-      '저장된 모든 게임 방 목록을 페이지네이션으로 조회합니다. 페이지는 1부터 시작하며, 한 페이지에 최대 ROOM_LIMIT개의 방 정보를 반환합니다.',
+    description: '저장된 모든 게임 방 목록을 페이지네이션으로 조회합니다.',
   })
   @ApiQuery({
     name: 'page',
@@ -227,33 +217,6 @@ export class RoomController {
     type: Number,
     description: '조회할 페이지 번호 (기본값: 0)',
     example: 1,
-  })
-  @ApiResponse({
-    status: 200,
-    description: '게임 방 목록이 성공적으로 반환됩니다.',
-    schema: {
-      example: {
-        rooms: [
-          {
-            roomId: '6f42377f-42ea-42cc-ac1a-b5d2b99d4ced',
-            roomName: '게임방123',
-            hostNickname: 'hostNickname123',
-            players: [
-              { playerNickname: 'hostNic123', isReady: true, isMuted: false },
-              { playerNickname: 'player1', isReady: false, isMuted: true },
-            ],
-            status: 'waiting',
-          },
-        ],
-        pagination: {
-          currentPage: 1,
-          totalPages: 5,
-          totalItems: 50,
-          hasNextPage: true,
-          hasPreviousPage: false,
-        },
-      },
-    },
   })
   async getRooms(@Query('page') page = 0): Promise<PaginatedRoomDto> {
     page = Number(page);
@@ -279,16 +242,19 @@ export class RoomController {
           return null;
         }
 
+        // 데이터 변환 확실히 하기
         return {
-          roomId: key,
-          roomName: roomData.roomName,
-          hostNickname: roomData.hostNickname,
-          players: roomData.players,
-          status: roomData.status,
+          ...roomData,
+          maxPlayers: Number(roomData.maxPlayers),
+          randomModeRatio: roomData.randomModeRatio
+            ? Number(roomData.randomModeRatio)
+            : undefined,
         } as RoomDataDto;
       }),
     );
-    const validRooms = rooms.filter((room) => room !== null);
+    const validRooms = rooms.filter(
+      (room): room is RoomDataDto => room !== null,
+    );
 
     this.logger.log(`게임 방 목록 조회 완료, ${validRooms.length}개 방 반환`);
 
