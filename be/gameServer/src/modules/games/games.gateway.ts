@@ -57,7 +57,7 @@ export class GamesGateway implements OnGatewayDisconnect {
       );
 
       if (!roomData) {
-        this.logger.warn(`Room not found: ${roomId}`);
+        this.logger.warn(`Room ${roomId} does not exist`);
         client.emit('error', ErrorMessages.ROOM_NOT_FOUND);
         return;
       }
@@ -114,7 +114,8 @@ export class GamesGateway implements OnGatewayDisconnect {
       };
       await this.redisService.set(`game:${roomId}`, JSON.stringify(gameData));
 
-      const turnData: TurnDataDto = createTurnData(roomId, gameData);
+      // roomData를 추가로 전달하여 게임 모드 정보 전달
+      const turnData: TurnDataDto = createTurnData(roomId, gameData, roomData);
 
       await new Promise<void>((resolve) => {
         this.server.to(VOICE_SERVERS).emit('turnChanged', turnData, () => {
@@ -155,9 +156,17 @@ export class GamesGateway implements OnGatewayDisconnect {
       }
 
       const gameData: GameDataDto = JSON.parse(gameDataString);
+      const roomData = await this.redisService.hgetAll<RoomDataDto>(
+        `room:${roomId}`,
+      );
 
       if (gameData.alivePlayers.length > 1) {
-        const turnData: TurnDataDto = createTurnData(roomId, gameData);
+        // roomData를 추가로 전달하여 게임 모드 정보 전달
+        const turnData: TurnDataDto = createTurnData(
+          roomId,
+          gameData,
+          roomData,
+        );
 
         await new Promise<void>((resolve) => {
           this.server.to(VOICE_SERVERS).emit('turnChanged', turnData, () => {

@@ -1,5 +1,5 @@
 import { GameMode, TurnDataDto } from './dto/turn-data.dto';
-import { RoomDataDto } from './../rooms/dto/room-data.dto';
+import { RoomDataDto } from '../rooms/dto/room-data.dto';
 import { GameDataDto } from './dto/game-data.dto';
 
 const SAMPLE_DATA = [
@@ -30,15 +30,17 @@ const SAMPLE_DATA = [
 export function createTurnData(
   roomId: string,
   gameData: GameDataDto,
+  roomData: RoomDataDto,
 ): TurnDataDto {
-  const gameModes = [
-    GameMode.PRONUNCIATION,
-    GameMode.CLEOPATRA,
-    GameMode.CLEOPATRA,
-    GameMode.CLEOPATRA,
-    GameMode.CLEOPATRA,
-  ];
-  const gameMode = gameModes[Math.floor(Math.random() * gameModes.length)];
+  let gameMode = roomData.gameMode;
+
+  // 랜덤 모드인 경우 비율에 따라 게임 모드 결정
+  if (gameMode === GameMode.RANDOM) {
+    const ratio = roomData.randomModeRatio || 50;
+    const randomValue = Math.random() * 100;
+    gameMode =
+      randomValue < ratio ? GameMode.CLEOPATRA : GameMode.PRONUNCIATION;
+  }
 
   if (gameMode === GameMode.CLEOPATRA) {
     return {
@@ -49,6 +51,7 @@ export function createTurnData(
       lyrics: '안녕! 클레오파트라! 세상에서 제일가는 포테이토 칩!',
     };
   }
+
   const randomSentence =
     SAMPLE_DATA[Math.floor(Math.random() * SAMPLE_DATA.length)];
 

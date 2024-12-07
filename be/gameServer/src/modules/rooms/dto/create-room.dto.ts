@@ -1,5 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNotEmpty, Length, Matches } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  Length,
+  Matches,
+  IsEnum,
+  IsInt,
+  IsNumber,
+  Min,
+  Max,
+  ValidateIf,
+} from 'class-validator';
+import { GameMode } from '../../games/dto/turn-data.dto';
 
 export class CreateRoomDto {
   @IsString({ message: 'roomName은 문자열이어야 합니다.' })
@@ -19,4 +31,32 @@ export class CreateRoomDto {
     description: 'hostNickname',
   })
   hostNickname: string;
+
+  @IsInt()
+  @Min(2)
+  @Max(10)
+  @ApiProperty({
+    example: 4,
+    description: '최대 플레이어 수 (2-10명)',
+  })
+  maxPlayers: number;
+
+  @IsEnum(GameMode)
+  @ApiProperty({
+    enum: GameMode,
+    example: GameMode.RANDOM,
+    description: '게임 모드',
+  })
+  gameMode: GameMode;
+
+  @ValidateIf((o) => o.gameMode === GameMode.RANDOM)
+  @IsNumber()
+  @Min(1)
+  @Max(99)
+  @ApiProperty({
+    example: 50,
+    description: '랜덤 모드에서 클레오파트라 모드의 비율 (1-99%)',
+    required: false,
+  })
+  randomModeRatio?: number;
 }

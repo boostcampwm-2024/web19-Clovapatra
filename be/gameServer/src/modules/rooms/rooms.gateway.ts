@@ -15,7 +15,6 @@ import { JoinRoomDto } from './dto/join-data.dto';
 import { RoomsValidationPipe } from './rooms.validation.pipe';
 import { WsExceptionsFilter } from '../../common/filters/ws-exceptions.filter';
 import {
-  isRoomFull,
   isNicknameTaken,
   removePlayerFromRoom,
   changeRoomHost,
@@ -47,9 +46,10 @@ export class RoomsGateway implements OnGatewayDisconnect {
     @ConnectedSocket() client: Socket,
   ) {
     try {
-      const { roomName, hostNickname } = createRoomDto;
+      const { roomName, hostNickname, maxPlayers, gameMode, randomModeRatio } =
+        createRoomDto;
       this.logger.log(
-        `Room creation requested: ${roomName} by ${hostNickname}`,
+        `Room creation requested: ${roomName} by ${hostNickname} (max: ${maxPlayers})`,
       );
 
       const roomId = uuidv4();
@@ -67,6 +67,9 @@ export class RoomsGateway implements OnGatewayDisconnect {
           },
         ],
         status: 'waiting',
+        maxPlayers,
+        gameMode,
+        ...(gameMode === 'RANDOM' && { randomModeRatio }),
       };
 
       await this.redisService.rpush(RedisKeys.ROOMS_LIST, roomId);
@@ -94,7 +97,6 @@ export class RoomsGateway implements OnGatewayDisconnect {
       client.emit('roomCreated', roomData);
     } catch (error) {
       this.logger.error('Error creating room:', error.message);
-
       client.emit('error', ErrorMessages.INTERNAL_ERROR);
     }
   }
@@ -118,8 +120,10 @@ export class RoomsGateway implements OnGatewayDisconnect {
         return;
       }
 
-      if (isRoomFull(roomData)) {
-        this.logger.log(`Room ${roomId} is full`);
+      if (roomData.players.length >= roomData.maxPlayers) {
+        this.logger.log(
+          `Room ${roomId} is full (${roomData.players.length}/${roomData.maxPlayers})`,
+        );
         client.emit('error', ErrorMessages.ROOM_FULL);
         return;
       }
@@ -156,9 +160,7 @@ export class RoomsGateway implements OnGatewayDisconnect {
           players: JSON.stringify(roomData.players),
         },
         RedisKeys.ROOMS_UPDATE_CHANNEL,
-        ...(index === -1
-          ? []
-          : [Math.floor(index / RoomsConstant.ROOMS_LIMIT)]),
+        index,
       );
 
       client.join(roomId);
