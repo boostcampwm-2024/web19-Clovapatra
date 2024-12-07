@@ -9,13 +9,15 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import RoomOptionsSlider from '@/components/common/RoomOptionsSlider';
+import GameModeSelector from '@/components/common/GameModeSelector';
 import { useAudioPermission } from '@/hooks/useAudioPermission';
 import { useDialogForm } from '@/hooks/useDialogForm';
 import { useFormValidation } from '@/hooks/useFormValidation';
 import { gameSocket } from '@/services/gameSocket';
 import { signalingSocket } from '@/services/signalingSocket';
 import useRoomStore from '@/stores/zustand/useRoomStore';
-import { RoomDialogProps } from '@/types/roomTypes';
+import { GameMode, RoomDialogProps } from '@/types/roomTypes';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -23,6 +25,10 @@ const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
   const [roomName, setRoomName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [hostNickname, setHostNickname] = useState('');
+  const [maxPlayers, setMaxPlayers] = useState(4);
+  const [gameMode, setGameMode] = useState<GameMode>(GameMode.RANDOM);
+  const [randomModeRatio, setRandomModeRatio] = useState(50);
+
   const navigate = useNavigate();
   const setCurrentPlayer = useRoomStore((state) => state.setCurrentPlayer);
   const { errors, validateForm, updateInput, setErrors, resetForm } =
@@ -38,6 +44,9 @@ const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
     if (!open) {
       setRoomName('');
       setHostNickname('');
+      setMaxPlayers(4);
+      setGameMode(GameMode.RANDOM);
+      setRandomModeRatio(50);
       setIsLoading(false);
       resetForm();
     }
@@ -47,7 +56,6 @@ const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
     onOpenChange(false);
   };
 
-  // 입력값 변경 핸들러
   const handleRoomNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setRoomName(value);
@@ -97,7 +105,11 @@ const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
         }
       });
 
-      gameSocket.createRoom(roomName.trim(), hostNickname.trim());
+      gameSocket.createRoom(roomName.trim(), hostNickname.trim(), {
+        maxPlayers,
+        gameMode,
+        ...(gameMode === GameMode.RANDOM && { randomModeRatio }),
+      });
 
       resetAndClose();
     } catch (error) {
@@ -167,6 +179,23 @@ const CreateDialog = ({ open, onOpenChange }: RoomDialogProps) => {
               <p className="text-sm text-red-500">{errors.nickname}</p>
             )}
           </div>
+
+          <RoomOptionsSlider
+            label="최대 인원"
+            value={maxPlayers}
+            min={2}
+            max={10}
+            step={1}
+            onChange={setMaxPlayers}
+            formatValue={(v) => `${v}명`}
+          />
+
+          <GameModeSelector
+            selectedMode={gameMode}
+            randomModeRatio={randomModeRatio}
+            onModeChange={setGameMode}
+            onRatioChange={setRandomModeRatio}
+          />
         </div>
         <DialogFooter className="gap-2 mt-2">
           <Button
