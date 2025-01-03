@@ -29,9 +29,9 @@ const EndScreen = () => {
   };
 
   const positions = {
-    0: { top: '20%', left: '49.5%' },
-    1: { top: '54%', left: '38.5%' },
-    2: { top: '68%', left: '60.5%' },
+    0: { top: '26.5%', left: '50.6%' },
+    1: { top: '60%', left: '39.5%' },
+    2: { top: '73%', left: '61.6%' },
   };
 
   const getRelativePosition = (index: number) => {
@@ -56,87 +56,86 @@ const EndScreen = () => {
   };
 
   return (
-    <div className="relative h-[27rem] md:h-[calc(100vh-20rem)] md:min-h-[27rem] md:max-h-[34rem] bg-white rounded-lg overflow-hidden">
-      <div className="h-full w-full flex items-center">
-        <Lottie
-          animationData={podiumAnimation}
-          loop={false}
-          className="w-full max-w-2xl absolute left-1/2 transform -translate-x-1/2"
-        />
+    <div className="h-full flex items-center">
+      <Lottie
+        animationData={podiumAnimation}
+        loop={false}
+        className="w-full max-w-2xl relative left-1/2 transform -translate-x-1/2"
+      />
 
-        <div className="absolute inset-0 pointer-events-none">
-          {rank.slice(0, 3).map((playerName, index) => (
+      <div className="inset-0 pointer-events-none">
+        {rank.slice(0, 3).map((playerName, index) => (
+          <motion.div
+            key={`rank-${index}-${playerName}`}
+            className="absolute"
+            style={getRelativePosition(index)}
+            initial={{
+              opacity: 0,
+              y: 10,
+              x: '-50%',
+            }}
+            animate={{
+              opacity: 1,
+              y: '-120%',
+              x: '-50%',
+            }}
+            transition={{
+              delay: getDelay(index),
+              duration: 0.4,
+              ease: 'easeOut',
+            }}
+          >
             <motion.div
-              key={`rank-${index}-${playerName}`}
-              className="absolute"
-              style={{
-                ...getRelativePosition(index),
-                transform: 'translate(-50%, -120%)',
-              }}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
+              className="w-max mx-auto text-center whitespace-nowrap"
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
               transition={{
                 delay: getDelay(index),
-                duration: 0.4,
-                ease: 'easeOut',
+                duration: 0.5,
+                ease: [0.175, 0.885, 0.32, 1.275],
               }}
             >
-              <motion.div
-                className="text-center whitespace-nowrap"
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
-                transition={{
-                  delay: getDelay(index),
-                  duration: 0.5,
-                  ease: [0.175, 0.885, 0.32, 1.275],
-                }}
-              >
-                <span className="block text-lg font-bold text-black">
-                  {playerName}
-                </span>
-              </motion.div>
+              <span className="block font-galmuri text-md font-bold text-black">
+                {playerName}
+              </span>
             </motion.div>
+          </motion.div>
+        ))}
+      </div>
+      <motion.div
+        className="absolute top-4 right-4 bg-white/90 p-4 rounded-lg shadow-lg"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 3, duration: 0.5 }}
+      >
+        <h3 className="font-galmuri font-bold mb-2">최종 순위</h3>
+        <div className="space-y-1">
+          {rank.map((playerName, index) => (
+            <div
+              key={playerName}
+              className="font-galmuri flex gap-2 text-sm items-center"
+            >
+              <span className="font-bold min-w-[24px]">{index + 1}위</span>
+              <span>{playerName}</span>
+            </div>
           ))}
         </div>
-        <motion.div
-          className="absolute top-4 right-4 bg-white/90 p-4 rounded-lg shadow-lg"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 3, duration: 0.5 }}
-        >
-          <h3 className="font-galmuri font-bold mb-2">최종 순위</h3>
-          <div className="space-y-1">
-            {rank.map((playerName, index) => (
-              <div
-                key={playerName}
-                className="font-galmuri flex gap-2 text-sm items-center"
-              >
-                <span className="font-bold min-w-[24px]">{index + 1}위</span>
-                <span>{playerName}</span>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-        <motion.div
-          className="absolute bottom-4 right-4 z-10"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 3.5 }}
-        >
-          <Button
-            onClick={handleGameEnd}
-            size="default"
-            className="font-galmuri"
-          >
-            <span className="hidden md:inline">로비로 돌아가기</span>
-            <span className="md:hidden">
-              로비로
-              <br />
-              돌아가기
-            </span>
-          </Button>
-        </motion.div>
-      </div>
+      </motion.div>
+      <motion.div
+        className="absolute bottom-4 right-4 z-10"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 3.5 }}
+      >
+        <Button onClick={handleGameEnd} size="default" className="font-galmuri">
+          <span className="hidden md:inline">로비로 돌아가기</span>
+          <span className="md:hidden">
+            로비로
+            <br />
+            돌아가기
+          </span>
+        </Button>
+      </motion.div>
     </div>
   );
 };

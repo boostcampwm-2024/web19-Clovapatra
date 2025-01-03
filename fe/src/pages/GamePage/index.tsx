@@ -108,32 +108,35 @@ const GamePage = () => {
 
   return (
     <div className="game-page game-wrapper">
-      <div className="relative overflow-y-auto p-6 mt-2 min-h-screen">
-        <div className="space-y-6">
-          <GameScreen />
-          <PlayerList
-            players={currentRoom.players.map((player) => ({
-              playerNickname: player.playerNickname,
-              isReady: player.isReady,
-              isDead: player.isDead,
-              isLeft: player.isLeft,
-            }))}
-          />
-        </div>
-        <div className="flex mt-6">
-          <div className="ml-auto">
-            <Button
-              onClick={handleCopyLink}
-              className="font-galmuri border mr-4"
-            >
-              ✨링크 복사✨
-            </Button>
-            <Button onClick={handleClickExit} className="font-galmuri border">
-              나가기
-            </Button>
+      <div className="flex flex-col items-center justify-center overflow-y-auto p-6 mt-3 min-h-screen">
+        <div className="w-full max-w-7xl px-4">
+          <div className="space-y-6">
+            <GameScreen />
+            <PlayerList
+              players={currentRoom.players.map((player) => ({
+                playerNickname: player.playerNickname,
+                isReady: player.isReady,
+                isDead: player.isDead,
+                isLeft: player.isLeft,
+              }))}
+            />
           </div>
+
+          <div className="flex mt-6">
+            <div className="ml-auto">
+              <Button
+                onClick={handleCopyLink}
+                className="font-galmuri border mr-4"
+              >
+                ✨링크 복사✨
+              </Button>
+              <Button onClick={handleClickExit} className="font-galmuri border">
+                나가기
+              </Button>
+            </div>
+          </div>
+          <ExitDialog open={showExitDialog} onOpenChange={setShowExitDialog} />
         </div>
-        <ExitDialog open={showExitDialog} onOpenChange={setShowExitDialog} />
       </div>
     </div>
   );
