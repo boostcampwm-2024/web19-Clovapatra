@@ -47,50 +47,52 @@ const ReadyScreen = () => {
 
   return (
     <div className="relative h-[27rem] md:h-[calc(100vh-20rem)] md:min-h-[27rem] md:max-h-[34rem] bg-white rounded-lg flex flex-col items-center justify-center space-y-4">
-      {isHost ? (
-        <Button
-          size="lg"
-          disabled={!canStartGame}
-          onClick={handleGameStart}
-          className="font-galmuri px-8 py-6 text-lg"
-        >
-          <Gamepad2 className="mr-2" />
-          게임 시작
-        </Button>
-      ) : (
-        <Button
-          size="lg"
-          onClick={toggleReady}
-          className={`font-galmuri px-8 py-6 text-lg ${isReady ? 'bg-cyan-500 hover:bg-cyan-500' : ''}`}
-        >
-          <CheckCircle2 className="mr-2 h-5 w-5" />
-          {isReady ? '준비 완료' : '게임 준비'}
-        </Button>
-      )}
+      <div className="flex flex-col items-center">
+        {isHost ? (
+          <Button
+            size="lg"
+            disabled={!canStartGame}
+            onClick={handleGameStart}
+            className="font-galmuri px-8 py-6 text-lg"
+          >
+            <Gamepad2 className="mr-2" />
+            게임 시작
+          </Button>
+        ) : (
+          <Button
+            size="lg"
+            onClick={toggleReady}
+            className={`font-galmuri px-8 py-6 text-lg ${isReady ? 'bg-cyan-500 hover:bg-cyan-500' : ''}`}
+          >
+            <CheckCircle2 className="mr-2 h-5 w-5" />
+            {isReady ? '준비 완료' : '게임 준비'}
+          </Button>
+        )}
 
-      {!canStartGame ? (
-        <>
-          <p className="font-galmuri text-md text-muted-foreground mt-2 hidden md:inline">
-            모든 플레이어가 준비를 완료해야 게임을 시작할 수 있습니다.
-          </p>
-          <p className="font-galmuri text-md text-muted-foreground mt-2 md:hidden">
-            모든 플레이어가 준비를 완료해야
-            <br />
-            게임을 시작할 수 있습니다.
-          </p>
-        </>
-      ) : (
-        <>
-          <p className="font-galmuri text-md text-muted-foreground mt-2 hidden md:inline">
-            모든 플레이어가 준비 완료되었습니다. 게임을 시작해 주세요!
-          </p>
-          <p className="font-galmuri text-md text-muted-foreground mt-2 md:hidden">
-            모든 플레이어가 준비 완료되었습니다.
-            <br />
-            게임을 시작해 주세요!
-          </p>
-        </>
-      )}
+        {!canStartGame ? (
+          <>
+            <p className="font-galmuri text-md text-muted-foreground mt-3 hidden md:inline">
+              모든 플레이어가 준비를 완료해야 게임을 시작할 수 있습니다.
+            </p>
+            <p className="font-galmuri text-md text-muted-foreground mt-3 md:hidden">
+              모든 플레이어가 준비를 완료해야
+              <br />
+              게임을 시작할 수 있습니다.
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="font-galmuri text-md text-muted-foreground mt-2 hidden md:inline">
+              모든 플레이어가 준비 완료되었습니다. 게임을 시작해 주세요!
+            </p>
+            <p className="font-galmuri text-md text-muted-foreground mt-2 md:hidden">
+              모든 플레이어가 준비 완료되었습니다.
+              <br />
+              게임을 시작해 주세요!
+            </p>
+          </>
+        )}
+      </div>
     </div>
   );
 };
