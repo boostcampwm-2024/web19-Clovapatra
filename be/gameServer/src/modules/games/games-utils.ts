@@ -1,5 +1,5 @@
 import { GameMode, TurnDataDto } from './dto/turn-data.dto';
-import { RoomDataDto } from './../rooms/dto/room-data.dto';
+import { RoomDataDto } from '../rooms/dto/room-data.dto';
 import { GameDataDto } from './dto/game-data.dto';
 
 const SAMPLE_DATA = [
@@ -13,7 +13,7 @@ const SAMPLE_DATA = [
       '내가 그린 기린 그림은 긴 기린 그림이고 네가 그린 기린 그림은 안 긴 기린 그림이다.',
   },
   {
-    timeLimit: 8,
+    timeLimit: 9,
     lyrics:
       '저기 계신 콩국수 국수 장수는 새 콩국수 국수 장수이고, 여기 계신 콩국수 국수 장수는 헌 콩국수 국수 장수다.',
   },
@@ -30,15 +30,17 @@ const SAMPLE_DATA = [
 export function createTurnData(
   roomId: string,
   gameData: GameDataDto,
+  roomData: RoomDataDto,
 ): TurnDataDto {
-  const gameModes = [
-    GameMode.PRONUNCIATION,
-    GameMode.CLEOPATRA,
-    GameMode.CLEOPATRA,
-    GameMode.CLEOPATRA,
-  ];
-  // const gameMode = gameModes[Math.floor(Math.random() * gameModes.length)];
-  const gameMode = gameModes[0];
+  let gameMode = roomData.gameMode;
+
+  // 랜덤 모드인 경우 비율에 따라 게임 모드 결정
+  if (gameMode === GameMode.RANDOM) {
+    const ratio = roomData.randomModeRatio || 50;
+    const randomValue = Math.random() * 100;
+    gameMode =
+      randomValue < ratio ? GameMode.CLEOPATRA : GameMode.PRONUNCIATION;
+  }
 
   if (gameMode === GameMode.CLEOPATRA) {
     return {
@@ -49,6 +51,7 @@ export function createTurnData(
       lyrics: '안녕! 클레오파트라! 세상에서 제일가는 포테이토 칩!',
     };
   }
+
   const randomSentence =
     SAMPLE_DATA[Math.floor(Math.random() * SAMPLE_DATA.length)];
 
@@ -91,11 +94,15 @@ export function removePlayerFromGame(
   gameData: GameDataDto,
   playerNickname: string,
 ): void {
-  gameData.alivePlayers = gameData.alivePlayers.filter(
-    (player: string) => player !== playerNickname,
-  );
+  if (gameData.alivePlayers.includes(playerNickname)) {
+    gameData.alivePlayers = gameData.alivePlayers.filter(
+      (player: string) => player !== playerNickname,
+    );
 
-  gameData.rank.unshift(playerNickname);
+    if (!gameData.rank.includes(playerNickname)) {
+      gameData.rank.unshift(playerNickname);
+    }
+  }
 }
 
 export function noteToNumber(note: string): number {
@@ -122,23 +129,29 @@ export function noteToNumber(note: string): number {
 }
 
 export function numberToNote(number: number): string {
-  const notes = [
-    'C',
-    'C#',
-    'D',
-    'D#',
-    'E',
-    'F',
-    'F#',
-    'G',
-    'G#',
-    'A',
-    'A#',
-    'B',
-  ];
+  const koreanNoteNames = {
+    C: '도',
+    'C#': '도#',
+    D: '레',
+    'D#': '레#',
+    E: '미',
+    F: '파',
+    'F#': '파#',
+    G: '솔',
+    'G#': '솔#',
+    A: '라',
+    'A#': '라#',
+    B: '시',
+  };
+
+  const noteNames = Object.keys(koreanNoteNames);
+  const noteBase = number % 12;
   const octave = Math.floor(number / 12) - 1;
-  const noteIndex = Math.round(number) % 12;
-  return `${notes[noteIndex]}${octave}`;
+
+  const noteName = noteNames[noteBase];
+  const koreanNote = koreanNoteNames[noteName];
+
+  return `${octave}옥${koreanNote}`;
 }
 
 export function updatePreviousPlayers(
@@ -151,22 +164,6 @@ export function updatePreviousPlayers(
   gameData.previousPlayers.push(playerNickname);
 }
 
-const PRONOUNCE_SCORE_ORIGINAL_THRESOLHD = 53;
-const PRONOUNCE_SCORE_THRESOLHD = 90;
-const INCREMENT = 2 / 7;
-const DECREMENT = 3;
-
-export function transformScore(originalScore) {
-  let transformed;
-  if (originalScore >= PRONOUNCE_SCORE_ORIGINAL_THRESOLHD) {
-    transformed =
-      PRONOUNCE_SCORE_THRESOLHD +
-      (originalScore - PRONOUNCE_SCORE_ORIGINAL_THRESOLHD) * INCREMENT;
-  } else {
-    transformed =
-      PRONOUNCE_SCORE_THRESOLHD -
-      (PRONOUNCE_SCORE_ORIGINAL_THRESOLHD - originalScore) * DECREMENT;
-  }
-
-  return Math.max(Math.min(Math.round(transformed), 100), 0);
+export function transformScore(originalScore: number) {
+  return Math.floor(Math.min(90 + ((originalScore - 40) / 60) * 10, 100));
 }

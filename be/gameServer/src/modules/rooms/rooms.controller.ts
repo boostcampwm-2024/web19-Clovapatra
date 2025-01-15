@@ -7,11 +7,22 @@ import {
   Param,
   NotFoundException,
   Query,
+  Delete,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { RedisService } from '../../redis/redis.service';
 import { RoomDataDto } from './dto/room-data.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import { PaginatedRoomDto } from './dto/paginated-room.dto';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { Observable, Subject } from 'rxjs';
+import { filter, concatMap } from 'rxjs';
+import { RoomsConstant } from '../../common/constant';
 
 @ApiTags('Rooms')
 @Controller('rooms')
@@ -21,17 +32,35 @@ export class RoomController {
 
   constructor(private readonly redisService: RedisService) {
     this.redisService.subscribeToChannel('roomUpdate', async (message) => {
-      this.logger.log(`게임방 업데이트 감지: ${message}`);
-
-      const roomKeys = await this.redisService.keys('room:*');
-      const rooms = await Promise.all(
-        roomKeys.map(async (key) => {
-          const roomData = await this.redisService.get<string>(key);
-          return JSON.parse(roomData) as RoomDataDto;
-        }),
-      );
-      this.roomUpdateSubject.next({ data: rooms });
+      this.logger.log(`게임방 업데이트 ${message}`);
+      this.roomUpdateSubject.next({ data: message });
     });
+  }
+
+  @Get('healthcheck')
+  @ApiOperation({
+    summary: '서버 상태 확인',
+    description:
+      '서버의 상태를 확인하고, 정상적으로 작동 중인 경우 200 상태를 반환합니다.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '서버가 정상적으로 작동 중임을 나타냅니다.',
+    schema: {
+      example: {
+        status: 'UP',
+        timestamp: '2024-11-28T12:34:56.789Z',
+        uptime: '12345.678 seconds',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 500,
+    description: '서버가 비정상적으로 작동 중임을 나타냅니다.',
+  })
+  async healthCheck() {
+    this.logger.log('HealthCheck API 호출');
+    return 'Healthy';
   }
 
   @Sse('stream')
@@ -39,12 +68,64 @@ export class RoomController {
     summary: '게임 방 목록 조회하는 SSE',
     description: 'roomData가 변경되었을 시 변경된 room 배열을 전송합니다.',
   })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: '구독할 페이지 번호 (기본값: 0)',
+    example: 0,
+  })
   @ApiResponse({
-    description: '게임 방 목록이 성공적으로 반환됩니다.',
+    description: '현재 페이지의 게임 방 목록이 성공적으로 반환됩니다.',
     type: [RoomDataDto],
   })
-  getRoomUpdates(): Observable<MessageEvent> {
-    return this.roomUpdateSubject.asObservable();
+  getRoomUpdates(
+    @Query('page', ParseIntPipe) page: number = 0,
+  ): Observable<MessageEvent> {
+    const start = page * RoomsConstant.ROOMS_LIMIT;
+    const end = start + RoomsConstant.ROOMS_LIMIT - 1;
+
+    return this.roomUpdateSubject.pipe(
+      concatMap(async (event: MessageEvent) => {
+        const totalRooms = await this.redisService.llen('roomsList');
+        const totalPages = Math.ceil(totalRooms / RoomsConstant.ROOMS_LIMIT);
+        const roomList = await this.redisService.lrange(
+          'roomsList',
+          start,
+          end,
+        );
+
+        const messageString = event.data as string;
+        const message = JSON.parse(messageString);
+        const { updatePage } = message;
+
+        if (updatePage !== undefined && updatePage != page) {
+          return null;
+        }
+
+        const rooms = await Promise.all(
+          roomList.map(async (roomKey) => {
+            const roomData = await this.redisService.hgetAll<RoomDataDto>(
+              `room:${roomKey}`,
+            );
+            return roomData;
+          }),
+        );
+        return {
+          data: {
+            rooms: rooms,
+            pagination: {
+              currentPage: Number(page),
+              totalPages,
+              totalItems: totalRooms,
+              hasNextPage: page < totalPages - 1,
+              hasPreviousPage: page > 0,
+            },
+          },
+        } as MessageEvent;
+      }),
+      filter((event: MessageEvent) => event !== null),
+    );
   }
 
   @Get('/search')
@@ -77,16 +158,18 @@ export class RoomController {
     const roomIds = (
       await Promise.all(
         roomNames.map(async (roomName) => {
-          return this.redisService.lrange(`roomName:${roomName}`, 0, -1);
+          return this.redisService.lrange(`roomNamesToIds:${roomName}`, 0, -1);
         }),
       )
     ).flat();
 
-    this.logger.log(`roomIds: ${JSON.stringify(roomIds)} 반환`);
+    this.logger.log(`roomData ${roomIds.length}개 반환`);
     return await Promise.all(
       roomIds.map(async (roomId) => {
-        const roomData = await this.redisService.get<string>(`room:${roomId}`);
-        return JSON.parse(roomData) as RoomDataDto;
+        const roomData = await this.redisService.hgetAll<RoomDataDto>(
+          `room:${roomId}`,
+        );
+        return roomData;
       }),
     );
   }
@@ -102,55 +185,113 @@ export class RoomController {
     description: '조회할 게임 방의 ID',
     example: '1234',
   })
-  @ApiResponse({
-    description: '특정 roomId에 해당하는 게임 방이 성공적으로 반환됩니다.',
-    type: RoomDataDto,
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'roomId에 해당하는 게임 방을 찾지 못했습니다.',
-    schema: {
-      example: {
-        statusCode: 404,
-        message: 'Room with ID 1234 not found',
-        error: 'Not Found',
-      },
-    },
-  })
   async getRoomById(@Param('roomId') roomId: string): Promise<RoomDataDto> {
     this.logger.log(`요청 시작 - Room 조회: roomId=${roomId}`);
-    const roomData = await this.redisService.get<string>(`room:${roomId}`);
+    const roomData = await this.redisService.hgetAll<RoomDataDto>(
+      `room:${roomId}`,
+    );
 
     if (!roomData) {
       this.logger.warn(`Room 조회 실패 - ID: ${roomId} (존재하지 않는 ID)`);
       throw new NotFoundException(`Room with ID ${roomId} not found`);
     }
 
+    // 데이터 변환 확실히 하기
+    roomData.maxPlayers = Number(roomData.maxPlayers);
+    if (roomData.randomModeRatio) {
+      roomData.randomModeRatio = Number(roomData.randomModeRatio);
+    }
+
     this.logger.log(`요청 완료 - Room 조회 성공: roomId=${roomId}`);
-    return JSON.parse(roomData) as RoomDataDto;
+    return roomData;
   }
 
   @Get()
   @ApiOperation({
     summary: '게임 방 목록 조회',
-    description: 'Redis에서 저장된 모든 게임 방 목록을 조회합니다.',
+    description: '저장된 모든 게임 방 목록을 페이지네이션으로 조회합니다.',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: '조회할 페이지 번호 (기본값: 0)',
+    example: 1,
+  })
+  async getRooms(@Query('page') page = 0): Promise<PaginatedRoomDto> {
+    page = Number(page);
+    this.logger.log(`게임 방 목록 조회 시작 (페이지: ${page})`);
+
+    const totalRooms = await this.redisService.llen('roomsList');
+    const totalPages = Math.ceil(totalRooms / RoomsConstant.ROOMS_LIMIT);
+    const start = page * RoomsConstant.ROOMS_LIMIT;
+    const end = start + RoomsConstant.ROOMS_LIMIT - 1;
+
+    const paginatedKeys = await this.redisService.lrange(
+      'roomsList',
+      start,
+      end,
+    );
+
+    const rooms = await Promise.all(
+      paginatedKeys.map(async (key) => {
+        const roomData = await this.redisService.hgetAll<RoomDataDto>(
+          `room:${key}`,
+        );
+        if (!roomData || Object.keys(roomData).length === 0) {
+          return null;
+        }
+
+        // 데이터 변환 확실히 하기
+        return {
+          ...roomData,
+          maxPlayers: Number(roomData.maxPlayers),
+          randomModeRatio: roomData.randomModeRatio
+            ? Number(roomData.randomModeRatio)
+            : undefined,
+        } as RoomDataDto;
+      }),
+    );
+    const validRooms = rooms.filter(
+      (room): room is RoomDataDto => room !== null,
+    );
+
+    this.logger.log(`게임 방 목록 조회 완료, ${validRooms.length}개 방 반환`);
+
+    return {
+      rooms: validRooms,
+      pagination: {
+        currentPage: Number(page),
+        totalPages,
+        totalItems: totalRooms,
+        hasNextPage: page < totalPages - 1,
+        hasPreviousPage: page > 0,
+      },
+    };
+  }
+
+  @Delete('Error Messages')
+  @ApiOperation({
+    summary: '에러 메시지 목록',
+    description: 'API에서 발생할 수 있는 에러 메시지 목록',
   })
   @ApiResponse({
     status: 200,
-    description: '게임 방 목록이 성공적으로 반환됩니다.',
-    type: [RoomDataDto],
+    description: '에러 메시지 목록',
+    example: [
+      'RoomNotFound: 방을 찾을 수 없음',
+      'GameNotFound: 게임을 찾을 수 없음',
+      'RoomFull: 방이 가득 참',
+      'NicknameTaken: 닉네임이 이미 사용 중',
+      'PlayerNotFound: 플레이어를 찾을 수 없음',
+      'HostOnlyStart: 호스트만 게임을 시작할 수 있음',
+      'InternalError: 내부 서버 오류',
+      'AllPlayersMustBeReady: 모든 플레이어가 준비 상태여야 함',
+      'NotEnoughPlayers: 플레이어가 충분하지 않음',
+      'ValidationFailed: 유효하지 않은 입력값',
+    ],
   })
-  async getRooms(): Promise<RoomDataDto[]> {
-    const roomKeys = await this.redisService.keys('room:*');
-    this.logger.log('게임 방 목록 조회 시작');
-
-    const rooms = await Promise.all(
-      roomKeys.map(async (key) => {
-        const roomData = await this.redisService.get<string>(key);
-        return JSON.parse(roomData) as RoomDataDto;
-      }),
-    );
-    this.logger.log(`게임 방 목록 조회 완료, ${rooms.length}개 방 반환`);
-    return rooms;
+  getErrorMessages() {
+    return;
   }
 }

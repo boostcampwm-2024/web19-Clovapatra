@@ -28,6 +28,24 @@ export class GamesWebSocketEmitController {
   @ApiResponse({
     description: '채점 결과',
     type: VoiceProcessingResultDto,
+    examples: {
+      example1: {
+        summary: '클레오파트라게임 채점 결과',
+        value: {
+          result: 'PASS',
+          playerNickname: '호스트',
+          note: '3옥도#',
+        },
+      },
+      example2: {
+        summary: '발음게임 채점 결과',
+        value: {
+          result: 'PASS',
+          playerNickname: '플레이어',
+          pronounceScore: 99,
+        },
+      },
+    },
   })
   voiceProcessingResult() {
     return;

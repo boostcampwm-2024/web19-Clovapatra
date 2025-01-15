@@ -6,7 +6,6 @@ import {
   OnGatewayDisconnect,
   MessageBody,
 } from '@nestjs/websockets';
-import { OnModuleDestroy } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { RedisService } from '../../redis/redis.service';
 import { Logger, UseFilters } from '@nestjs/common';
@@ -15,7 +14,6 @@ import { RoomDataDto } from '../rooms/dto/room-data.dto';
 import { GameDataDto } from './dto/game-data.dto';
 import { TurnDataDto } from './dto/turn-data.dto';
 import { VoiceResultFromServerDto } from './dto/voice-result-from-server.dto';
-import { ErrorResponse } from '../rooms/dto/error-response.dto';
 import {
   createTurnData,
   selectCurrentPlayer,
@@ -26,9 +24,10 @@ import {
   numberToNote,
   transformScore,
 } from './games-utils';
+import { ErrorMessages } from '../../common/constant';
 
 const VOICE_SERVERS = 'voice-servers';
-const PRONOUNCE_SCORE_THRESOLHD = 53;
+const PRONOUNCE_SCORE_THRESOLHD = 40;
 
 @WebSocketGateway({
   namespace: '/rooms',
@@ -39,7 +38,7 @@ const PRONOUNCE_SCORE_THRESOLHD = 53;
   },
 })
 @UseFilters(WsExceptionsFilter)
-export class GamesGateway implements OnGatewayDisconnect, OnModuleDestroy {
+export class GamesGateway implements OnGatewayDisconnect {
   private readonly logger = new Logger(GamesGateway.name);
 
   @WebSocketServer()
@@ -47,46 +46,42 @@ export class GamesGateway implements OnGatewayDisconnect, OnModuleDestroy {
 
   constructor(private readonly redisService: RedisService) {}
 
-  async onModuleDestroy() {
-    this.logger.log('Module is being destroyed, cleaning up...');
-
-    const gameKeys = await this.redisService.keys('game:*');
-    for (const gameId of gameKeys) {
-      await this.redisService.delete(`game:${gameId}`);
-      this.logger.log(`Game ${gameId} data deleted from Redis`);
-    }
-  }
-
   @SubscribeMessage('startGame')
   async handleStartGame(@ConnectedSocket() client: Socket) {
     const { roomId, playerNickname } = client.data;
     this.logger.log(`Game start requested for room: ${roomId}`);
 
     try {
-      const roomDataString = await this.redisService.get<string>(
+      const roomData = await this.redisService.hgetAll<RoomDataDto>(
         `room:${roomId}`,
       );
 
-      if (!roomDataString) {
-        this.logger.warn(`Room not found: ${roomId}`);
-        client.emit('error', 'Room not found');
+      if (!roomData) {
+        this.logger.warn(`Room ${roomId} does not exist`);
+        client.emit('error', ErrorMessages.ROOM_NOT_FOUND);
         return;
       }
-
-      const roomData: RoomDataDto = JSON.parse(roomDataString);
 
       if (roomData.hostNickname !== playerNickname) {
         this.logger.warn(
           `User ${client.data.playerNickname} is not the host of room ${roomId}`,
         );
-        client.emit('error', 'Only the host can start the game');
+        client.emit('error', ErrorMessages.ONLY_HOST_CAN_START);
+        return;
+      }
+
+      if (roomData.players.length <= 1) {
+        this.logger.warn(
+          `Not enough players to start the game in room ${roomId}`,
+        );
+        client.emit('error', ErrorMessages.NOT_ENOUGH_PLAYERS);
         return;
       }
 
       const allReady = checkPlayersReady(roomData);
       if (!allReady) {
         this.logger.warn(`Not all players are ready in room: ${roomId}`);
-        client.emit('error', 'All players must be ready to start the game');
+        client.emit('error', ErrorMessages.ALL_PLAYERS_MUST_BE_READY);
         return;
       }
 
@@ -97,9 +92,9 @@ export class GamesGateway implements OnGatewayDisconnect, OnModuleDestroy {
       });
       this.server.to(roomId).emit('updateUsers', roomData.players);
 
-      await this.redisService.set(
+      await this.redisService.hmset(
         `room:${roomId}`,
-        JSON.stringify(roomData),
+        { players: JSON.stringify(roomData.players), status: roomData.status },
         'roomUpdate',
       );
 
@@ -109,6 +104,7 @@ export class GamesGateway implements OnGatewayDisconnect, OnModuleDestroy {
 
       const gameData: GameDataDto = {
         gameId: roomId,
+        players: roomData.players,
         alivePlayers,
         rank: [],
         currentTurn: 1,
@@ -118,7 +114,8 @@ export class GamesGateway implements OnGatewayDisconnect, OnModuleDestroy {
       };
       await this.redisService.set(`game:${roomId}`, JSON.stringify(gameData));
 
-      const turnData: TurnDataDto = createTurnData(roomId, gameData);
+      // roomData를 추가로 전달하여 게임 모드 정보 전달
+      const turnData: TurnDataDto = createTurnData(roomId, gameData, roomData);
 
       await new Promise<void>((resolve) => {
         this.server.to(VOICE_SERVERS).emit('turnChanged', turnData, () => {
@@ -134,10 +131,7 @@ export class GamesGateway implements OnGatewayDisconnect, OnModuleDestroy {
       this.logger.error(
         `Error starting game in room ${roomId}: ${error.message}`,
       );
-      const errorResponse: ErrorResponse = {
-        message: 'Failed to start the game',
-      };
-      client.emit('error', errorResponse);
+      client.emit('error', ErrorMessages.INTERNAL_ERROR);
     }
   }
 
@@ -158,13 +152,21 @@ export class GamesGateway implements OnGatewayDisconnect, OnModuleDestroy {
         `game:${roomId}`,
       );
       if (!gameDataString) {
-        return client.emit('error', { message: `game ${roomId} not found` });
+        return client.emit('error', ErrorMessages.ROOM_NOT_FOUND);
       }
 
       const gameData: GameDataDto = JSON.parse(gameDataString);
+      const roomData = await this.redisService.hgetAll<RoomDataDto>(
+        `room:${roomId}`,
+      );
 
       if (gameData.alivePlayers.length > 1) {
-        const turnData: TurnDataDto = createTurnData(roomId, gameData);
+        // roomData를 추가로 전달하여 게임 모드 정보 전달
+        const turnData: TurnDataDto = createTurnData(
+          roomId,
+          gameData,
+          roomData,
+        );
 
         await new Promise<void>((resolve) => {
           this.server.to(VOICE_SERVERS).emit('turnChanged', turnData, () => {
@@ -180,19 +182,19 @@ export class GamesGateway implements OnGatewayDisconnect, OnModuleDestroy {
           .to(roomId)
           .emit('endGame', [...gameData.alivePlayers, ...gameData.rank]);
 
-        const roomDataString = await this.redisService.get<string>(
+        const roomData = await this.redisService.hgetAll<RoomDataDto>(
           `room:${roomId}`,
         );
-        if (!roomDataString) {
+        if (!roomData) {
           this.logger.warn(`Room not found: ${roomId}`);
-          client.emit('error', 'Room not found');
+          client.emit('error', ErrorMessages.ROOM_NOT_FOUND);
           return;
         }
-        const roomData: RoomDataDto = JSON.parse(roomDataString);
+
         roomData.status = 'waiting';
-        await this.redisService.set(
+        await this.redisService.hmset(
           `room:${roomId}`,
-          JSON.stringify(roomData),
+          { status: roomData.status },
           'roomUpdate',
         );
 
@@ -207,7 +209,7 @@ export class GamesGateway implements OnGatewayDisconnect, OnModuleDestroy {
       }
     } catch (error) {
       this.logger.error('Error handling next:', error);
-      client.emit('error', { message: 'Internal server error' });
+      client.emit('error', ErrorMessages.INTERNAL_ERROR);
     }
   }
 
@@ -216,23 +218,22 @@ export class GamesGateway implements OnGatewayDisconnect, OnModuleDestroy {
     @MessageBody() voiceResultFromServerDto: VoiceResultFromServerDto,
     @ConnectedSocket() client: Socket,
   ) {
+    const { roomId, playerNickname, averageNote, pronounceScore } =
+      voiceResultFromServerDto;
+    this.logger.log(
+      `Received voice result for roomId: ${roomId}, player: ${playerNickname}, averageNote: ${averageNote}, pronounceScore: ${pronounceScore}`,
+    );
+
+    const gameDataString = await this.redisService.get<string>(
+      `game:${roomId}`,
+    );
+    if (!gameDataString) {
+      return client.emit('error', ErrorMessages.GAME_NOT_FOUND);
+    }
+
+    const gameData: GameDataDto = JSON.parse(gameDataString);
+
     try {
-      const { roomId, playerNickname, averageNote, pronounceScore } =
-        voiceResultFromServerDto;
-
-      this.logger.log(
-        `Received voice result for roomId: ${roomId}, player: ${playerNickname}, averageNote: ${averageNote}, pronounceScore: ${pronounceScore}`,
-      );
-
-      const gameDataString = await this.redisService.get<string>(
-        `game:${roomId}`,
-      );
-      if (!gameDataString) {
-        return client.emit('error', { message: `game ${roomId} not found` });
-      }
-
-      const gameData: GameDataDto = JSON.parse(gameDataString);
-
       if (averageNote !== undefined) {
         const note = noteToNumber(averageNote);
         this.logger.log(
@@ -245,12 +246,7 @@ export class GamesGateway implements OnGatewayDisconnect, OnModuleDestroy {
           this.server.to(roomId).emit('voiceProcessingResult', {
             result: 'PASS',
             playerNickname,
-            playerNote: averageNote,
-            previousPlayerNickname:
-              gameData.previousPlayers.length === 0
-                ? null
-                : gameData.previousPlayers[gameData.previousPlayers.length - 1],
-            previousPlayerNote: numberToNote(gameData.previousPitch),
+            note: numberToNote(note),
           });
           gameData.previousPitch = note;
         } else {
@@ -260,14 +256,18 @@ export class GamesGateway implements OnGatewayDisconnect, OnModuleDestroy {
           this.server.to(roomId).emit('voiceProcessingResult', {
             result: 'FAIL',
             playerNickname,
-            playerNote: averageNote,
-            previousPlayerNickname:
-              gameData.previousPlayers.length === 0
-                ? null
-                : gameData.previousPlayers[gameData.previousPlayers.length - 1],
-            previousPlayerNote: numberToNote(gameData.previousPitch),
+            note: numberToNote(note),
           });
           removePlayerFromGame(gameData, playerNickname);
+
+          const player = gameData.players.find(
+            (p) => p.playerNickname === playerNickname,
+          );
+
+          if (player) {
+            player.isDead = true;
+            this.server.to(roomId).emit('updateUsers', gameData.players);
+          }
         }
       } else if (pronounceScore !== undefined) {
         this.logger.log(
@@ -286,6 +286,14 @@ export class GamesGateway implements OnGatewayDisconnect, OnModuleDestroy {
             pronounceScore: transformScore(pronounceScore),
           });
           removePlayerFromGame(gameData, playerNickname);
+          const player = gameData.players.find(
+            (p) => p.playerNickname === playerNickname,
+          );
+
+          if (player) {
+            player.isDead = true;
+            this.server.to(roomId).emit('updateUsers', gameData.players);
+          }
         }
       } else {
         this.logger.log('pronounceScore nor averageNote');
@@ -304,9 +312,36 @@ export class GamesGateway implements OnGatewayDisconnect, OnModuleDestroy {
       await this.redisService.set(`game:${roomId}`, JSON.stringify(gameData));
     } catch (error) {
       this.logger.error('Error handling voiceResult:', error);
-      client.emit('error', { message: 'Internal server error' });
+      this.server.to(roomId).emit('voiceProcessingResult', {
+        result: 'FAIL',
+        playerNickname,
+        pronounceScore: 0,
+        note: '0옥도',
+      });
 
-      // 오류 일때
+      removePlayerFromGame(gameData, playerNickname);
+
+      const player = gameData.players.find(
+        (p) => p.playerNickname === playerNickname,
+      );
+
+      if (player) {
+        player.isDead = true;
+        this.server.to(roomId).emit('updateUsers', gameData.players);
+      }
+
+      updatePreviousPlayers(gameData, playerNickname);
+      gameData.currentTurn++;
+      this.logger.log(`Turn updated: ${gameData.currentTurn}`);
+      gameData.currentPlayer = selectCurrentPlayer(
+        gameData.alivePlayers,
+        gameData.previousPlayers,
+      );
+
+      this.logger.log(
+        `Saving updated game data to Redis for roomId: ${roomId}`,
+      );
+      await this.redisService.set(`game:${roomId}`, JSON.stringify(gameData));
     }
   }
 
@@ -326,6 +361,53 @@ export class GamesGateway implements OnGatewayDisconnect, OnModuleDestroy {
       const gameData: GameDataDto = JSON.parse(gameDataString);
 
       removePlayerFromGame(gameData, playerNickname);
+
+      const player = gameData.players.find(
+        (p) => p.playerNickname === playerNickname,
+      );
+
+      if (player) {
+        player.isLeft = true;
+        await this.redisService.set(`game:${roomId}`, JSON.stringify(gameData));
+        this.server.to(roomId).emit('updateUsers', gameData.players);
+
+        player.isMuted = true;
+        await this.redisService.hmset(`room:${roomId}`, {
+          players: JSON.stringify(gameData.players),
+        });
+        const muteStatus = gameData.players.reduce((acc, player) => {
+          acc[player.playerNickname] = player.isMuted;
+          return acc;
+        }, {});
+        this.server.to(roomId).emit('muteStatusChanged', muteStatus);
+
+        if (playerNickname === gameData.currentPlayer) {
+          updatePreviousPlayers(gameData, playerNickname);
+          gameData.currentTurn++;
+          this.logger.log(`Turn updated: ${gameData.currentTurn}`);
+          gameData.currentPlayer = selectCurrentPlayer(
+            gameData.alivePlayers,
+            gameData.previousPlayers,
+          );
+          await this.redisService.set(
+            `game:${roomId}`,
+            JSON.stringify(gameData),
+          );
+          this.logger.log(`leaved player === currentPlayer: ${playerNickname}`);
+          setTimeout(() => {
+            this.server.to(roomId).emit('voiceProcessingResult', {
+              result: 'FAIL',
+              playerNickname,
+              pronounceScore: 0,
+              note: '탈주',
+            });
+
+            this.logger.log(
+              `Voice processing result sent for player: ${playerNickname}`,
+            );
+          }, 10000);
+        }
+      }
 
       if (gameData.alivePlayers.length <= 0) {
         this.logger.log(`${roomId} deleting game`);
