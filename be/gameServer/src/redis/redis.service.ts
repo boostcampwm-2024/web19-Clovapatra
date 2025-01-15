@@ -96,16 +96,20 @@ export class RedisService implements OnModuleDestroy {
       return null;
     }
 
-    const parsedValues: T = {} as T;
+    const parsedValues: Record<string, unknown> = {};
     for (const [field, value] of Object.entries(values)) {
       if (field === 'players') {
         parsedValues[field] = JSON.parse(value);
+      } else if (field === 'maxPlayers') {
+        parsedValues[field] = parseInt(value, 10); // maxPlayers를 숫자로 변환
+      } else if (field === 'randomModeRatio') {
+        parsedValues[field] = parseFloat(value); // randomModeRatio를 숫자로 변환
       } else {
         parsedValues[field] = value;
       }
     }
 
-    return parsedValues;
+    return parsedValues as T;
   }
 
   async get<T>(key: string): Promise<T | null> {

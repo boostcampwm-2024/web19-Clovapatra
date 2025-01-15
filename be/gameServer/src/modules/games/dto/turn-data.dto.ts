@@ -3,6 +3,7 @@ import { ApiProperty } from '@nestjs/swagger';
 export enum GameMode {
   PRONUNCIATION = 'PRONUNCIATION',
   CLEOPATRA = 'CLEOPATRA',
+  RANDOM = 'RANDOM',
 }
 
 export class TurnDataDto {

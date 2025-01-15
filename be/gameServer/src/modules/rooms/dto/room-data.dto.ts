@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { PlayerDataDto } from '../../players/dto/player-data.dto';
+import { GameMode } from '../../games/dto/turn-data.dto';
 
 export class RoomDataDto {
   @ApiProperty({
@@ -43,4 +44,24 @@ export class RoomDataDto {
     description: '현재 방의 상태 (예: 대기 중, 게임 중)',
   })
   status: string;
+
+  @ApiProperty({
+    example: 4,
+    description: '최대 플레이어 수',
+  })
+  maxPlayers: number;
+
+  @ApiProperty({
+    enum: GameMode,
+    example: GameMode.RANDOM,
+    description: '게임 모드',
+  })
+  gameMode: GameMode;
+
+  @ApiProperty({
+    example: 50,
+    description: '랜덤 모드에서 클레오파트라 모드의 비율',
+    required: false,
+  })
+  randomModeRatio?: number;
 }
