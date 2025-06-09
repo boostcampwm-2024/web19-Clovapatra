@@ -9,7 +9,7 @@ export default function LandingPage() {
         className="min-h-screen relative flex flex-col items-center justify-center text-center p-4 overflow-hidden rounded-t-2xl" // rounded-t-3xl로 변경
         style={{
           backgroundImage:
-            "url('https://hebbkx1anhila5yf.public.blob.vercel-storage.com/desert-bg-PZ3mAo0uZgBqi3T4EaMHe8MCM7knxx.png')",
+            'url(https://res.cloudinary.com/durvfabtg/image/upload/f_auto,q_auto,w_1920,dpr_auto/desert_aaja6p)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
@@ -112,11 +112,18 @@ export default function LandingPage() {
                 </p>
               </div>
               <div className="aspect-video bg-gray-200">
-                <img
-                  src="https://i.imgur.com/C2I0jNW.gif"
-                  alt="클레오파트라 모드 GIF"
+                <video
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
                   className="object-cover w-full h-full"
-                />
+                >
+                  <source
+                    src="https://res.cloudinary.com/durvfabtg/video/upload/f_mp4,q_auto/cleopatra_lwirbr"
+                    type="video/mp4"
+                  />
+                </video>
               </div>
             </Card>
             <Card className="overflow-hidden transform hover:scale-105 transition-all duration-300 hover:shadow-xl">
@@ -130,11 +137,18 @@ export default function LandingPage() {
                 </p>
               </div>
               <div className="aspect-video bg-gray-200">
-                <img
-                  src="https://i.imgur.com/XNEw8tq.gif"
-                  alt="발음 도전 모드 GIF"
+                <video
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
                   className="object-cover w-full h-full"
-                />{' '}
+                >
+                  <source
+                    src="https://res.cloudinary.com/durvfabtg/video/upload/f_mp4,q_auto/pronunciation_rtrxft"
+                    type="video/mp4"
+                  />
+                </video>
               </div>
             </Card>
           </div>

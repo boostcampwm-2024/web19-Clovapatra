@@ -5,7 +5,8 @@ export default {
   theme: {
     extend: {
       backgroundImage: {
-        'main-desert': 'url(https://i.imgur.com/RMCkgEF.png)',
+        'main-desert':
+          'url(https://res.cloudinary.com/durvfabtg/image/upload/f_auto,q_auto,w_1920,dpr_auto/desert_aaja6p)',
       },
 
       fontFamily: {
