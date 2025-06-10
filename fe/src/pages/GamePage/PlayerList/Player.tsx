@@ -68,13 +68,13 @@ const Player = ({ playerNickname, isReady, isDead, isLeft }: PlayerProps) => {
           {isLeft ? (
             <img
               className="w-16 h-10 md:w-20 md:h-12 lg:w-[6.875rem] lg:h-[3.625rem]"
-              src="https://i.imgur.com/JCNlJnB.png"
+              src="https://res.cloudinary.com/durvfabtg/image/upload/f_auto,q_auto/escape-sign_t1vmp1"
               alt="탈주"
             />
           ) : isDead ? (
             <img
               className="w-16 h-10 md:w-20 md:h-12 lg:w-[6.875rem] lg:h-[3.625rem]"
-              src="https://i.imgur.com/kcsoaeY.png"
+              src="https://res.cloudinary.com/durvfabtg/image/upload/f_quto,q_auto/fail-sign_sldnal"
               alt="탈락"
             />
           ) : (

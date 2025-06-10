@@ -101,7 +101,7 @@ const PitchVisualizer = ({ isGameplayPhase }: PitchVisualizerProps) => {
           }}
         >
           <img
-            src="https://i.imgur.com/q6TZIlM.png"
+            src="https://res.cloudinary.com/durvfabtg/image/upload/f_auto,q_auto/angry-pepe_ridnhc"
             alt="Angry Pepe"
             style={{
               width: '100%',

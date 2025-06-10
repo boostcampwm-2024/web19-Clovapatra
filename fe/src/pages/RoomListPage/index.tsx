@@ -42,7 +42,7 @@ const RoomListPage = () => {
         {isEmpty ? (
           <div className="h-[calc(100vh-220px)] flex items-center justify-center font-galmuri text-muted-foreground text-xl">
             <img
-              src="https://i.imgur.com/sXJUeME.png"
+              src="https://res.cloudinary.com/durvfabtg/image/upload/f_auto,q_auto/no-rooms_jhcyiu"
               alt="생성된 방이 없습니다. 게임방을 만들어 주세요."
               className="w-[28rem] h-[9rem]"
             />
